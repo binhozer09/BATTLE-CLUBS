@@ -96,6 +96,8 @@ namespace BattleClubs.Editor
             controller.radius = 0.42f;
             controller.center = new Vector3(0f, 1f, 0f);
             root.AddComponent<ThirdPersonMotor>();
+            root.AddComponent<Combatant>();
+            root.AddComponent<HumanoidAnimationDriver>();
 
             GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             body.name = "Player_Body_Visual";
