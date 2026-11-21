@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using BattleClubs.Characters;
 
 namespace BattleClubs.Gameplay
 {
@@ -98,6 +99,12 @@ namespace BattleClubs.Gameplay
             if (team.players.Count >= PlayersPerTeam) return false;
 
             team.players.Add(player);
+
+            int teamIndex = teams.IndexOf(team);
+            ClubKitApplier kitApplier = player.GetComponentInChildren<ClubKitApplier>(true);
+            if (kitApplier != null)
+                kitApplier.ApplyKit(teamIndex, team.players.Count);
+
             return true;
         }
 
