@@ -83,6 +83,9 @@ namespace BattleClubs.World
             if (createSpawnMarkers)
                 CreateSpawns(origin, totalX, totalZ);
 
+            TeamSpawnManager spawnManager = GetComponent<TeamSpawnManager>();
+            if (spawnManager != null) spawnManager.RefreshSpawnPoints();
+
             Random.state = previousRandomState;
         }
 
