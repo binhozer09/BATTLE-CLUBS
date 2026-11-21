@@ -10,7 +10,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 
 | Frente | Situação | Evidência / próximo passo |
 |---|---|---|
-| Base técnica Unity | Em ajuste | Habilitar módulos internos de Física e Animação no manifest |
+| Base técnica Unity | Configuração ajustada; teste pendente | Módulos internos de Física e Animação adicionados ao manifest; falta reimportar/validar no Editor Unity |
 | Materiais e texturas originais | Integrados no código; aguardando renderização | Gerador procedural cria tijolo, reboco, concreto, asfalto e piso da quadra; o gerador do mapa agora atribui esses materiais por tipo de objeto |
 | Cenário 3D da comunidade | A iniciar após materiais | Evoluir o blockout para arte com relevo, escadarias, becos, postes, fios, lajes e quadra |
 | Personagem 3D | Pendente | Escolher/criar modelo humanoide com rig; integrar malha, roupas e animações |
