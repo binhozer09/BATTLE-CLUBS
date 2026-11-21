@@ -11,7 +11,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Frente | Situação | Evidência / próximo passo |
 |---|---|---|
 | Base técnica Unity | Em ajuste | Habilitar módulos internos de Física e Animação no manifest |
-| Materiais e texturas originais | Em desenvolvimento | Gerador procedural de tijolo, reboco, concreto, asfalto e piso da quadra; falta integrar e renderizar na cena |
+| Materiais e texturas originais | Integrados no código; aguardando renderização | Gerador procedural cria tijolo, reboco, concreto, asfalto e piso da quadra; o gerador do mapa agora atribui esses materiais por tipo de objeto |
 | Cenário 3D da comunidade | A iniciar após materiais | Evoluir o blockout para arte com relevo, escadarias, becos, postes, fios, lajes e quadra |
 | Personagem 3D | Pendente | Escolher/criar modelo humanoide com rig; integrar malha, roupas e animações |
 | Uniformes | Pendente | Criar sistema de kits; usar marcas e escudos oficiais somente com autorização |
@@ -22,8 +22,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 
 ### 21/11/2026 — Fundação da produção visual
 - Criada a branch `production/3d-art-foundation`, separando a produção original da linha principal.
-- Adicionado o primeiro gerador de texturas tileáveis originais: tijolo aparente, reboco pintado, concreto, asfalto e piso de quadra.
-- Próxima ação técnica: integrar os materiais ao gerador do cenário e corrigir as dependências de Física/Animação.
+- Adicionado o gerador de cinco texturas tileáveis originais: tijolo aparente, reboco pintado, concreto, asfalto e piso de quadra.
+- Integradas as texturas ao gerador procedural do cenário por tipo de superfície.
+- Habilitados no manifest os módulos Unity de Física e Animação que faltaram na compilação anterior.
+- Próxima ação: abrir/importar no Unity, validar os materiais visualmente e ajustar escala/contraste; depois avançar para personagem humanoide com rig e animações.
 - Ainda não há personagem final, cena renderizada, APK de produção ou validação visual no Unity Editor.
 
 ## Como acompanhar
