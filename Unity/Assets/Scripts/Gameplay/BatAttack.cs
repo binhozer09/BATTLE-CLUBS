@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using BattleClubs.Player;
 
@@ -14,9 +15,13 @@ namespace BattleClubs.Gameplay
         [SerializeField] private Animator animator;
         [SerializeField] private string attackTrigger = "Attack";
         [SerializeField] private float turnToTargetSpeed = 900f;
+        [SerializeField] private float fallbackImpactDelay = 0.35f;
 
         private float nextAttackTime;
         private int attackTriggerHash;
+        private Combatant pendingTarget;
+        private bool pendingHitApplied;
+        private Coroutine fallbackRoutine;
 
         private void Awake()
         {
@@ -32,23 +37,59 @@ namespace BattleClubs.Gameplay
             if (Time.time < nextAttackTime) return;
             nextAttackTime = Time.time + attackCooldown;
 
-            // Play the configured attack animation when an Animator Controller is assigned.
-            if (animator != null && HasAttackTrigger())
-                animator.SetTrigger(attackTriggerHash);
+            pendingTarget = FindNearestTarget();
+            pendingHitApplied = false;
 
-            // The attack button also advances the third-person camera smoothly around the player.
+            if (pendingTarget != null)
+            {
+                Vector3 direction = pendingTarget.transform.position - transform.position;
+                direction.y = 0f;
+                if (direction.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.RotateTowards(
+                        transform.rotation, Quaternion.LookRotation(direction),
+                        turnToTargetSpeed * Time.deltaTime);
+            }
+
             if (cameraRig != null) cameraRig.AddAttackOrbit();
 
-            Combatant nearestTarget = FindNearestTarget();
-            if (nearestTarget == null) return;
+            bool hasAnimation = animator != null && HasAttackTrigger();
+            if (hasAnimation)
+            {
+                animator.SetTrigger(attackTriggerHash);
+                // The animation should call ApplyAttackHit() at the contact frame.
+                // This fallback prevents attacks from getting stuck if no Animation Event exists.
+                if (fallbackRoutine != null) StopCoroutine(fallbackRoutine);
+                fallbackRoutine = StartCoroutine(FallbackImpact());
+            }
+            else
+            {
+                ApplyAttackHit();
+            }
+        }
 
-            Vector3 direction = nearestTarget.transform.position - transform.position;
-            direction.y = 0f;
-            if (direction.sqrMagnitude > 0.001f)
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation, Quaternion.LookRotation(direction), turnToTargetSpeed * Time.deltaTime);
+        // Add an Animation Event to the bat-contact frame and set its function to ApplyAttackHit.
+        public void ApplyAttackHit()
+        {
+            if (pendingHitApplied) return;
+            pendingHitApplied = true;
 
-            nearestTarget.ReceiveBatHit();
+            if (fallbackRoutine != null)
+            {
+                StopCoroutine(fallbackRoutine);
+                fallbackRoutine = null;
+            }
+
+            if (pendingTarget != null && pendingTarget.State == PlayerLifeState.Alive)
+                pendingTarget.ReceiveBatHit();
+
+            pendingTarget = null;
+        }
+
+        private IEnumerator FallbackImpact()
+        {
+            yield return new WaitForSeconds(fallbackImpactDelay);
+            fallbackRoutine = null;
+            ApplyAttackHit();
         }
 
         private Combatant FindNearestTarget()
