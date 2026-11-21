@@ -40,6 +40,9 @@ namespace BattleClubs.Editor
 
             GameObject map = new GameObject("BATTLE_CLUBS_Community_Map");
             map.AddComponent<UrbanCommunityBlockout>();
+            map.AddComponent<CommunityArtDetails>();
+            map.AddComponent<FavelaStreetLifeDetails>();
+            map.AddComponent<TeamMatchRules>();
 
             GameObject player = CreatePlayer(new Vector3(4f, 0.1f, 4f));
             GameObject cameraObject = new GameObject("Main Camera");

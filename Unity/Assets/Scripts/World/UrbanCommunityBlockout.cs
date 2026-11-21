@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using BattleClubs.Art;
 
 namespace BattleClubs.World
 {
@@ -244,13 +245,13 @@ namespace BattleClubs.World
 
         private void CreateSpawns(Vector3 origin, float width, float depth)
         {
+            // One spawn anchor per team: the match is designed for four teams of five.
             Vector3[] positions =
             {
                 origin + new Vector3(3f, 0.15f, 3f),
                 origin + new Vector3(width - 3f, 0.15f, 3f),
                 origin + new Vector3(3f, 0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, 0.15f, depth - 3f),
-                origin + new Vector3(width * 0.5f, 0.15f, depth - 3f)
+                origin + new Vector3(width - 3f, 0.15f, depth - 3f)
             };
 
             for (int i = 0; i < positions.Length; i++)
@@ -280,12 +281,29 @@ namespace BattleClubs.World
                 {
                     Material material = new Material(shader);
                     material.color = color;
+                    ProceduralSurfaceTextures.Surface surface = ResolveSurface(objectName);
+                    material.mainTexture = ProceduralSurfaceTextures.Get(surface);
+                    material.mainTextureScale = new Vector2(
+                        Mathf.Max(1f, scale.x * 0.35f), Mathf.Max(1f, scale.y * 0.35f));
                     renderer.sharedMaterial = material;
                 }
             }
 
             generated.Add(item);
             return item;
+        }
+
+        private static ProceduralSurfaceTextures.Surface ResolveSurface(string objectName)
+        {
+            if (objectName == "Map_Ground" || objectName == "RoadDash")
+                return ProceduralSurfaceTextures.Surface.Asphalt;
+            if (objectName.StartsWith("House_"))
+                return ProceduralSurfaceTextures.Surface.Brick;
+            if (objectName == "CentralCourt" || objectName.StartsWith("Court"))
+                return ProceduralSurfaceTextures.Surface.Court;
+            if (objectName == "Roof" || objectName == "RoofParapet" || objectName == "AlleyCover")
+                return ProceduralSurfaceTextures.Surface.Concrete;
+            return ProceduralSurfaceTextures.Surface.Plaster;
         }
 
         private void ClearGenerated()

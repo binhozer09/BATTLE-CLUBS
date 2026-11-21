@@ -24,16 +24,44 @@ namespace BattleClubs.Gameplay
     public sealed class TeamMatchRules : MonoBehaviour
     {
         [SerializeField] private List<MatchTeam> teams = new List<MatchTeam>();
-        [SerializeField] private int playersPerTeam = 4;
+        [SerializeField, Min(1)] private int playersPerTeam = 5;
         [SerializeField] private int pointsPerEliminatedTeam = 3;
 
+        private const int RequiredTeamCount = 4;
+
+        private void Awake()
+        {
+            EnsureDefaultTeams();
+        }
+
+        private void EnsureDefaultTeams()
+        {
+            if (teams == null) teams = new List<MatchTeam>();
+            while (teams.Count < RequiredTeamCount)
+            {
+                int number = teams.Count + 1;
+                teams.Add(new MatchTeam
+                {
+                    teamId = "team-" + number,
+                    clubId = string.Empty,
+                    players = new List<Combatant>()
+                });
+            }
+        }
+
         public IReadOnlyList<MatchTeam> Teams => teams;
+        public int PlayersPerTeam => playersPerTeam;
+        public int TeamCount => teams == null ? 0 : teams.Count;
+        public int MaxPlayers => TeamCount * playersPerTeam;
 
         public bool TryAddPlayer(string teamId, Combatant player)
         {
             if (player == null) return false;
-            MatchTeam team = teams.Find(t => t.teamId == teamId);
-            if (team == null || team.players.Count >= playersPerTeam || team.players.Contains(player))
+            if (teams == null) return false;
+            MatchTeam team = teams.Find(t => t != null && t.teamId == teamId);
+            if (team == null) return false;
+            if (team.players == null) team.players = new List<Combatant>();
+            if (team.players.Count >= playersPerTeam || team.players.Contains(player))
                 return false;
             team.players.Add(player);
             return true;
