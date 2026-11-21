@@ -53,7 +53,7 @@ namespace BattleClubs.World
                     BuildFacadeShopfront(center, (x + z) % 2 == 0 ? -1 : 1);
 
                 if ((x + z) % 3 == 1)
-                    BuildRooftopSatellite(center);
+                    BuildFacadeUtility(center, (x + z) % 2 == 0 ? -1 : 1);
             }
 
             Random.state = previous;
@@ -112,25 +112,19 @@ namespace BattleClubs.World
                 new Color(0.57f, 0.22f, 0.17f), side * 5f);
         }
 
-        private void BuildRooftopSatellite(Vector3 center)
+        private void BuildFacadeUtility(Vector3 center, int side)
         {
-            // The dish is intentionally low-profile so it does not dominate the skyline.
-            Vector3 roof = center + new Vector3(
-                Random.Range(-5.2f, 5.2f), 8.6f,
-                Random.Range(-5.5f, 5.5f));
+            // Meter boxes and exposed conduit add believable street-level infrastructure.
+            float faceZ = center.z - side * (alleyWidth * 0.5f + 0.16f);
+            Vector3 meter = new Vector3(center.x + 4.2f, 1.9f, faceZ);
 
-            CreateCube("Satellite_Dish_Mast", roof + Vector3.up * 0.45f,
-                new Vector3(0.07f, 0.9f, 0.07f),
-                new Color(0.18f, 0.19f, 0.19f));
-
-            GameObject dish = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            dish.name = "Rooftop_Satellite_Dish";
-            dish.transform.SetParent(transform, true);
-            dish.transform.position = roof + Vector3.up * 0.9f;
-            dish.transform.rotation = Quaternion.Euler(90f, Random.Range(0f, 360f), 0f);
-            dish.transform.localScale = new Vector3(0.9f, 0.075f, 0.9f);
-            SetColor(dish, new Color(0.48f, 0.5f, 0.49f));
-            generated.Add(dish);
+            CreateCube("Electric_Meter_Box", meter,
+                new Vector3(0.48f, 0.72f, 0.2f), new Color(0.56f, 0.58f, 0.54f));
+            CreateCube("Meter_Display", meter + new Vector3(0f, 0.12f, -side * 0.11f),
+                new Vector3(0.22f, 0.12f, 0.025f), new Color(0.12f, 0.18f, 0.16f));
+            CreateCube("Exposed_Conduit",
+                meter + new Vector3(-0.28f, -0.65f, 0f),
+                new Vector3(0.055f, 1.2f, 0.055f), new Color(0.22f, 0.23f, 0.21f));
         }
 
         private void CreateCylinderBetween(string objectName, Vector3 start, Vector3 end,
