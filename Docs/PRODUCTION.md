@@ -14,7 +14,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Materiais e texturas originais | Integrados no código; aguardando renderização | Gerador procedural cria tijolo, reboco, concreto, asfalto e piso da quadra; o gerador do mapa agora atribui esses materiais por tipo de objeto |
 | Cenário 3D da comunidade | Geometria procedural ampliada; validação visual pendente | Além das construções, vielas e detalhes urbanos, o mapa agora gera quatro faixas de relevo em malha 3D ao redor da comunidade para compor o morro no horizonte; conferir no Unity se a escala e o enquadramento estão corretos |
 | Personagem 3D | Estrutura de integração criada; asset pendente | Driver de Animator e telemetria do motor adicionados; falta importar o modelo Humanoid, criar o Animator Controller e validar clipes no Unity |
-| Uniformes | Pendente | Criar sistema de kits; usar marcas e escudos oficiais somente com autorização |
+| Uniformes | Base de kits criada; integração no personagem pendente | `ClubKitApplier.cs` aplica cores/texturas por equipe com `MaterialPropertyBlock`; configurar renderers e chamar `ApplyKit` na atribuição da equipe; escudos oficiais somente com autorização |
 | HUD e controles Android | Botão de resgate conectado; validação pendente | HUD agora inicia resgate ao pressionar e cancelar ao soltar, mostrando progresso; testar multitoque e interação no Unity/Android |
 | Multiplayer | Pendente | Não iniciado |
 
