@@ -16,12 +16,12 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Personagem 3D | Estrutura de integração criada; asset pendente | Driver de Animator e telemetria do motor adicionados; falta importar o modelo Humanoid, criar o Animator Controller e validar clipes no Unity |
 | Uniformes | Base de kits criada; integração no personagem pendente | `ClubKitApplier.cs` aplica cores/texturas por equipe com `MaterialPropertyBlock`; configurar renderers e chamar `ApplyKit` na atribuição da equipe; escudos oficiais somente com autorização |
 | HUD e controles Android | Botão de resgate conectado; validação pendente | HUD agora inicia resgate ao pressionar e cancelar ao soltar, mostrando progresso; testar multitoque e interação no Unity/Android |
-| Regras de equipes | Em correção de consistência | Formato canônico: 5 equipes de 4 jogadores (20 no total); alinhar capacidade e cinco pontos de nascimento com `GAME_DESIGN.md` |
+| Regras de equipes | Código alinhado; validação Unity pendente | `TeamMatchRules` limita a cinco equipes de quatro (20 jogadores); `UrbanCommunityBlockout` gera cinco âncoras; conferir distribuição no Editor |
 | Multiplayer | Pendente | Ainda sem servidor autoritativo, sincronização, lobby ou matchmaking |
 
 ## Registro de trabalho
 
-### 21/11/2026 — Fundação da produção visual
+### 21/11/2026 — Correção do formato de partida e kits\n- Corrigida a divergência entre a especificação original (cinco equipes de quatro jogadores) e a implementação anterior (quatro equipes de cinco). `TeamMatchRules` agora fixa cinco equipes, quatro vagas por equipe e 20 jogadores no total.\n- `UrbanCommunityBlockout` agora cria cinco marcadores de nascimento, um por equipe.\n- `ClubKitApplier` agora possui cinco paletas provisórias e `TeamMatchRules.TryAddPlayer` aplica automaticamente o kit correspondente quando encontra o componente no personagem.\n- Atualizados README e documentos de mapa/kits. Ainda falta validar os pontos de nascimento, os renderers e a atribuição de equipe no Unity Editor.\n\n### 21/11/2026 — Fundação da produção visual
 - Adicionado ao `UrbanCommunityBlockout` um relevo de morro em malhas 3D procedurais nas quatro bordas externas do mapa, com variação de altura e silhueta irregular; integrado à geração principal do cenário. Ainda precisa de inspeção visual no Unity para ajustar escala, normais e enquadramento.
 - Criada a branch `production/3d-art-foundation`, separando a produção original da linha principal.
 - Adicionado o gerador de cinco texturas tileáveis originais: tijolo aparente, reboco pintado, concreto, asfalto e piso de quadra.
@@ -29,8 +29,8 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Habilitados no manifest os módulos Unity de Física e Animação que faltaram na compilação anterior.
 - Próxima ação: importar e executar a cena no Unity, verificar as escadas/cabos/drenagem e corrigir sobreposições; depois iniciar a integração do personagem humanoide com rig e animações.
 - Adicionado `CommunityArtDetails.cs`: escadarias em vielas selecionadas, fiação aérea, canais de drenagem e muros de contenção; conectado ao construtor da cena Unity.
-- Corrigida a capacidade de equipe para cinco jogadores e inicializadas quatro equipes padrão (20 vagas no total); o construtor da cena agora inclui o gerenciador de regras de partida.
-- Corrigidos os pontos de nascimento do mapa para quatro âncoras, uma por equipe.
+- A implementação inicial tinha quatro equipes de cinco jogadores; essa configuração foi corrigida posteriormente para respeitar o design original de cinco equipes de quatro.
+- A versão anterior tinha quatro âncoras; a implementação atual cria cinco âncoras, uma por equipe.
 - Integrado ao HUD Android o botão de resgate por toque contínuo: procura aliado caído, exibe progresso e cancela se o jogador soltar ou sair do botão. Continua sendo resgate local, sem autoridade/replicação de rede.
 - Criado `HumanoidAnimationDriver.cs` para ligar velocidade, salto/queda e estados de vida ao Animator Humanoid; `ThirdPersonMotor` agora expõe telemetria de movimento para animação.
 - Documentado o contrato de rig, hierarquia, parâmetros do Animator e critérios de validação em `Docs/HUMANOID_ANIMATION_SETUP.md`. O modelo 3D e os clipes finais ainda não foram adicionados.
