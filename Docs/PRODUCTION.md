@@ -16,7 +16,8 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Personagem 3D | Estrutura de integração criada; asset pendente | Driver de Animator e telemetria do motor adicionados; falta importar o modelo Humanoid, criar o Animator Controller e validar clipes no Unity |
 | Uniformes | Base de kits criada; integração no personagem pendente | `ClubKitApplier.cs` aplica cores/texturas por equipe com `MaterialPropertyBlock`; configurar renderers e chamar `ApplyKit` na atribuição da equipe; escudos oficiais somente com autorização |
 | HUD e controles Android | Botão de resgate conectado; validação pendente | HUD agora inicia resgate ao pressionar e cancelar ao soltar, mostrando progresso; testar multitoque e interação no Unity/Android |
-| Multiplayer | Pendente | Não iniciado |
+| Regras de equipes | Em correção de consistência | Formato canônico: 5 equipes de 4 jogadores (20 no total); alinhar capacidade e cinco pontos de nascimento com `GAME_DESIGN.md` |
+| Multiplayer | Pendente | Ainda sem servidor autoritativo, sincronização, lobby ou matchmaking |
 
 ## Registro de trabalho
 
