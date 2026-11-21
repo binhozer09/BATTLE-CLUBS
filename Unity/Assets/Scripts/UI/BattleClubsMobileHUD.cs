@@ -169,6 +169,8 @@ namespace BattleClubs.UI
     }
 }
 
+namespace BattleClubs.UI
+{
     /// <summary>Drag-to-look input for the right side of the Android screen.</summary>
     public sealed class TouchLookPad : MonoBehaviour, IPointerDownHandler, IDragHandler
     {
