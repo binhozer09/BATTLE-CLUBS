@@ -13,13 +13,19 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Base técnica Unity | Configuração ajustada; teste pendente | Módulos internos de Física e Animação adicionados ao manifest; falta reimportar/validar no Editor Unity |
 | Materiais e texturas originais | Integrados no código; aguardando renderização | Gerador procedural cria tijolo, reboco, concreto, asfalto e piso da quadra; o gerador do mapa agora atribui esses materiais por tipo de objeto |
 | Cenário 3D da comunidade | Geometria procedural ampliada; validação visual pendente | Além das construções, vielas e detalhes urbanos, o mapa agora gera quatro faixas de relevo em malha 3D ao redor da comunidade para compor o morro no horizonte; conferir no Unity se a escala e o enquadramento estão corretos |
-| Personagem 3D | Estrutura de integração criada; asset pendente | Driver de Animator e telemetria do motor adicionados; falta importar o modelo Humanoid, criar o Animator Controller e validar clipes no Unity |
+| Personagem 3D | Ferramenta de integração criada; asset e clipes pendentes | `HumanoidAnimationDriver` lê telemetria/estado; `HumanoidAnimationSetupWizard` cria o controller-base e valida Avatar Humanoid; importar modelo/clipes e validar no Editor |
 | Uniformes | Base de kits criada; integração no personagem pendente | `ClubKitApplier.cs` aplica cores/texturas por equipe com `MaterialPropertyBlock`; configurar renderers e chamar `ApplyKit` na atribuição da equipe; escudos oficiais somente com autorização |
 | HUD e controles Android | Botão de resgate conectado; validação pendente | HUD agora inicia resgate ao pressionar e cancelar ao soltar, mostrando progresso; testar multitoque e interação no Unity/Android |
 | Regras de equipes | Código alinhado; validação Unity pendente | `TeamMatchRules` limita a cinco equipes de quatro (20 jogadores); `UrbanCommunityBlockout` gera cinco âncoras; conferir distribuição no Editor |
 | Multiplayer | Pendente | Ainda sem servidor autoritativo, sincronização, lobby ou matchmaking |
 
 ## Registro de trabalho
+
+### 21/11/2026 — Ferramenta de integração humanoide
+- Criado `HumanoidAnimationSetupWizard.cs` com comandos no menu BATTLE CLUBS para gerar/atualizar o Animator Controller base (`Assets/Animation/BC_Humanoid.controller`) e validar o Avatar Humanoid selecionado. A ferramenta configura referências do `HumanoidAnimationDriver`, desativa root motion e verifica os componentes de gameplay no objeto raiz.
+- Os estados do controller são criados sem clipes intencionalmente; os movimentos finais precisam vir de assets humanoides licenciados e ser atribuídos no Editor.
+- O construtor da cena de teste agora inclui `Combatant` e `HumanoidAnimationDriver` no objeto raiz do jogador, preparando a hierarquia para substituição do visual provisório.
+- Documentado o procedimento em `Docs/HUMANOID_ANIMATION_SETUP.md`. Não foi possível compilar ou validar no Unity Editor nesta sessão.
 
 ### 21/11/2026 — Correção do formato de partida e kits\n- Corrigida a divergência entre a especificação original (cinco equipes de quatro jogadores) e a implementação anterior (quatro equipes de cinco). `TeamMatchRules` agora fixa cinco equipes, quatro vagas por equipe e 20 jogadores no total.\n- `UrbanCommunityBlockout` agora cria cinco marcadores de nascimento, um por equipe.\n- `ClubKitApplier` agora possui cinco paletas provisórias e `TeamMatchRules.TryAddPlayer` aplica automaticamente o kit correspondente quando encontra o componente no personagem.\n- Atualizados README e documentos de mapa/kits. Ainda falta validar os pontos de nascimento, os renderers e a atribuição de equipe no Unity Editor.\n\n### 21/11/2026 — Fundação da produção visual
 - Adicionado ao `UrbanCommunityBlockout` um relevo de morro em malhas 3D procedurais nas quatro bordas externas do mapa, com variação de altura e silhueta irregular; integrado à geração principal do cenário. Ainda precisa de inspeção visual no Unity para ajustar escala, normais e enquadramento.
