@@ -16,10 +16,15 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Personagem 3D | Ferramenta de integração criada; asset e clipes pendentes | `HumanoidAnimationDriver` lê telemetria/estado; `HumanoidAnimationSetupWizard` cria o controller-base e valida Avatar Humanoid; importar modelo/clipes e validar no Editor |
 | Uniformes | Base de kits criada; integração no personagem pendente | `ClubKitApplier.cs` aplica cores/texturas por equipe com `MaterialPropertyBlock`; configurar renderers e chamar `ApplyKit` na atribuição da equipe; escudos oficiais somente com autorização |
 | HUD e controles Android | Botão de resgate conectado; validação pendente | HUD agora inicia resgate ao pressionar e cancelar ao soltar, mostrando progresso; testar multitoque e interação no Unity/Android |
-| Regras de equipes | Código alinhado; validação Unity pendente | `TeamMatchRules` limita a cinco equipes de quatro (20 jogadores); `UrbanCommunityBlockout` gera cinco âncoras; conferir distribuição no Editor |
+| Regras e spawn de equipes | Integração local criada; validação Unity pendente | `TeamMatchRules` limita cinco equipes de quatro e chama `TeamSpawnManager`, que posiciona os quatro membros em formação ao redor de cada um dos cinco marcadores |
 | Multiplayer | Pendente | Ainda sem servidor autoritativo, sincronização, lobby ou matchmaking |
 
 ## Registro de trabalho
+
+### 21/11/2026 — Spawn local por equipe
+- Criado `TeamSpawnManager.cs`: localiza os cinco marcadores gerados pelo mapa, distribui até quatro jogadores por equipe em uma formação de quatro posições e orienta os personagens para o centro da comunidade.
+- `TeamMatchRules.TryAddPlayer` agora chama o gerenciador de spawn ao registrar um jogador; `UrbanCommunityBlockout.Generate` atualiza o cache dos marcadores depois de criar o mapa.
+- O construtor da cena de teste adiciona `TeamSpawnManager` ao objeto do mapa. Essa lógica é local e provisória; no multiplayer o servidor deverá validar e autorizar os pontos de nascimento.
 
 ### 21/11/2026 — Correção do HUD e diagnóstico de compilação
 - O log da execução Unity mais recente no `main` apontou erro C# `CS1022` em `BattleClubsMobileHUD.cs`, causado por uma chave de fechamento extra após `TouchLookPad`. A estrutura de namespace foi corrigida no `main`.
