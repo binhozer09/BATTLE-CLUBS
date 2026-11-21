@@ -78,11 +78,100 @@ namespace BattleClubs.World
 
             BuildMainStreetDetails(origin, totalX, totalZ);
             BuildCentralCourt(origin, totalX, totalZ);
+            BuildHillsideBackdrop(origin, totalX, totalZ);
 
             if (createSpawnMarkers)
                 CreateSpawns(origin, totalX, totalZ);
 
             Random.state = previousRandomState;
+        }
+
+
+        /// <summary>
+        /// Builds a distant hillside silhouette around the playable neighborhood.
+        /// This is background terrain, not a replacement for the walkable streets.
+        /// </summary>
+        private void BuildHillsideBackdrop(Vector3 origin, float width, float depth)
+        {
+            const float setback = 3f;
+            const float reach = 46f;
+            BuildHillsideStrip("Hillside_North", origin,
+                new Vector2(0f, depth + setback), new Vector2(width, depth + setback),
+                reach, false, 0.13f);
+            BuildHillsideStrip("Hillside_South", origin,
+                new Vector2(width, -setback), new Vector2(0f, -setback),
+                reach, false, 0.37f);
+            BuildHillsideStrip("Hillside_East", origin,
+                new Vector2(width + setback, depth), new Vector2(width + setback, 0f),
+                reach, true, 0.59f);
+            BuildHillsideStrip("Hillside_West", origin,
+                new Vector2(-setback, 0f), new Vector2(-setback, depth),
+                reach, true, 0.83f);
+        }
+
+        private void BuildHillsideStrip(string objectName, Vector3 origin,
+            Vector2 start, Vector2 end, float reach, bool extendAlongX, float noiseOffset)
+        {
+            const int alongSegments = 28;
+            const int depthSegments = 10;
+            var vertices = new Vector3[(alongSegments + 1) * (depthSegments + 1)];
+            var triangles = new int[alongSegments * depthSegments * 6];
+
+            for (int z = 0; z <= depthSegments; z++)
+            {
+                float d = z / (float)depthSegments;
+                for (int x = 0; x <= alongSegments; x++)
+                {
+                    float t = x / (float)alongSegments;
+                    Vector2 edge = Vector2.Lerp(start, end, t);
+                    float ridge = Mathf.PerlinNoise(t * 3.8f + noiseOffset * 17f, d * 2.6f + randomSeed * 0.001f);
+                    float detail = Mathf.PerlinNoise(t * 15f + 4f, d * 11f + noiseOffset * 31f);
+                    float rise = 7f + ridge * 15f + detail * 2.5f;
+                    float terrace = Mathf.Floor(rise / 2.2f) * 2.2f;
+                    float distance = d * reach;
+                    Vector2 point = extendAlongX
+                        ? edge + new Vector2(Mathf.Sign(start.x) * distance, 0f)
+                        : edge + new Vector2(0f, Mathf.Sign(start.y - end.y) * distance);
+                    vertices[z * (alongSegments + 1) + x] =
+                        new Vector3(point.x, terrace - d * 1.8f, point.y);
+                }
+            }
+
+            int index = 0;
+            for (int z = 0; z < depthSegments; z++)
+            for (int x = 0; x < alongSegments; x++)
+            {
+                int a = z * (alongSegments + 1) + x;
+                int b = a + 1;
+                int c = a + alongSegments + 1;
+                int d = c + 1;
+                triangles[index++] = a; triangles[index++] = c; triangles[index++] = b;
+                triangles[index++] = b; triangles[index++] = c; triangles[index++] = d;
+            }
+
+            Mesh mesh = new Mesh { name = objectName + "_Mesh" };
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.vertices = vertices;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            GameObject hill = new GameObject(objectName);
+            hill.transform.SetParent(transform, false);
+            hill.transform.position = origin;
+            hill.AddComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer renderer = hill.AddComponent<MeshRenderer>();
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) shader = Shader.Find("Standard");
+            if (shader != null)
+            {
+                Material material = new Material(shader);
+                material.color = new Color(0.24f, 0.27f, 0.22f);
+                renderer.sharedMaterial = material;
+            }
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = true;
+            generated.Add(hill);
         }
 
         private void BuildBlock(Vector3 center, int blockX, int blockZ)
