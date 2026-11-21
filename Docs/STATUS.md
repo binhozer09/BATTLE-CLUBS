@@ -8,10 +8,11 @@
 
 | Área | Estado | O que existe |
 |---|---|---|
-| Estrutura do projeto | Parcial | Documentação e scripts iniciais da Unity |
+| Projeto Unity | Estrutura inicial criada | Versão-base Unity 2022.3 LTS e dependência UGUI em `Packages/manifest.json`; ainda precisa ser aberto/importado no Editor |
+| Cena de teste | Ferramenta de criação adicionada | Menu `BATTLE CLUBS > Create Community Test Scene` em `Assets/Editor/BattleClubsSceneBuilder.cs`; cria câmera, personagem provisório, alvos de treino, iluminação e liga os scripts |
 | Movimento do jogador | Código inicial | `ThirdPersonMotor.cs` |
-| Câmera em terceira pessoa | Código inicial atualizado | `ThirdPersonCameraRig.cs`; `AddAttackOrbit()` gira a câmera suavemente 90° ao atacar, mantendo o controle manual |
-| Combate com taco | Código inicial atualizado | `BatAttack.cs` procura o adversário vivo mais próximo, vira o personagem e sincroniza o dano com `ApplyAttackHit()`; fallback após 0,35 s |
+| Câmera em terceira pessoa | Código inicial atualizado | `ThirdPersonCameraRig.cs`; `AddAttackOrbit()` gira a câmera suavemente 90° ao atacar |
+| Combate com taco | Código inicial atualizado | `BatAttack.cs` procura o adversário vivo mais próximo e sincroniza o dano com `ApplyAttackHit()`; fallback após 0,35 s |
 | Reanimação | Código inicial | `ReviveInteraction.cs` |
 | Regras de equipes | Código inicial | `TeamMatchRules.cs` |
 | Mapa da comunidade | Gerador procedural detalhado em código | `UrbanCommunityBlockout.cs` cria casas com fachadas, portas, janelas, varandas, ar-condicionado, caixas-d'água, postes, marcações viárias e quadra; ainda precisa ser gerado e avaliado na Unity |
@@ -22,13 +23,13 @@
 
 ## Próximas etapas
 
-1. Abrir o projeto na Unity, gerar o mapa e corrigir eventuais avisos ou incompatibilidades de render pipeline.
-2. Configurar um personagem 3D provisório com Animator, Trigger `Attack` e Animation Event `ApplyAttackHit`.
-3. Ajustar câmera, HUD e colisões; validar a movimentação dentro das vielas e na quadra.
-4. Fazer uma primeira build Android de teste e medir desempenho em aparelho real.
-5. Substituir os elementos provisórios por modelos otimizados e texturas de melhor qualidade.
+1. Abrir a pasta `Unity` no Unity Hub com Unity 2022.3 LTS e aguardar a importação dos pacotes.
+2. Executar `BATTLE CLUBS > Create Community Test Scene`; a ferramenta salva `Assets/Scenes/BattleClubs_Community_Test.unity`.
+3. Pressionar Play para gerar o mapa, observar a câmera e testar movimento e HUD; corrigir erros que aparecerem no Console.
+4. Substituir o personagem provisório por modelo 3D com rig e animações reais; configurar o Trigger `Attack` e o Animation Event `ApplyAttackHit`.
+5. Fazer uma primeira build Android de teste e medir desempenho em aparelho real.
 6. Integrar uniformes autorizados e, depois, desenvolver e testar o multiplayer.
 
 ## Limitação importante
 
-Os arquivos listados são código-fonte. A presença deles no GitHub **não comprova** que o jogo compila, que o mapa já foi renderizado, que a HUD funciona, nem que existe APK ou multiplayer pronto. Cada etapa só deve ser marcada como concluída depois de compilar e testar na Unity.
+O código e a ferramenta de criação de cena foram gravados no GitHub, mas a cena ainda não foi executada no Unity Editor. Portanto, não há captura real, compilação validada, APK ou multiplayer pronto. A qualidade visual final só poderá ser avaliada depois de abrir a cena e renderizá-la na Unity.
