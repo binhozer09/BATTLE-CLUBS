@@ -42,6 +42,7 @@ namespace BattleClubs.Editor
             map.AddComponent<UrbanCommunityBlockout>();
             map.AddComponent<CommunityArtDetails>();
             map.AddComponent<FavelaStreetLifeDetails>();
+            map.AddComponent<TeamSpawnManager>();
             map.AddComponent<TeamMatchRules>();
 
             GameObject player = CreatePlayer(new Vector3(4f, 0.1f, 4f));
