@@ -12,6 +12,7 @@ namespace BattleClubs.UI
         [SerializeField] private ThirdPersonMotor motor;
         [SerializeField] private BatAttack batAttack;
         [SerializeField] private ReviveInteraction reviveInteraction;
+        [SerializeField] private ThirdPersonCameraRig cameraRig;
         [SerializeField] private Vector2 joystickSize = new Vector2(190f, 190f);
         [SerializeField] private float joystickRange = 62f;
 
@@ -20,6 +21,7 @@ namespace BattleClubs.UI
             if (motor == null) motor = FindObjectOfType<ThirdPersonMotor>();
             if (batAttack == null && motor != null) batAttack = motor.GetComponent<BatAttack>();
             if (reviveInteraction == null && motor != null) reviveInteraction = motor.GetComponent<ReviveInteraction>();
+            if (cameraRig == null) cameraRig = FindObjectOfType<ThirdPersonCameraRig>();
             BuildHud();
         }
 
@@ -59,6 +61,13 @@ namespace BattleClubs.UI
             handle.anchoredPosition = Vector2.zero;
             VirtualJoystick stick = joystick.gameObject.AddComponent<VirtualJoystick>();
             stick.Initialize(motor, handle, joystickRange);
+
+            // Transparent right-side drag zone; action buttons are created afterwards and stay on top.
+            RectTransform lookArea = CreatePanel(canvas.transform, "TouchLookArea",
+                new Vector2(0.5f, 0f), new Vector2(1f, 1f), new Vector2(0.5f, 0.5f),
+                Vector2.zero, new Color(1f, 1f, 1f, 0.001f));
+            TouchLookPad lookPad = lookArea.gameObject.AddComponent<TouchLookPad>();
+            lookPad.Initialize(cameraRig);
 
             CreateActionButton(canvas.transform, "CORRER", new Vector2(1f, 0f),
                 new Vector2(-300f, 120f), new Vector2(142f, 82f), () => { }, true);
@@ -175,6 +184,32 @@ namespace BattleClubs.UI
         public void OnPointerDown(PointerEventData eventData) { if (motor != null) motor.SetSprint(true); }
         public void OnPointerUp(PointerEventData eventData) { if (motor != null) motor.SetSprint(false); }
         public void OnPointerExit(PointerEventData eventData) { if (motor != null) motor.SetSprint(false); }
+
+    /// <summary>Drag-to-look input for the right side of the Android screen.</summary>
+    public sealed class TouchLookPad : MonoBehaviour, IPointerDownHandler, IDragHandler
+    {
+        private ThirdPersonCameraRig cameraRig;
+        private Vector2 previousPosition;
+        private bool tracking;
+
+        public void Initialize(ThirdPersonCameraRig target) => cameraRig = target;
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            previousPosition = eventData.position;
+            tracking = true;
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (!tracking) return;
+            Vector2 delta = eventData.position - previousPosition;
+            previousPosition = eventData.position;
+            if (cameraRig != null) cameraRig.AddLookInput(delta * 0.12f);
+        }
+
+        private void OnDisable() => tracking = false;
+    }
     }
 }
 namespace BattleClubs.UI
