@@ -15,7 +15,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 | Cenário 3D da comunidade | Detalhes adicionais escritos; validação visual pendente | Novo gerador de escadarias de concreto, cabos aéreos com leve curvatura, canais de drenagem e muros de contenção; integrado ao construtor da cena |
 | Personagem 3D | Estrutura de integração criada; asset pendente | Driver de Animator e telemetria do motor adicionados; falta importar o modelo Humanoid, criar o Animator Controller e validar clipes no Unity |
 | Uniformes | Pendente | Criar sistema de kits; usar marcas e escudos oficiais somente com autorização |
-| HUD e controles Android | Base de teste existente | Validar novamente após integração do personagem final |
+| HUD e controles Android | Botão de resgate conectado; validação pendente | HUD agora inicia resgate ao pressionar e cancelar ao soltar, mostrando progresso; testar multitoque e interação no Unity/Android |
 | Multiplayer | Pendente | Não iniciado |
 
 ## Registro de trabalho
@@ -29,6 +29,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Adicionado `CommunityArtDetails.cs`: escadarias em vielas selecionadas, fiação aérea, canais de drenagem e muros de contenção; conectado ao construtor da cena Unity.
 - Corrigida a capacidade de equipe para cinco jogadores e inicializadas quatro equipes padrão (20 vagas no total); o construtor da cena agora inclui o gerenciador de regras de partida.
 - Corrigidos os pontos de nascimento do mapa para quatro âncoras, uma por equipe.
+- Integrado ao HUD Android o botão de resgate por toque contínuo: procura aliado caído, exibe progresso e cancela se o jogador soltar ou sair do botão. Continua sendo resgate local, sem autoridade/replicação de rede.
 - Criado `HumanoidAnimationDriver.cs` para ligar velocidade, salto/queda e estados de vida ao Animator Humanoid; `ThirdPersonMotor` agora expõe telemetria de movimento para animação.
 - Documentado o contrato de rig, hierarquia, parâmetros do Animator e critérios de validação em `Docs/HUMANOID_ANIMATION_SETUP.md`. O modelo 3D e os clipes finais ainda não foram adicionados.
 - Ainda não há personagem final, captura renderizada, APK de produção ou validação visual no Unity Editor. O código precisa ser importado e executado no Unity para confirmar escala, colisões e desempenho.
