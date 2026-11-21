@@ -12,7 +12,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 |---|---|---|
 | Base técnica Unity | Configuração ajustada; teste pendente | Módulos internos de Física e Animação adicionados ao manifest; falta reimportar/validar no Editor Unity |
 | Materiais e texturas originais | Integrados no código; aguardando renderização | Gerador procedural cria tijolo, reboco, concreto, asfalto e piso da quadra; o gerador do mapa agora atribui esses materiais por tipo de objeto |
-| Cenário 3D da comunidade | A iniciar após materiais | Evoluir o blockout para arte com relevo, escadarias, becos, postes, fios, lajes e quadra |
+| Cenário 3D da comunidade | Detalhes adicionais escritos; validação visual pendente | Novo gerador de escadarias de concreto, cabos aéreos com leve curvatura, canais de drenagem e muros de contenção; integrado ao construtor da cena |
 | Personagem 3D | Pendente | Escolher/criar modelo humanoide com rig; integrar malha, roupas e animações |
 | Uniformes | Pendente | Criar sistema de kits; usar marcas e escudos oficiais somente com autorização |
 | HUD e controles Android | Base de teste existente | Validar novamente após integração do personagem final |
@@ -25,8 +25,9 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Adicionado o gerador de cinco texturas tileáveis originais: tijolo aparente, reboco pintado, concreto, asfalto e piso de quadra.
 - Integradas as texturas ao gerador procedural do cenário por tipo de superfície.
 - Habilitados no manifest os módulos Unity de Física e Animação que faltaram na compilação anterior.
-- Próxima ação: abrir/importar no Unity, validar os materiais visualmente e ajustar escala/contraste; depois avançar para personagem humanoide com rig e animações.
-- Ainda não há personagem final, cena renderizada, APK de produção ou validação visual no Unity Editor.
+- Próxima ação: importar e executar a cena no Unity, verificar as escadas/cabos/drenagem e corrigir sobreposições; depois iniciar a integração do personagem humanoide com rig e animações.
+- Adicionado `CommunityArtDetails.cs`: escadarias em vielas selecionadas, fiação aérea, canais de drenagem e muros de contenção; conectado ao construtor da cena Unity.
+- Ainda não há personagem final, captura renderizada, APK de produção ou validação visual no Unity Editor. O código precisa ser importado e executado no Unity para confirmar escala, colisões e desempenho.
 
 ## Como acompanhar
 - Commits da produção: https://github.com/binhozer09/BATTLE-CLUBS/commits/production/3d-art-foundation
