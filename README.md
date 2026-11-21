@@ -19,16 +19,16 @@ Jogo multiplayer 3D de combate em equipes inspirado na cultura do futebol brasil
 - `Server/`: especificações e código futuro dos serviços multiplayer.
 
 ## Estado atual
-Este repositório começa com documentação e estrutura-base. Ainda não contém uma build Android/PC, modelos 3D finais, servidor multiplayer operacional ou uniformes oficiais importados.
+O repositório contém scripts Unity de movimentação, câmera, combate, reanimação, HUD mobile e geração procedural da comunidade, além de documentação de integração e produção. A branch `production/3d-art-foundation` concentra a produção visual mais recente. Ainda não há build Android/PC validada, modelo humanoide final com rig/animações, servidor multiplayer operacional ou uniformes oficiais importados.
 
 ## Próximos marcos
-1. Criar projeto Unity e cena de protótipo.
-2. Implementar movimentação, câmera e HUD Android/PC.
-3. Implementar combate, estado derrubado e reanimação.
-4. Construir o mapa de teste.
-5. Integrar rede, salas e partidas de 20 jogadores.
-6. Importar personagens e uniformes com direitos de uso confirmados.
-7. Testar desempenho em Android e PC e gerar builds.
+1. Validar a cena e os sistemas locais já implementados no Unity Editor.
+2. Integrar personagem humanoide final, rig e animações.
+3. Integrar kits de equipe aos renderers do personagem.
+4. Finalizar e otimizar o cenário da comunidade.
+5. Implementar servidor autoritativo, salas e partidas online de 20 jogadores.
+6. Implementar lobby, matchmaking e cross-play Android/PC.
+7. Validar desempenho, estabilidade e builds finais em Android e PC.
 
 ## Requisitos
 - Unity LTS compatível com Android e Windows.
