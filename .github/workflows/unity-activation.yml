@@ -1,24 +1,122 @@
-name: Solicitar arquivo de ativação da Unity
+name: BATTLE CLUBS - Autorizar Unity Personal e compilar APK Android
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/unity-activation.yml'
 
 permissions:
   contents: read
 
 jobs:
-  activation:
-    name: Gerar arquivo de ativação para a compilação Android
-    runs-on: ubuntu-latest
-    steps:
-      - name: Solicitar arquivo de ativação
-        id: activation
-        uses: game-ci/unity-request-activation-file@v2
-        with:
-          unityVersion: 2022.3.62f1
+  build-android:
+    name: Autorizar Unity e gerar APK do BATTLE CLUBS
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    env:
+      UNITY_NO_CLI_INVOKED_TELEMETRY: '1'
+      UNITY_NO_CRASH_REPORT: '1'
+      UNITY_NO_UPDATE_CHECK: '1'
+      UNITY_NO_CONSENT_PROMPT: '1'
 
-      - name: Disponibilizar arquivo de ativação
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências do Unity
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1 libgconf-2-4 unzip
+
+      - name: Instalar Unity CLI oficial
+        run: |
+          curl -fsSL https://unity.com/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Desativar análise de uso da Unity CLI
+        run: |
+          unity analytics opt-out
+          unity analytics status
+
+      - name: Entrar na conta Unity pelo link seguro
+        run: |
+          echo "Abra o link temporário exibido neste passo e aprove o acesso da Unity."
+          timeout 10m unity auth login
+          unity auth status
+
+      - name: Ativar licença gratuita Unity Personal
+        run: |
+          unity license activate --personal --accept-eula --non-interactive
+          unity license status
+          test -s "$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+
+      - name: Instalar Unity 2022.3.62f1 com suporte Android
+        run: |
+          unity install 2022.3.62f1 -m android --cm --accept-eula
+          unity editors --installed
+          EDITOR_PATH="$(find "$HOME" -type f -path '*/2022.3.62f1/Editor/Unity' -print -quit 2>/dev/null)"
+          if [ -z "$EDITOR_PATH" ]; then
+            echo "Não encontrei o executável do Unity Editor 2022.3.62f1."
+            find "$HOME" -maxdepth 8 -type f -name Unity -print 2>/dev/null | head -50
+            exit 1
+          fi
+          echo "UNITY_EDITOR_PATH=$EDITOR_PATH" >> "$GITHUB_ENV"
+
+      - name: Confirmar licença Personal
+        run: |
+          LICENSE_FILE="$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+          test -s "$LICENSE_FILE"
+          echo "Licença Unity Personal localizada no runner."
+
+      - name: Criar cena de teste e compilar APK
+        shell: bash
+        run: |
+          set -o pipefail
+          unity auth status
+          unity auth broker ensure
+          "$UNITY_EDITOR_PATH" \
+            -batchmode \
+            -nographics \
+            -accept-apiupdate \
+            -projectPath "$GITHUB_WORKSPACE/Unity" \
+            -executeMethod BattleClubs.Editor.BattleClubsAndroidCI.BuildAndroid \
+            -logFile "$GITHUB_WORKSPACE/unity-build.log" \
+            -quit
+
+      - name: Diagnosticar falha do Unity
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f unity-build.log ]; then
+            grep -n -E -i "error|exception|failed|failure|crash|fatal|BATTLE_CLUBS_BUILD_" unity-build.log | tail -300 || true
+            tail -250 unity-build.log
+          fi
+          for LOG in "$HOME/.config/unity3d/Unity/Unity.Licensing.Client.log" "$HOME/.config/unity3d/Unity/Unity.Entitlements.Audit.log"; do
+            if [ -f "$LOG" ]; then
+              echo "===== $LOG ====="
+              tail -120 "$LOG"
+            fi
+          done
+
+      - name: Validar APK Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="Unity/Build/Android/BATTLE-CLUBS.apk"
+          test -s "$APK"
+          file "$APK"
+          unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" | grep -q '^lib/arm64-v8a/libunity.so' || { echo "::error::APK sem libunity ARM64"; exit 1; }
+          unzip -Z1 "$APK" | grep -q '^lib/arm64-v8a/libil2cpp.so' || { echo "::error::APK sem libil2cpp ARM64/IL2CPP"; exit 1; }
+          echo "APK válido: $(du -h "$APK" | cut -f1)"
+
+      - name: Publicar APK para download
         uses: actions/upload-artifact@v4
         with:
-          name: Unity-Activation-2022.3.62f1
-          path: ${{ steps.activation.outputs.filePath }}
+          name: BATTLE-CLUBS-Android-APK
+          path: Unity/Build/Android/BATTLE-CLUBS.apk
+          if-no-files-found: error
+          retention-days: 14
