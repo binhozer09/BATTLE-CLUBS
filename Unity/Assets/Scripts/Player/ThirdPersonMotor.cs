@@ -18,6 +18,11 @@ namespace BattleClubs.Player
         private bool mobileSprint;
         private bool jumpQueued;
         private float verticalVelocity;
+        private float currentPlanarSpeed;
+
+        public float CurrentPlanarSpeed => currentPlanarSpeed;
+        public float VerticalSpeed => verticalVelocity;
+        public bool IsGrounded => controller != null && controller.isGrounded;
 
         private void Awake()
         {
@@ -63,6 +68,7 @@ namespace BattleClubs.Player
             float speed = sprint ? sprintSpeed : moveSpeed;
             Vector3 velocity = move * speed;
             velocity.y = verticalVelocity;
+            currentPlanarSpeed = new Vector3(velocity.x, 0f, velocity.z).magnitude;
             controller.Move(velocity * Time.deltaTime);
         }
 
