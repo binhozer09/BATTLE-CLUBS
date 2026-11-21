@@ -89,7 +89,7 @@ namespace BattleClubs.Characters
                     Material material = materials[slot];
                     if (material == null) continue;
 
-                    bool primary = IsSlotSelected(primaryMaterialSlots, slot, primaryMaterialSlots.Length == 0);
+                    bool primary = IsSlotSelected(primaryMaterialSlots, slot, primaryMaterialSlots == null || primaryMaterialSlots.Length == 0);
                     bool secondary = IsSlotSelected(secondaryMaterialSlots, slot, false);
                     if (!primary && !secondary && kit.baseTexture == null) continue;
 
