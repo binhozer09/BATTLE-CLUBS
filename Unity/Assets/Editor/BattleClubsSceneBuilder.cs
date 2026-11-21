@@ -75,10 +75,13 @@ namespace BattleClubs.Editor
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Selection.activeGameObject = map;
-            EditorUtility.DisplayDialog("BATTLE CLUBS",
-                "Cena de teste criada em " + ScenePath +
-                "\n\nPressione Play para gerar o mapa procedural e testar a câmera e os controles.",
-                "OK");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog("BATTLE CLUBS",
+                    "Cena de teste criada em " + ScenePath +
+                    "\n\nPressione Play para gerar o mapa procedural e testar a câmera e os controles.",
+                    "OK");
+            }
         }
 
         private static GameObject CreatePlayer(Vector3 position)
