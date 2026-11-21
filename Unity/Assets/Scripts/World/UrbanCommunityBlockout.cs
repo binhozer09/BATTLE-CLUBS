@@ -97,20 +97,20 @@ namespace BattleClubs.World
             const float reach = 46f;
             BuildHillsideStrip("Hillside_North", origin,
                 new Vector2(0f, depth + setback), new Vector2(width, depth + setback),
-                reach, false, 0.13f);
+                reach, false, 1f, 0.13f);
             BuildHillsideStrip("Hillside_South", origin,
                 new Vector2(width, -setback), new Vector2(0f, -setback),
-                reach, false, 0.37f);
+                reach, false, -1f, 0.37f);
             BuildHillsideStrip("Hillside_East", origin,
                 new Vector2(width + setback, depth), new Vector2(width + setback, 0f),
-                reach, true, 0.59f);
+                reach, true, 1f, 0.59f);
             BuildHillsideStrip("Hillside_West", origin,
                 new Vector2(-setback, 0f), new Vector2(-setback, depth),
-                reach, true, 0.83f);
+                reach, true, -1f, 0.83f);
         }
 
         private void BuildHillsideStrip(string objectName, Vector3 origin,
-            Vector2 start, Vector2 end, float reach, bool extendAlongX, float noiseOffset)
+            Vector2 start, Vector2 end, float reach, bool extendAlongX, float outwardSign, float noiseOffset)
         {
             const int alongSegments = 28;
             const int depthSegments = 10;
@@ -130,8 +130,8 @@ namespace BattleClubs.World
                     float terrace = Mathf.Floor(rise / 2.2f) * 2.2f;
                     float distance = d * reach;
                     Vector2 point = extendAlongX
-                        ? edge + new Vector2(Mathf.Sign(start.x) * distance, 0f)
-                        : edge + new Vector2(0f, Mathf.Sign(start.y - end.y) * distance);
+                        ? edge + new Vector2(outwardSign * distance, 0f)
+                        : edge + new Vector2(0f, outwardSign * distance);
                     vertices[z * (alongSegments + 1) + x] =
                         new Vector3(point.x, terrace - d * 1.8f, point.y);
                 }
