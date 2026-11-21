@@ -21,6 +21,11 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 
 ## Registro de trabalho
 
+### 21/11/2026 — Correção do HUD e diagnóstico de compilação
+- O log da execução Unity mais recente no `main` apontou erro C# `CS1022` em `BattleClubsMobileHUD.cs`, causado por uma chave de fechamento extra após `TouchLookPad`. A estrutura de namespace foi corrigida no `main`.
+- A versão da branch de produção foi reconciliada para manter simultaneamente o controle de câmera por toque no lado direito e o botão de resgate por pressão contínua; o HUD não foi recriado.
+- A execução anterior chegou à etapa de compilação do Unity, mas falhou no erro de sintaxe do HUD; portanto não existe APK válido dessa execução. A correção foi gravada, mas ainda precisa de uma nova compilação de validação. Não executar publicação de APK nesta fase.
+
 ### 21/11/2026 — Ferramenta de integração humanoide
 - Criado `HumanoidAnimationSetupWizard.cs` com comandos no menu BATTLE CLUBS para gerar/atualizar o Animator Controller base (`Assets/Animation/BC_Humanoid.controller`) e validar o Avatar Humanoid selecionado. A ferramenta configura referências do `HumanoidAnimationDriver`, desativa root motion e verifica os componentes de gameplay no objeto raiz.
 - Os estados do controller são criados sem clipes intencionalmente; os movimentos finais precisam vir de assets humanoides licenciados e ser atribuídos no Editor.
