@@ -11,9 +11,14 @@ namespace BattleClubs.Player
         [SerializeField] private float sensitivity = 2.2f;
         [SerializeField] private float minPitch = -25f;
         [SerializeField] private float maxPitch = 65f;
+        [Header("Attack camera movement")]
+        [SerializeField] private float attackOrbitDegrees = 90f;
+        [SerializeField] private float attackOrbitSpeed = 300f;
 
         private float yaw;
         private float pitch = 12f;
+        private float attackYawOffset;
+        private float attackYawTarget;
 
         private void LateUpdate()
         {
@@ -24,7 +29,10 @@ namespace BattleClubs.Player
             pitch -= Input.GetAxis("Mouse Y") * sensitivity * 3f;
 #endif
             pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
-            Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
+            attackYawOffset = Mathf.MoveTowardsAngle(
+                attackYawOffset, attackYawTarget, attackOrbitSpeed * Time.deltaTime);
+
+            Quaternion rotation = Quaternion.Euler(pitch, yaw + attackYawOffset, 0f);
             Vector3 desired = target.position + rotation * offset;
             transform.position = Vector3.Lerp(transform.position, desired, 1f - Mathf.Exp(-followSharpness * Time.deltaTime));
             transform.rotation = Quaternion.LookRotation(target.position + Vector3.up * lookHeight - transform.position, Vector3.up);
@@ -41,6 +49,12 @@ namespace BattleClubs.Player
         {
             yaw += delta.x * sensitivity;
             pitch = Mathf.Clamp(pitch - delta.y * sensitivity, minPitch, maxPitch);
+        }
+
+        // Each attack smoothly turns the camera around the player by the configured angle.
+        public void AddAttackOrbit()
+        {
+            attackYawTarget += attackOrbitDegrees;
         }
     }
 }
