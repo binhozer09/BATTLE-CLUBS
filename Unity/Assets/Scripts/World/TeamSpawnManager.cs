@@ -72,7 +72,16 @@ namespace BattleClubs.World
         private Vector3 GetSpawnRotation(Transform anchor)
         {
             if (!faceMapCenter) return anchor.rotation;
-            Vector3 center = transform.position;
+            Vector3 center = Vector3.zero;
+            int count = 0;
+            for (int i = 0; i < spawnPoints.Length; i++)
+            {
+                if (spawnPoints[i] == null) continue;
+                center += spawnPoints[i].position;
+                count++;
+            }
+            if (count > 0) center /= count;
+            else center = transform.position;
             Vector3 direction = center - anchor.position;
             direction.y = 0f;
             return direction.sqrMagnitude > 0.001f
