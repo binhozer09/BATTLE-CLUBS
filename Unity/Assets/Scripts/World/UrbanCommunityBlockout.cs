@@ -245,13 +245,13 @@ namespace BattleClubs.World
 
         private void CreateSpawns(Vector3 origin, float width, float depth)
         {
+            // One spawn anchor per team: the match is designed for four teams of five.
             Vector3[] positions =
             {
                 origin + new Vector3(3f, 0.15f, 3f),
                 origin + new Vector3(width - 3f, 0.15f, 3f),
                 origin + new Vector3(3f, 0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, 0.15f, depth - 3f),
-                origin + new Vector3(width * 0.5f, 0.15f, depth - 3f)
+                origin + new Vector3(width - 3f, 0.15f, depth - 3f)
             };
 
             for (int i = 0; i < positions.Length; i++)
