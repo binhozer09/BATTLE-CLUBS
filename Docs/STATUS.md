@@ -15,15 +15,15 @@
 | Reanimação | Código inicial | `ReviveInteraction.cs` |
 | Regras de equipes | Código inicial | `TeamMatchRules.cs` |
 | Mapa da comunidade | Blockout procedural | `UrbanCommunityBlockout.cs` |
-| HUD Android | **Ainda não confirmada** | Não há arquivos de HUD na pasta de scripts verificada |
+| HUD Android | Código inicial adicionado | `BattleClubsMobileHUD.cs` cria joystick virtual e botões de correr, pular e atacar em runtime; integração ainda precisa ser validada no Unity |
 | Uniformes 3D oficiais | Pendente de integração | Identificação/cadastro inicial; modelos e texturas não confirmados |
 | Multiplayer online | Pendente | Não há partida online funcional confirmada |
 | APK Android / build PC | Pendente | Nenhuma compilação testada foi confirmada |
 
 ## Próximas etapas
 
-1. Implementar a HUD Android com joystick e botões de ação.
-2. Ligar os controles da HUD ao movimento e ao combate.
+1. Validar no Unity a HUD Android adicionada: joystick, correr, pular e atacar.
+2. Ajustar a HUD à resolução e proporção de telas Android.
 3. Criar/configurar a cena Unity e um personagem provisório.
 4. Compilar e testar primeiro no Android e depois no PC.
 5. Evoluir o blockout da comunidade para cenário detalhado.
