@@ -27,6 +27,28 @@ namespace BattleClubs.Gameplay
         [SerializeField, Min(1)] private int playersPerTeam = 5;
         [SerializeField] private int pointsPerEliminatedTeam = 3;
 
+        private const int RequiredTeamCount = 4;
+
+        private void Awake()
+        {
+            EnsureDefaultTeams();
+        }
+
+        private void EnsureDefaultTeams()
+        {
+            if (teams == null) teams = new List<MatchTeam>();
+            while (teams.Count < RequiredTeamCount)
+            {
+                int number = teams.Count + 1;
+                teams.Add(new MatchTeam
+                {
+                    teamId = "team-" + number,
+                    clubId = string.Empty,
+                    players = new List<Combatant>()
+                });
+            }
+        }
+
         public IReadOnlyList<MatchTeam> Teams => teams;
         public int PlayersPerTeam => playersPerTeam;
         public int TeamCount => teams == null ? 0 : teams.Count;
