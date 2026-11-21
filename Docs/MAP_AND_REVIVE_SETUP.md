@@ -26,3 +26,7 @@ The revive takes four seconds by default and is cancelled if the target leaves r
 - The generated houses use primitive colliders and simple Standard materials. Check the render pipeline and replace materials if the project uses URP.
 - No licensed club crest, sponsor, official kit texture, player likeness, or third-party map asset is included.
 - Run the project in the Unity Editor and inspect the Console before treating this prototype as build-ready.
+
+## Distribuição de jogadores por equipe
+
+`TeamSpawnManager` procura os cinco marcadores `TeamSpawn_1` a `TeamSpawn_5` gerados por `UrbanCommunityBlockout`. Ao adicionar um jogador com `TeamMatchRules.TryAddPlayer`, o membro é colocado em uma das quatro posições de formação ao redor do ponto da equipe, com o `CharacterController` temporariamente desativado durante o teleporte. Essa é uma integração local para teste; em partidas online, o servidor autoritativo deverá validar e determinar os spawns.
