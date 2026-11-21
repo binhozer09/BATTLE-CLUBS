@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using BattleClubs.Characters;
+using BattleClubs.World;
 
 namespace BattleClubs.Gameplay
 {
@@ -30,6 +31,7 @@ namespace BattleClubs.Gameplay
     public sealed class TeamMatchRules : MonoBehaviour
     {
         [SerializeField] private List<MatchTeam> teams = new List<MatchTeam>();
+        [SerializeField] private TeamSpawnManager spawnManager;
         [SerializeField, Min(1)] private int playersPerTeam = 4;
         [SerializeField] private int pointsPerEliminatedTeam = 3;
 
@@ -38,6 +40,7 @@ namespace BattleClubs.Gameplay
         private void Awake()
         {
             playersPerTeam = 4;
+            if (spawnManager == null) spawnManager = GetComponent<TeamSpawnManager>();
             EnsureDefaultTeams();
         }
 
@@ -101,6 +104,8 @@ namespace BattleClubs.Gameplay
             team.players.Add(player);
 
             int teamIndex = teams.IndexOf(team);
+            if (spawnManager != null)
+                spawnManager.TrySpawnPlayer(teamIndex, team.players.Count - 1, player.transform);
             ClubKitApplier kitApplier = player.GetComponentInChildren<ClubKitApplier>(true);
             if (kitApplier != null)
                 kitApplier.ApplyKit(teamIndex, team.players.Count);
