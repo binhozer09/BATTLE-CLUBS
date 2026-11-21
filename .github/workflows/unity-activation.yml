@@ -1,14 +1,7 @@
-name: BATTLE CLUBS - Autorizar Unity Personal e compilar APK Android
+name: BATTLE CLUBS - Build Android manual (pausado durante produção)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/unity-activation.yml'
-      - 'Unity/Packages/manifest.json'
-      - 'Unity/Assets/**/*.cs'
 
 permissions:
   contents: read
