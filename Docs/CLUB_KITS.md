@@ -11,7 +11,7 @@
 5. Para evitar colorir pele, cabelo ou acessórios, configurar `Primary Material Slots` e `Secondary Material Slots` ou atribuir somente os renderers das peças do uniforme em `Targets`.
 
 ## Limites desta etapa
-- As quatro paletas incluídas são placeholders originais, não representam clubes reais.
+- As cinco paletas incluídas são placeholders originais, não representam clubes reais.
 - Não há escudos, marcas ou uniformes oficiais incorporados.
 - O número é armazenado em `PlayerNumber` para futura integração com UI/textura de costas; ainda não é renderizado automaticamente.
 - A integração com a atribuição de equipe e a validação visual precisam ser feitas no Unity Editor.
