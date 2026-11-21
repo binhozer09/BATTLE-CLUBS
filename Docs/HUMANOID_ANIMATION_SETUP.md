@@ -48,7 +48,7 @@ Player_Root
         └── Armature / SkinnedMeshRenderer
 ```
 
-## Critérios de validação no Unity
+## Ferramentas de integração no Editor\n\nO projeto inclui `BATTLE CLUBS > Characters > Create Humanoid Animator Template`, que cria/atualiza `Assets/Animation/BC_Humanoid.controller` com os parâmetros e estados de transição usados pelo driver. Os estados ficam intencionalmente sem clipes: o projeto não deve fingir que animações finais existem quando os arquivos licenciados ainda não foram importados.\n\nDepois de importar o FBX e configurar o Avatar como Humanoid, selecione o `Player_Root` na Hierarchy ou o prefab e execute `BATTLE CLUBS > Characters > Validate Selected Humanoid`. A ferramenta verifica o Avatar e os componentes `ThirdPersonMotor` e `Combatant`, adiciona/configura o `HumanoidAnimationDriver` e desativa root motion. Ela não cria nem substitui o modelo 3D.\n\n## Critérios de validação no Unity
 
 - Avatar válido e `Animator.isHuman == true`.
 - Pés não atravessam o chão e o modelo acompanha a rotação do Player_Root.
@@ -58,4 +58,4 @@ Player_Root
 - Downed, revive e Eliminated mudam os estados de animação corretamente.
 - Sem root motion duplicando o deslocamento do CharacterController.
 
-**Situação atual:** o driver e a telemetria do motor estão no repositório. Ainda falta importar/selecionar o modelo humanoide, criar o Animator Controller e adicionar os clipes finais. Nenhuma dessas etapas é considerada validada até abrir e testar no Unity Editor.
+**Situação atual:** o driver, telemetria do motor e ferramenta de criação/validação do Animator Controller estão no repositório. Ainda falta importar/selecionar o modelo humanoide, atribuir clipes finais e executar os testes no Unity Editor. Nenhuma dessas etapas é considerada validada até abrir e testar no Unity Editor.
