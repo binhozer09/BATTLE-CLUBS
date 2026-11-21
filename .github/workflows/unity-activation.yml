@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - '.github/workflows/unity-activation.yml'
+      - 'Unity/Packages/manifest.json'
+      - 'Unity/Assets/**/*.cs'
 
 permissions:
   contents: read
