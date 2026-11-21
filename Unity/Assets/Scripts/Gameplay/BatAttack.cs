@@ -1,4 +1,5 @@
 using UnityEngine;
+using BattleClubs.Player;
 
 namespace BattleClubs.Gameplay
 {
@@ -8,13 +9,23 @@ namespace BattleClubs.Gameplay
         [SerializeField] private float hitRadius = 1.25f;
         [SerializeField] private float attackCooldown = 0.8f;
         [SerializeField] private LayerMask targetLayers = ~0;
+        [SerializeField] private ThirdPersonCameraRig cameraRig;
 
         private float nextAttackTime;
+
+        private void Awake()
+        {
+            if (cameraRig == null && Camera.main != null)
+                cameraRig = Camera.main.GetComponent<ThirdPersonCameraRig>();
+        }
 
         public void Attack()
         {
             if (Time.time < nextAttackTime || hitOrigin == null) return;
             nextAttackTime = Time.time + attackCooldown;
+
+            // The attack button also advances the third-person camera smoothly around the player.
+            if (cameraRig != null) cameraRig.AddAttackOrbit();
 
             Collider[] hits = Physics.OverlapSphere(hitOrigin.position, hitRadius, targetLayers, QueryTriggerInteraction.Ignore);
             foreach (Collider hit in hits)
