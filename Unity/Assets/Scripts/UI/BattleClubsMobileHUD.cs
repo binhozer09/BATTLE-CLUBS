@@ -184,6 +184,7 @@ namespace BattleClubs.UI
         public void OnPointerDown(PointerEventData eventData) { if (motor != null) motor.SetSprint(true); }
         public void OnPointerUp(PointerEventData eventData) { if (motor != null) motor.SetSprint(false); }
         public void OnPointerExit(PointerEventData eventData) { if (motor != null) motor.SetSprint(false); }
+    }
 
     /// <summary>Drag-to-look input for the right side of the Android screen.</summary>
     public sealed class TouchLookPad : MonoBehaviour, IPointerDownHandler, IDragHandler
@@ -209,7 +210,6 @@ namespace BattleClubs.UI
         }
 
         private void OnDisable() => tracking = false;
-    }
     }
 }
 namespace BattleClubs.UI
