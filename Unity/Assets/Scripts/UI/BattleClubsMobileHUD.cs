@@ -11,6 +11,7 @@ namespace BattleClubs.UI
     {
         [SerializeField] private ThirdPersonMotor motor;
         [SerializeField] private BatAttack batAttack;
+        [SerializeField] private ReviveInteraction reviveInteraction;
         [SerializeField] private Vector2 joystickSize = new Vector2(190f, 190f);
         [SerializeField] private float joystickRange = 62f;
 
@@ -18,6 +19,7 @@ namespace BattleClubs.UI
         {
             if (motor == null) motor = FindObjectOfType<ThirdPersonMotor>();
             if (batAttack == null && motor != null) batAttack = motor.GetComponent<BatAttack>();
+            if (reviveInteraction == null && motor != null) reviveInteraction = motor.GetComponent<ReviveInteraction>();
             BuildHud();
         }
 
@@ -66,6 +68,15 @@ namespace BattleClubs.UI
             CreateActionButton(canvas.transform, "ATACAR", new Vector2(1f, 0f),
                 new Vector2(-145f, 110f), new Vector2(142f, 92f),
                 () => { if (batAttack != null) batAttack.Attack(); }, false);
+            RectTransform reviveRect = CreatePanel(canvas.transform, "Revive_Button",
+                new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0.5f),
+                new Vector2(150f, 82f), new Color(0.08f, 0.32f, 0.18f, 0.82f));
+            reviveRect.anchoredPosition = new Vector2(-310f, 250f);
+            Button reviveButton = reviveRect.gameObject.AddComponent<Button>();
+            reviveButton.targetGraphic = reviveRect.GetComponent<Image>();
+            Text reviveLabel = CreateButtonLabel(reviveRect, "SEGURE PARA REVIVER");
+            HoldRevive reviveHold = reviveRect.gameObject.AddComponent<HoldRevive>();
+            reviveHold.Initialize(reviveInteraction, reviveLabel);
         }
 
         private static RectTransform CreatePanel(Transform parent, string objectName,
@@ -83,6 +94,27 @@ namespace BattleClubs.UI
             return rect;
         }
 
+
+        private static Text CreateButtonLabel(RectTransform parent, string caption)
+        {
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            labelObject.transform.SetParent(parent, false);
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            Text label = labelObject.GetComponent<Text>();
+            label.text = caption;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            label.fontSize = 20;
+            label.fontStyle = FontStyle.Bold;
+            label.color = Color.white;
+            label.raycastTarget = false;
+            return label;
+        }
+
         private static void CreateActionButton(Transform parent, string caption, Vector2 anchor,
             Vector2 position, Vector2 size, UnityEngine.Events.UnityAction action, bool hold)
         {
@@ -93,21 +125,7 @@ namespace BattleClubs.UI
             button.targetGraphic = rect.GetComponent<Image>();
             if (!hold) button.onClick.AddListener(action);
 
-            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            labelObject.transform.SetParent(rect, false);
-            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-            Text label = labelObject.GetComponent<Text>();
-            label.text = caption;
-            label.alignment = TextAnchor.MiddleCenter;
-            label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            label.fontSize = 24;
-            label.fontStyle = FontStyle.Bold;
-            label.color = Color.white;
-            label.raycastTarget = false;
+            CreateButtonLabel(rect, caption);
 
             if (hold)
             {
@@ -157,5 +175,49 @@ namespace BattleClubs.UI
         public void OnPointerDown(PointerEventData eventData) { if (motor != null) motor.SetSprint(true); }
         public void OnPointerUp(PointerEventData eventData) { if (motor != null) motor.SetSprint(false); }
         public void OnPointerExit(PointerEventData eventData) { if (motor != null) motor.SetSprint(false); }
+    }
+}
+namespace BattleClubs.UI
+{
+    /// <summary>Hold interaction that cancels the local revive when touch is released.</summary>
+    public sealed class HoldRevive : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+    {
+        private ReviveInteraction revive;
+        private Text label;
+        private const string IdleCaption = "SEGURE PARA REVIVER";
+
+        public void Initialize(ReviveInteraction target, Text targetLabel)
+        {
+            revive = target;
+            label = targetLabel;
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (revive != null && revive.BeginRevive())
+                UpdateCaption();
+        }
+
+        private void Update()
+        {
+            if (revive != null && label != null && revive.IsReviving)
+                UpdateCaption();
+        }
+
+        private void UpdateCaption()
+        {
+            if (label != null)
+                label.text = "REVIVENDO " + Mathf.RoundToInt(revive.Progress * 100f) + "%";
+        }
+
+        public void OnPointerUp(PointerEventData eventData) => StopRevive();
+        public void OnPointerExit(PointerEventData eventData) => StopRevive();
+        private void OnDisable() => StopRevive();
+
+        private void StopRevive()
+        {
+            if (revive != null) revive.CancelRevive();
+            if (label != null) label.text = IdleCaption;
+        }
     }
 }
