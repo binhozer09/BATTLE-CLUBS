@@ -27,6 +27,8 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Habilitados no manifest os módulos Unity de Física e Animação que faltaram na compilação anterior.
 - Próxima ação: importar e executar a cena no Unity, verificar as escadas/cabos/drenagem e corrigir sobreposições; depois iniciar a integração do personagem humanoide com rig e animações.
 - Adicionado `CommunityArtDetails.cs`: escadarias em vielas selecionadas, fiação aérea, canais de drenagem e muros de contenção; conectado ao construtor da cena Unity.
+- Corrigida a capacidade de equipe para cinco jogadores e inicializadas quatro equipes padrão (20 vagas no total); o construtor da cena agora inclui o gerenciador de regras de partida.
+- Corrigidos os pontos de nascimento do mapa para quatro âncoras, uma por equipe.
 - Ainda não há personagem final, captura renderizada, APK de produção ou validação visual no Unity Editor. O código precisa ser importado e executado no Unity para confirmar escala, colisões e desempenho.
 
 ## Como acompanhar
