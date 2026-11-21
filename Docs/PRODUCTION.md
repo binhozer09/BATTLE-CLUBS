@@ -34,4 +34,6 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Arquivos da produção: https://github.com/binhozer09/BATTLE-CLUBS/tree/production/3d-art-foundation
 - Compilações (somente quando uma build de validação for necessária): https://github.com/binhozer09/BATTLE-CLUBS/actions
 
+**Builds Android:** automação de APK no branch `main` foi pausada para não gerar builds durante a fase de desenvolvimento. Não executar nem publicar APK até solicitação explícita e conclusão do jogo.
+
 **Regra de transparência:** uma tarefa só muda para concluída quando o arquivo foi gravado e a integração/teste correspondente foi confirmado. Plano não é asset pronto; código de geração não é captura de jogo.
