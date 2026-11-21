@@ -11,7 +11,7 @@
 | Estrutura do projeto | Parcial | Documentação e pastas iniciais do Unity |
 | Movimento do jogador | Código inicial | `ThirdPersonMotor.cs` |
 | Câmera em terceira pessoa | Código inicial atualizado | `ThirdPersonCameraRig.cs`; o método `AddAttackOrbit()` gira a câmera suavemente 90° por acionamento do ataque, mantendo o controle manual |
-| Combate com taco | Código inicial atualizado | `BatAttack.cs` aciona o giro da câmera, dispara o gatilho opcional `Attack` no Animator e prioriza o adversário vivo mais próximo dentro do alcance |
+| Combate com taco | Código inicial atualizado | `BatAttack.cs` prioriza o adversário vivo mais próximo, vira o personagem, aciona o giro da câmera e sincroniza o dano com o evento `ApplyAttackHit()` da animação; há fallback após 0,35 s se o evento não estiver configurado |
 | Reanimação | Código inicial | `ReviveInteraction.cs` |
 | Regras de equipes | Código inicial | `TeamMatchRules.cs` |
 | Mapa da comunidade | Blockout procedural | `UrbanCommunityBlockout.cs` |
@@ -22,7 +22,7 @@
 
 ## Próximas etapas
 
-1. Configurar no Animator Controller o Trigger `Attack` e validar a animação, o direcionamento ao adversário mais próximo e o giro da câmera no Unity.
+1. Configurar no Animator Controller o Trigger `Attack` e adicionar um Animation Event `ApplyAttackHit` no quadro em que o taco encosta no alvo; validar animação, dano e giro da câmera no Unity.
 2. Ajustar a HUD à resolução e proporção de telas Android.
 3. Criar/configurar a cena Unity e um personagem provisório.
 4. Compilar e testar primeiro no Android e depois no PC.
