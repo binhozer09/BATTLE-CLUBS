@@ -334,13 +334,15 @@ namespace BattleClubs.World
 
         private void CreateSpawns(Vector3 origin, float width, float depth)
         {
-            // One spawn anchor per team: the match is designed for four teams of five.
+            // Five spawn anchors, one for each team in the canonical 5x4 format.
+            // The fifth anchor sits along the north edge to keep all starts separated.
             Vector3[] positions =
             {
                 origin + new Vector3(3f, 0.15f, 3f),
                 origin + new Vector3(width - 3f, 0.15f, 3f),
                 origin + new Vector3(3f, 0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, 0.15f, depth - 3f)
+                origin + new Vector3(width - 3f, 0.15f, depth - 3f),
+                origin + new Vector3(width * 0.5f, 0.15f, depth - 3f)
             };
 
             for (int i = 0; i < positions.Length; i++)
