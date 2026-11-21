@@ -21,13 +21,14 @@ namespace BattleClubs.Characters
             public Texture baseTexture;
         }
 
-        [Header("Team kits (index 0-3)")]
+        [Header("Team kits (index 0-4)")]
         [SerializeField] private KitDefinition[] kits =
         {
             new KitDefinition { displayName = "Equipe 1", primaryColor = new Color(0.10f, 0.28f, 0.78f), secondaryColor = Color.white },
             new KitDefinition { displayName = "Equipe 2", primaryColor = new Color(0.78f, 0.12f, 0.10f), secondaryColor = Color.white },
             new KitDefinition { displayName = "Equipe 3", primaryColor = new Color(0.10f, 0.48f, 0.24f), secondaryColor = Color.white },
-            new KitDefinition { displayName = "Equipe 4", primaryColor = new Color(0.92f, 0.68f, 0.12f), secondaryColor = new Color(0.12f, 0.12f, 0.12f) }
+            new KitDefinition { displayName = "Equipe 4", primaryColor = new Color(0.92f, 0.68f, 0.12f), secondaryColor = new Color(0.12f, 0.12f, 0.12f) },
+            new KitDefinition { displayName = "Equipe 5", primaryColor = new Color(0.48f, 0.16f, 0.62f), secondaryColor = Color.white }
         };
 
         [Header("Renderer targets")]
@@ -62,7 +63,7 @@ namespace BattleClubs.Characters
 
         /// <summary>
         /// Applies a team's kit and records the shirt number for UI/nameplate systems.
-        /// Team indices are zero-based: 0, 1, 2 or 3.
+        /// Team indices are zero-based: 0 through 4 (five teams).
         /// </summary>
         public bool ApplyKit(int teamIndex, int shirtNumber = 0)
         {
