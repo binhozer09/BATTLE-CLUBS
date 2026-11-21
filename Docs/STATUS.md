@@ -10,8 +10,8 @@
 |---|---|---|
 | Estrutura do projeto | Parcial | Documentação e pastas iniciais do Unity |
 | Movimento do jogador | Código inicial | `ThirdPersonMotor.cs` |
-| Câmera em terceira pessoa | Código inicial | `ThirdPersonCameraRig.cs` |
-| Combate com taco | Código inicial | `BatAttack.cs` e `Combatant.cs` |
+| Câmera em terceira pessoa | Código inicial atualizado | `ThirdPersonCameraRig.cs`; o método `AddAttackOrbit()` gira a câmera suavemente 90° por acionamento do ataque, mantendo o controle manual |
+| Combate com taco | Código inicial atualizado | `BatAttack.cs` chama o giro da câmera ao atacar; dano ainda depende de alvo dentro do alcance |
 | Reanimação | Código inicial | `ReviveInteraction.cs` |
 | Regras de equipes | Código inicial | `TeamMatchRules.cs` |
 | Mapa da comunidade | Blockout procedural | `UrbanCommunityBlockout.cs` |
@@ -22,7 +22,7 @@
 
 ## Próximas etapas
 
-1. Validar no Unity a HUD Android adicionada: joystick, correr, pular e atacar.
+1. Compilar e validar no Unity o vínculo do botão ATACAR com o giro suave da câmera, além da HUD Android.
 2. Ajustar a HUD à resolução e proporção de telas Android.
 3. Criar/configurar a cena Unity e um personagem provisório.
 4. Compilar e testar primeiro no Android e depois no PC.
