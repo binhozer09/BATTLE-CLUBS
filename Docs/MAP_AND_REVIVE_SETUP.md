@@ -22,7 +22,7 @@ The revive takes four seconds by default and is cancelled if the target leaves r
 
 ## Important production notes
 
-- Spawn markers are named `TeamSpawn_1` through `TeamSpawn_5`; they are empty transforms, not a matchmaking/spawn system.
+- The canonical match is five teams of four (20 players); spawn markers are named `TeamSpawn_1` through `TeamSpawn_5`. They are empty transforms, not a matchmaking/spawn system.
 - The generated houses use primitive colliders and simple Standard materials. Check the render pipeline and replace materials if the project uses URP.
 - No licensed club crest, sponsor, official kit texture, player likeness, or third-party map asset is included.
 - Run the project in the Unity Editor and inspect the Console before treating this prototype as build-ready.
