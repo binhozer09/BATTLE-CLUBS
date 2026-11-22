@@ -4,19 +4,44 @@ using UnityEngine;
 namespace BattleClubs.World
 {
     /// <summary>
-    /// Reuses runtime materials for repeated procedural street props. This avoids
-    /// allocating a unique Material for every stair, cable support and facade detail.
+    /// Shares runtime materials across procedural environment props. Per-renderer
+    /// texture tiling is applied with MaterialPropertyBlock so different-sized
+    /// buildings can share one material without losing their surface scale.
     /// </summary>
     public static class CommunityMaterialLibrary
     {
-        private static readonly Dictionary<Color32, Material> Materials =
-            new Dictionary<Color32, Material>();
+        private struct MaterialKey
+        {
+            public Color32 color;
+            public int textureId;
 
+            public MaterialKey(Color tint, Texture texture)
+            {
+                color = tint;
+                textureId = texture != null ? texture.GetInstanceID() : 0;
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked { return (color.GetHashCode() * 397) ^ textureId; }
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (!(obj is MaterialKey)) return false;
+                MaterialKey other = (MaterialKey)obj;
+                return color.Equals(other.color) && textureId == other.textureId;
+            }
+        }
+
+        private static readonly Dictionary<MaterialKey, Material> Materials =
+            new Dictionary<MaterialKey, Material>();
+        private static readonly MaterialPropertyBlock PropertyBlock = new MaterialPropertyBlock();
         private static Shader cachedShader;
 
-        public static Material Get(Color color)
+        public static Material Get(Color color, Texture texture = null)
         {
-            Color32 key = color;
+            MaterialKey key = new MaterialKey(color, texture);
             if (Materials.TryGetValue(key, out Material material) && material != null)
                 return material;
 
@@ -26,16 +51,27 @@ namespace BattleClubs.World
                 if (cachedShader == null) cachedShader = Shader.Find("Standard");
             }
 
-            if (cachedShader == null)
-                return null;
+            if (cachedShader == null) return null;
 
             material = new Material(cachedShader)
             {
-                name = "BC_Community_" + key.r + "_" + key.g + "_" + key.b,
-                color = color
+                name = "BC_Community_" + key.color.r + "_" + key.color.g + "_" +
+                    key.color.b + "_" + key.textureId,
+                color = color,
+                mainTexture = texture
             };
             Materials[key] = material;
             return material;
+        }
+
+        public static void SetTextureScale(Renderer renderer, Vector2 scale)
+        {
+            if (renderer == null) return;
+            renderer.GetPropertyBlock(PropertyBlock);
+            Vector4 tiling = new Vector4(scale.x, scale.y, 0f, 0f);
+            PropertyBlock.SetVector("_BaseMap_ST", tiling);
+            PropertyBlock.SetVector("_MainTex_ST", tiling);
+            renderer.SetPropertyBlock(PropertyBlock);
         }
     }
 }
