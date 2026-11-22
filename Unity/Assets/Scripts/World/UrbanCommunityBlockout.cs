@@ -809,6 +809,8 @@ namespace BattleClubs.World
                 objectName.Contains("LampArm") || objectName.Contains("DoorFrame") ||
                 objectName.Contains("DoorAwning") || objectName.Contains("AwningSupport"))
                 return ProceduralSurfaceTextures.Surface.PaintedMetal;
+            if (objectName == "Rooftop_Utility_Room")
+                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
             if (objectName.StartsWith("House_") || objectName.StartsWith("Hillside_House_"))
                 return ProceduralSurfaceTextures.Surface.ConcreteBlock;
             if (objectName == "RoadDash" || objectName == "Road_Crosswalk_Stripe" || objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle")
