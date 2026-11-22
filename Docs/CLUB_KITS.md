@@ -6,8 +6,8 @@
 ## Integração
 1. Adicionar `ClubKitApplier` ao objeto visual raiz do personagem (o mesmo que contém o modelo/Animator).
 2. Se necessário, preencher `Targets` com os renderers da camisa/shorts; por padrão o componente coleta os renderers filhos.
-3. Configurar até quatro `KitDefinition` no Inspector, com nome, cor primária, cor secundária e textura opcional.
-4. Quando o servidor/gerenciador de partida atribuir a equipe, chamar `ApplyKit(teamIndex, shirtNumber)`. Os índices são zero-based (0 a 3).
+3. Configurar cinco `KitDefinition` no Inspector, com nome, cor primária, cor secundária e textura opcional.
+4. Quando o servidor/gerenciador de partida atribuir a equipe, chamar `ApplyKit(teamIndex, shirtNumber)`. Os índices são zero-based (0 a 4).
 5. Para evitar colorir pele, cabelo ou acessórios, configurar `Primary Material Slots` e `Secondary Material Slots` ou atribuir somente os renderers das peças do uniforme em `Targets`.
 
 ## Limites desta etapa
