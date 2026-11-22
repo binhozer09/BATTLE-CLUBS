@@ -157,3 +157,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `ReviveInteraction.cs` agora encaminha início/cancelamento para a autoridade de rede quando o jogador está spawnado em NGO, preservando o fluxo local offline.
 - O prefab precisa conter `NetworkObject`, `Combatant`, `NetworkCombatantAuthority` e `NetworkReviveAuthority`, com origens de ataque e reanimação configuradas.
 - Atribuição de equipes, movimento replicado, lobby/matchmaking e pontuação online ainda não estão concluídos. Sem compilação/teste Unity nesta etapa.
+
+
+### 21/11/2026 — Preparação automática dos assets humanoides CC0
+- Criado `Unity/Assets/Editor/HumanoidAssetBootstrap.cs` com download da release oficial KinemIQ FBX, verificação SHA-256 e extração segura para `Assets/ThirdParty/KinemIQ`.
+- O pacote upstream declara 35 animações humanoides CC0 e inclui o FBX `KinemIQ_Mannequin.fbx`; fonte e licença documentadas em `Docs/HUMANOID_ASSET_IMPORT.md`.
+- O menu de importação evita exigir que o usuário baixe manualmente arquivos no celular.
+- Limite: a conexão GitHub disponível nesta sessão não envia binários FBX ao repositório e não há Unity Editor remoto conectado. Portanto, o pacote ainda não foi materializado/importado no projeto nesta sessão. O mannequin não é fotorrealista; Avatar, clips e integração na cena precisam ser validados no Unity Editor.
