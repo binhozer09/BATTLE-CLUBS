@@ -14,10 +14,10 @@
 | Câmera em terceira pessoa | Código inicial atualizado | `ThirdPersonCameraRig.cs`; `AddAttackOrbit()` gira a câmera suavemente 90° ao atacar |
 | Combate com taco | Código inicial atualizado | `BatAttack.cs` procura o adversário vivo mais próximo e sincroniza o dano com `ApplyAttackHit()`; fallback após 0,35 s |
 | Reanimação | Código inicial | `ReviveInteraction.cs` |
-| Regras de equipes | Código atualizado na branch de produção | Cinco equipes de quatro jogadores (20 no total); integração local de kits ao adicionar jogador; ainda sem validação no Unity |
+| Regras de equipes | Código local ampliado | Cinco equipes de quatro jogadores; validação de elencos completos, fases WaitingForPlayers/InProgress/Finished, bloqueio de novas inscrições após início e detecção de vencedor único; ainda sem validação no Unity |
 | Mapa da comunidade | Gerador procedural detalhado em código | `UrbanCommunityBlockout.cs` cria casas com fachadas, portas, janelas, varandas, ar-condicionado, caixas-d'água, postes, marcações viárias e quadra; ainda precisa ser gerado e avaliado na Unity |
 | HUD Android | Código inicial adicionado | `BattleClubsMobileHUD.cs` cria joystick virtual e botões de correr, pular e atacar em runtime; integração ainda precisa ser validada |
-| Uniformes 3D | Base de kits por equipe | `ClubKitApplier.cs` suporta cinco paletas, cores e texturas; atribuição automática via `TeamMatchRules`; falta configurar os renderers do modelo humanoide |
+| Uniformes 3D | Base de kits por equipe | `ClubKitApplier.cs` suporta cinco paletas, cores e texturas; atribuição automática via `TeamMatchRules`; falta configurar os renderers do modelo humanoide e validar visualmente |
 | Multiplayer online | Pendente | Não há partida online funcional confirmada |
 | APK Android / build PC | Pendente | Nenhuma compilação testada foi confirmada |
 
@@ -33,3 +33,12 @@
 ## Limitação importante
 
 O código e a ferramenta de criação de cena foram gravados no GitHub, mas a cena ainda não foi executada no Unity Editor. A branch de produção possui correções recentes de regras (5x4), cinco pontos de nascimento e atribuição de kits; essas alterações ainda não foram compiladas nem validadas no Editor. Portanto, não há captura real, compilação validada, APK ou multiplayer pronto. A qualidade visual final só poderá ser avaliada depois de abrir a cena e renderizá-la na Unity.
+
+
+## Atualização de regras — 21/11/2026
+
+- A partida local agora possui fases explícitas: aguardando jogadores, em andamento e finalizada.
+- O início exige 20 jogadores em cinco elencos completos e coerentes; novas inscrições são bloqueadas depois do início.
+- O vencedor é registrado quando resta exatamente uma equipe não eliminada. Empate por eliminação simultânea continua sem regra definida.
+- Ataque e reanimação possuem verificações locais adicionais de estado e equipe.
+- Essas mudanças foram gravadas no GitHub, mas ainda não foram compiladas ou executadas no Unity Editor. O multiplayer online continua pendente.
