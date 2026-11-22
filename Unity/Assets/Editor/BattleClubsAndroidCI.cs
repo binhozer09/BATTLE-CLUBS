@@ -11,6 +11,7 @@ namespace BattleClubs.Editor
     {
         public static void BuildAndroid()
         {
+            BCPBRTextureImport.ConfigureAll();
             BattleClubsSceneBuilder.CreateCommunityTestScene();
 
             const string scenePath = "Assets/Scenes/BattleClubs_Community_Test.unity";
