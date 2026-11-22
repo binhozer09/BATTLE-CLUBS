@@ -76,3 +76,8 @@ Na branch `feature/humanoid-character-integration` foi criado `NetworkCombatantA
 ## Atualização — reanimação online autoritativa inicial
 
 Foi criado `NetworkReviveAuthority.cs`. Em sessão NGO, a interação existente encaminha início e cancelamento ao servidor. O servidor procura um companheiro derrubado, valida estado de vida, equipe e distância, conta quatro segundos e restaura o jogador; o progresso é replicado. O prefab online precisa receber `NetworkReviveAuthority` além de `NetworkCombatantAuthority`. A atribuição de equipes ainda não é replicada/automatizada, e o código ainda não foi compilado nem testado no Unity Editor.
+
+
+## Atualização — importador automático de humanoide 3D CC0
+
+Foi adicionado `HumanoidAssetBootstrap.cs` ao Editor. O menu `BATTLE CLUBS/Characters/Download CC0 Humanoid + Animations` baixa diretamente a release oficial KinemIQ, confere SHA-256 e extrai o FBX + clipes para `Assets/ThirdParty/KinemIQ`, sem exigir download manual pelo usuário. O pacote publicado declara 35 animações humanoides CC0 e inclui `KinemIQ_Mannequin.fbx`. O pacote ainda não foi efetivamente importado por uma instância do Unity Editor nesta sessão; o personagem é um mannequin 3D rigged, não um modelo fotorrealista final. Depois da importação, o Avatar precisa ser validado como Humanoid e integrado ao `Player_Root` pelo wizard existente. Nenhuma compilação/teste Unity foi executado.
