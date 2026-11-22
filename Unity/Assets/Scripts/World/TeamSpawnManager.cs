@@ -69,7 +69,7 @@ namespace BattleClubs.World
             cached = true;
         }
 
-        private Vector3 GetSpawnRotation(Transform anchor)
+        private Quaternion GetSpawnRotation(Transform anchor)
         {
             if (!faceMapCenter) return anchor.rotation;
             Vector3 center = Vector3.zero;
