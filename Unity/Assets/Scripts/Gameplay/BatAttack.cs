@@ -39,6 +39,18 @@ namespace BattleClubs.Gameplay
             if (Time.time < nextAttackTime) return;
             nextAttackTime = Time.time + attackCooldown;
 
+            // In an online session the server selects and validates the target.
+            // Never apply a client-side hit to a replicated opponent.
+            NetworkCombatantAuthority networkAuthority = GetComponent<NetworkCombatantAuthority>();
+            if (networkAuthority != null && networkAuthority.IsSpawned)
+            {
+                networkAuthority.RequestAttackServerRpc();
+                if (cameraRig != null) cameraRig.AddAttackOrbit();
+                if (animator != null && HasAttackTrigger())
+                    animator.SetTrigger(attackTriggerHash);
+                return;
+            }
+
             pendingTarget = FindNearestTarget();
             pendingHitApplied = false;
 
