@@ -73,6 +73,14 @@ namespace BattleClubs.Gameplay
             targetAuthority.ApplyServerHit();
         }
 
+        /// <summary>Call only from a validated server-side revive interaction.</summary>
+        public bool ApplyServerRevive()
+        {
+            if (!IsServer || combatant == null || !combatant.Revive()) return false;
+            PublishCurrentState();
+            return true;
+        }
+
         /// <summary>Call only from server-owned match/team setup.</summary>
         public void ApplyServerElimination()
         {
