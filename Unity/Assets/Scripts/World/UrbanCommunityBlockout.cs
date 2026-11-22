@@ -224,6 +224,8 @@ namespace BattleClubs.World
                     CreatePrimitive(PrimitiveType.Cylinder, "WaterTankLid",
                         tankPosition + Vector3.up * 0.78f, new Vector3(1.2f, 0.06f, 1.2f), DarkMetal);
                 }
+
+                BuildRooftopDetails(roof, width, depth, blockX, blockZ, side);
             }
 
             // Keep both ends of the alley completely open. Full-width cover walls
@@ -234,6 +236,71 @@ namespace BattleClubs.World
             // A small streetlight at alternating corners adds depth without cluttering every lane.
             if (addStreetLights && (blockX + blockZ) % 2 == 0)
                 BuildStreetLight(center + new Vector3(-half + 0.7f, 0f, -half + 0.7f));
+        }
+
+
+        private void BuildRooftopDetails(Vector3 roof, float width, float depth,
+            int blockX, int blockZ, int side)
+        {
+            // Small rooftop rooms, patched metal roofs, antennas and laundry make
+            // the skyline feel inhabited instead of repeating identical flat boxes.
+            int variation = Mathf.Abs(blockX * 17 + blockZ * 31 + side * 13) % 10;
+            float roofTop = roof.y + 0.12f;
+
+            if (variation <= 3)
+            {
+                Vector3 room = roof + new Vector3(width * 0.22f, 0.88f, side * depth * 0.12f);
+                float roomWidth = Mathf.Clamp(width * 0.34f, 1.6f, 2.5f);
+                float roomDepth = Mathf.Clamp(depth * 0.42f, 1.4f, 2.2f);
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Utility_Room",
+                    room, new Vector3(roomWidth, 1.55f, roomDepth),
+                    new Color(0.62f, 0.59f, 0.51f));
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Corrugated_Canopy",
+                    room + Vector3.up * 0.82f,
+                    new Vector3(roomWidth + 0.24f, 0.12f, roomDepth + 0.24f),
+                    new Color(0.25f, 0.28f, 0.27f));
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Room_Door",
+                    room + new Vector3(0f, -0.18f, -side * (roomDepth * 0.5f + 0.07f)),
+                    new Vector3(0.52f, 1.05f, 0.07f), new Color(0.29f, 0.22f, 0.16f));
+            }
+
+            if (variation == 1 || variation == 4 || variation == 7)
+            {
+                Vector3 antenna = roof + new Vector3(-width * 0.28f, 1.05f, -side * depth * 0.22f);
+                CreatePrimitive(PrimitiveType.Cylinder, "Rooftop_Antenna_Mast",
+                    antenna, new Vector3(0.035f, 1.05f, 0.035f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Antenna_Crossbar",
+                    antenna + Vector3.up * 0.72f,
+                    new Vector3(0.9f, 0.045f, 0.045f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Sphere, "Rooftop_Satellite_Dish",
+                    antenna + new Vector3(0.42f, -0.15f, 0f),
+                    new Vector3(0.52f, 0.12f, 0.52f), new Color(0.68f, 0.69f, 0.65f));
+            }
+
+            if (variation == 2 || variation == 5 || variation == 8)
+            {
+                float lineZ = roof.z - side * depth * 0.28f;
+                Vector3 lineStart = new Vector3(roof.x - width * 0.28f, roofTop + 1.15f, lineZ);
+                Vector3 lineEnd = new Vector3(roof.x + width * 0.28f, roofTop + 1.15f, lineZ);
+                CreatePrimitive(PrimitiveType.Cylinder, "Rooftop_Laundry_Line",
+                    (lineStart + lineEnd) * 0.5f,
+                    new Vector3(0.018f, Vector3.Distance(lineStart, lineEnd) * 0.5f, 0.018f),
+                    new Color(0.18f, 0.18f, 0.17f)).transform.rotation =
+                    Quaternion.FromToRotation(Vector3.up, (lineEnd - lineStart).normalized);
+
+                Color[] clothColors =
+                {
+                    new Color(0.72f, 0.22f, 0.18f), new Color(0.82f, 0.76f, 0.61f),
+                    new Color(0.18f, 0.31f, 0.48f), new Color(0.48f, 0.55f, 0.37f)
+                };
+                for (int i = 0; i < 3; i++)
+                {
+                    Vector3 cloth = Vector3.Lerp(lineStart, lineEnd, (i + 1) / 4f);
+                    CreatePrimitive(PrimitiveType.Cube, "Rooftop_Hanging_Cloth",
+                        cloth + Vector3.down * 0.32f,
+                        new Vector3(0.48f, 0.62f, 0.045f), clothColors[(variation + i) % clothColors.Length]);
+                }
+            }
         }
 
         private void BuildFacade(Vector3 house, float width, float height, float depth,
