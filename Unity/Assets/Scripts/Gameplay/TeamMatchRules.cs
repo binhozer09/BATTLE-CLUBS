@@ -107,6 +107,7 @@ namespace BattleClubs.Gameplay
             if (team.players.Count >= PlayersPerTeam) return false;
 
             team.players.Add(player);
+            player.AssignTeam(team.teamId);
 
             int teamIndex = teams.IndexOf(team);
             if (spawnManager != null)
