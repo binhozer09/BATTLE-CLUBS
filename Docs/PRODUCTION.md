@@ -107,3 +107,9 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Revisado `BatAttack.FindNearestTarget()`: o método usava a referência `attacker` sem declará-la no escopo local, o que causaria erro de compilação C#.
 - Adicionada a obtenção do `Combatant` atacante no próprio método antes da filtragem de aliados, preservando a regra contra fogo amigo.
 - Correção gravada na branch de produção. Ainda precisa de compilação real no Unity Editor e teste de combate para confirmar o comportamento completo.
+
+
+### 21/11/2026 — Consistência de equipe na reanimação
+- Ajustada a elegibilidade em `ReviveInteraction`: personagens sem equipe continuam podendo interagir em cenas de treino quando ambos estão sem atribuição.
+- Se um dos personagens estiver atribuído a uma equipe, o outro também precisa estar atribuído à mesma equipe. Isso fecha o caso em que um personagem sem equipe poderia reanimar um jogador de equipe diferente.
+- Alteração gravada na branch de produção. Ainda depende de compilação e teste de gameplay no Unity Editor.
