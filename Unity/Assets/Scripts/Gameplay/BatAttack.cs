@@ -34,6 +34,8 @@ namespace BattleClubs.Gameplay
 
         public void Attack()
         {
+            Combatant attacker = GetComponent<Combatant>();
+            if (attacker != null && attacker.State != PlayerLifeState.Alive) return;
             if (Time.time < nextAttackTime) return;
             nextAttackTime = Time.time + attackCooldown;
 
@@ -107,9 +109,9 @@ namespace BattleClubs.Gameplay
 
                 Combatant candidate = hit.GetComponentInParent<Combatant>();
                 if (candidate == null || candidate.State != PlayerLifeState.Alive) continue;
-                Combatant attacker = GetComponent<Combatant>();
                 if (attacker != null && attacker.HasTeamAssignment &&
-                    candidate.TeamId == attacker.TeamId) continue;
+                    (!candidate.HasTeamAssignment || candidate.TeamId == attacker.TeamId))
+                    continue;
 
                 float distance = (candidate.transform.position - transform.position).sqrMagnitude;
                 if (distance < nearestDistance)
