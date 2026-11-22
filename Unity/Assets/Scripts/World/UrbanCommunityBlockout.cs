@@ -494,6 +494,49 @@ namespace BattleClubs.World
                         new Vector3(origin.x + x, -0.08f, roadZ),
                         new Vector3(2.2f, 0.035f, 0.12f), new Color(0.72f, 0.68f, 0.53f));
             }
+
+            // Worn zebra crossings make every internal street junction readable.
+            // Each crossing stays on its own road approach and leaves the junction
+            // center open for combat movement.
+            Color crossingPaint = new Color(0.82f, 0.81f, 0.75f);
+            const int crossingStripes = 5;
+            const float stripeWidth = 0.42f;
+            const float stripeGap = 0.34f;
+            float crossingOffset = roadWidth * 0.5f + 1.05f;
+            for (int x = 0; x < blocksX - 1; x++)
+            {
+                float roadX = origin.x + (x + 1) * blockSize + x * roadWidth + roadWidth * 0.5f;
+                for (int z = 0; z < blocksZ - 1; z++)
+                {
+                    float roadZ = origin.z + (z + 1) * blockSize + z * roadWidth + roadWidth * 0.5f;
+
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        float zPosition = roadZ + side * crossingOffset;
+                        for (int stripe = 0; stripe < crossingStripes; stripe++)
+                        {
+                            float xPosition = roadX - (crossingStripes - 1) * (stripeWidth + stripeGap) * 0.5f
+                                + stripe * (stripeWidth + stripeGap);
+                            CreatePrimitive(PrimitiveType.Cube, "Road_Crosswalk_Stripe",
+                                new Vector3(xPosition, -0.075f, zPosition),
+                                new Vector3(stripeWidth, 0.025f, roadWidth - 0.6f), crossingPaint);
+                        }
+                    }
+
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        float xPosition = roadX + side * crossingOffset;
+                        for (int stripe = 0; stripe < crossingStripes; stripe++)
+                        {
+                            float zPosition = roadZ - (crossingStripes - 1) * (stripeWidth + stripeGap) * 0.5f
+                                + stripe * (stripeWidth + stripeGap);
+                            CreatePrimitive(PrimitiveType.Cube, "Road_Crosswalk_Stripe",
+                                new Vector3(xPosition, -0.075f, zPosition),
+                                new Vector3(roadWidth - 0.6f, 0.025f, stripeWidth), crossingPaint);
+                        }
+                    }
+                }
+            }
         }
 
         private void BuildCentralCourt(Vector3 origin, float width, float depth)
