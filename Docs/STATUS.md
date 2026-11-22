@@ -95,3 +95,10 @@ Foi adicionado `HumanoidAssetBootstrap.cs` ao Editor. O menu `BATTLE CLUBS/Chara
 - `UrbanCommunityBlockout` agora rastreia e libera as meshes de relevo procedural quando o mapa é regenerado ou destruído, evitando acumular meshes órfãs durante recriações no Editor/Play Mode.
 - `CommunityArtDetails` agora reutiliza `CommunityMaterialLibrary` nos cabos de energia em vez de criar um Material exclusivo para cada trecho de LineRenderer.
 - São correções de gerenciamento de recursos e redução de materiais duplicados; não representam benchmark de FPS nem validação visual. A compilação e o teste de regeneração ainda dependem do Unity Editor.
+
+
+### 22/11/2026 — Continuidade das vielas e acesso às escadarias
+- Removidas as duas paredes transversais `AlleyCover` que ocupavam as extremidades de cada quarteirão e fechavam a passagem central.
+- As entradas e saídas das vielas ficam livres para conectar ruas entre quarteirões e permitir o acesso às escadarias existentes de `CommunityArtDetails`.
+- A alteração não cria um sistema novo de navegação nem substitui as escadas; corrige um bloqueio geométrico no gerador existente.
+- Verificação estática do trecho alterado concluída. Colisões, percurso contínuo e comportamento do jogador ainda precisam ser confirmados no Unity Editor; não houve compilação nem teste em runtime nesta sessão.
