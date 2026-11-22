@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Animations;
 using UnityEngine;
 using BattleClubs.Player;
 using BattleClubs.UI;
@@ -114,9 +115,8 @@ namespace BattleClubs.Editor
             if (animator == null || animator.avatar == null || !animator.avatar.isValid || !animator.isHuman)
                 throw new System.Exception("O FBX KinemIQ foi encontrado, mas não possui Avatar Humanoid válido.");
             animator.applyRootMotion = false;
-            RuntimeAnimatorController controller =
-                AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Animation/BC_Humanoid.controller");
-            if (controller != null) animator.runtimeAnimatorController = controller;
+            RuntimeAnimatorController controller = EnsureHumanoidController();
+            animator.runtimeAnimatorController = controller;
 
             HumanoidAnimationDriver animationDriver = root.GetComponent<HumanoidAnimationDriver>();
             SerializedObject driverData = new SerializedObject(animationDriver);
@@ -136,6 +136,109 @@ namespace BattleClubs.Editor
             Object.DestroyImmediate(bat.GetComponent<Collider>());
             SetColor(bat, new Color(0.36f, 0.22f, 0.12f));
             return root;
+        }
+
+        private static RuntimeAnimatorController EnsureHumanoidController()
+        {
+            const string folder = "Assets/Animation";
+            const string path = folder + "/BC_Humanoid.controller";
+            if (!AssetDatabase.IsValidFolder(folder)) AssetDatabase.CreateFolder("Assets", "Animation");
+            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
+            if (controller == null) controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+
+            EnsureAnimatorParameter(controller, "MoveSpeed", AnimatorControllerParameterType.Float);
+            EnsureAnimatorParameter(controller, "Grounded", AnimatorControllerParameterType.Bool);
+            EnsureAnimatorParameter(controller, "VerticalSpeed", AnimatorControllerParameterType.Float);
+            EnsureAnimatorParameter(controller, "Downed", AnimatorControllerParameterType.Bool);
+            EnsureAnimatorParameter(controller, "Eliminated", AnimatorControllerParameterType.Bool);
+            EnsureAnimatorParameter(controller, "Attack", AnimatorControllerParameterType.Trigger);
+
+            AnimationClip idleClip = FindAnimationClip("idle", "stand");
+            AnimationClip moveClip = FindAnimationClip("run", "walk", "locomotion");
+            AnimationClip jumpClip = FindAnimationClip("jump", "fall");
+            AnimationClip attackClip = FindAnimationClip("punch", "attack", "jab");
+            AnimationClip downClip = FindAnimationClip("hit", "down", "fall");
+            AnimationClip deathClip = FindAnimationClip("death", "die");
+
+            AnimatorStateMachine machine = controller.layers[0].stateMachine;
+            AnimatorState idle = FindOrCreateAnimatorState(machine, "Idle", new Vector3(250, 80, 0), idleClip);
+            AnimatorState locomotion = FindOrCreateAnimatorState(machine, "Locomotion", new Vector3(500, 80, 0), moveClip);
+            AnimatorState airborne = FindOrCreateAnimatorState(machine, "Jump_Fall", new Vector3(500, 230, 0), jumpClip);
+            AnimatorState attack = FindOrCreateAnimatorState(machine, "Attack", new Vector3(760, 80, 0), attackClip);
+            AnimatorState downed = FindOrCreateAnimatorState(machine, "Downed", new Vector3(760, 230, 0), downClip);
+            AnimatorState eliminated = FindOrCreateAnimatorState(machine, "Eliminated", new Vector3(1010, 230, 0), deathClip);
+            machine.defaultState = idle;
+
+            EnsureAnimatorTransition(idle, locomotion, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f);
+            EnsureAnimatorTransition(locomotion, idle, "MoveSpeed", AnimatorConditionMode.Less, 0.1f);
+            EnsureAnimatorTransition(idle, airborne, "Grounded", AnimatorConditionMode.IfNot, 0f);
+            EnsureAnimatorTransition(locomotion, airborne, "Grounded", AnimatorConditionMode.IfNot, 0f);
+            EnsureAnimatorTransition(airborne, locomotion, "Grounded", AnimatorConditionMode.If, 0f);
+            EnsureAnimatorTransition(machine, attack, "Attack", AnimatorConditionMode.If, 0f);
+            EnsureAnimatorTransition(machine, downed, "Downed", AnimatorConditionMode.If, 0f);
+            EnsureAnimatorTransition(machine, eliminated, "Eliminated", AnimatorConditionMode.If, 0f);
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+            return controller;
+        }
+
+        private static AnimationClip FindAnimationClip(params string[] keywords)
+        {
+            string[] models = AssetDatabase.FindAssets("t:Model", new[] { "Assets/ThirdParty/KinemIQ" });
+            foreach (string guid in models)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(assetPath))
+                {
+                    AnimationClip clip = asset as AnimationClip;
+                    if (clip == null || clip.name.StartsWith("__preview__")) continue;
+                    string name = clip.name.ToLowerInvariant();
+                    foreach (string keyword in keywords)
+                        if (name.Contains(keyword)) return clip;
+                }
+            }
+            return null;
+        }
+
+        private static AnimatorState FindOrCreateAnimatorState(AnimatorStateMachine machine,
+            string name, Vector3 position, Motion motion)
+        {
+            AnimatorState state = null;
+            foreach (ChildAnimatorState child in machine.states)
+                if (child.state.name == name) { state = child.state; break; }
+            if (state == null) state = machine.AddState(name, position);
+            state.motion = motion;
+            return state;
+        }
+
+        private static void EnsureAnimatorParameter(AnimatorController controller,
+            string name, AnimatorControllerParameterType type)
+        {
+            foreach (AnimatorControllerParameter parameter in controller.parameters)
+                if (parameter.name == name) return;
+            controller.AddParameter(name, type);
+        }
+
+        private static void EnsureAnimatorTransition(AnimatorState from, AnimatorState to,
+            string parameter, AnimatorConditionMode mode, float threshold)
+        {
+            foreach (AnimatorStateTransition transition in from.transitions)
+                if (transition.destinationState == to) return;
+            AnimatorStateTransition created = from.AddTransition(to);
+            created.hasExitTime = false;
+            created.duration = 0.08f;
+            created.AddCondition(mode, threshold, parameter);
+        }
+
+        private static void EnsureAnimatorTransition(AnimatorStateMachine machine, AnimatorState to,
+            string parameter, AnimatorConditionMode mode, float threshold)
+        {
+            foreach (AnimatorStateTransition transition in machine.anyStateTransitions)
+                if (transition.destinationState == to) return;
+            AnimatorStateTransition created = machine.AddAnyStateTransition(to);
+            created.hasExitTime = false;
+            created.duration = 0.08f;
+            created.AddCondition(mode, threshold, parameter);
         }
 
         private static GameObject LoadHumanoidMannequin()
