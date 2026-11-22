@@ -71,3 +71,8 @@ Foi adicionada à branch `feature/humanoid-character-integration` a dependência
 ## Atualização — combate online autoritativo inicial
 
 Na branch `feature/humanoid-character-integration` foi criado `NetworkCombatantAuthority.cs`. Em jogadores com `NetworkObject` ativo, `BatAttack` agora envia a solicitação ao servidor em vez de aplicar dano local. O servidor aplica cooldown, procura alvos por colisão, rejeita aliados e aplica o acerto no `Combatant`; quantidade de acertos e estado de vida são replicados por `NetworkVariable`. A integração exige adicionar o componente ao prefab do jogador, configurar o ponto de impacto e um `NetworkTransform`, além de registrar o prefab no `NetworkManager`. Reanimação, movimento replicado, equipes autoritativas, matchmaking e pontuação online continuam pendentes. Código ainda não compilado/testado no Unity Editor.
+
+
+## Atualização — reanimação online autoritativa inicial
+
+Foi criado `NetworkReviveAuthority.cs`. Em sessão NGO, a interação existente encaminha início e cancelamento ao servidor. O servidor procura um companheiro derrubado, valida estado de vida, equipe e distância, conta quatro segundos e restaura o jogador; o progresso é replicado. O prefab online precisa receber `NetworkReviveAuthority` além de `NetworkCombatantAuthority`. A atribuição de equipes ainda não é replicada/automatizada, e o código ainda não foi compilado nem testado no Unity Editor.
