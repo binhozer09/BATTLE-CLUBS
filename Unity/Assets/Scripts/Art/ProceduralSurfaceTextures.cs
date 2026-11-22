@@ -15,6 +15,10 @@ namespace BattleClubs.Art
 
         public static Texture2D Get(Surface surface)
         {
+            // Prefer scanned CC0 PBR albedo maps shipped in Resources/BC_PBR.
+            Texture2D scanned = Resources.Load<Texture2D>("BC_PBR/" + surface + "_Color");
+            if (scanned != null) return scanned;
+
             switch (surface)
             {
                 case Surface.Brick: return brick ?? (brick = LoadBrickAsset() ?? BuildBrick());
@@ -31,6 +35,16 @@ namespace BattleClubs.Art
                 case Surface.Wood: return wood ?? (wood = BuildWood());
                 default: return plaster ?? (plaster = BuildNoise("Painted_Plaster", 256, 256, 0.72f, 0.09f, 0.035f));
             }
+        }
+
+        public static Texture2D GetNormal(Surface surface)
+        {
+            return Resources.Load<Texture2D>("BC_PBR/" + surface + "_NormalGL");
+        }
+
+        public static Texture2D GetRoughness(Surface surface)
+        {
+            return Resources.Load<Texture2D>("BC_PBR/" + surface + "_Roughness");
         }
 
         private static Texture2D LoadBrickAsset()
