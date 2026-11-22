@@ -2,6 +2,11 @@ name: BATTLE CLUBS - Build Android APK (test scene)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/favela-map-worldbuilding
+    paths:
+      - '.github/workflows/android-apk.yml'
 
 permissions:
   contents: read
