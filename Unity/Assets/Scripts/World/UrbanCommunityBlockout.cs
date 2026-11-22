@@ -172,8 +172,9 @@ namespace BattleClubs.World
             hill.transform.position = origin;
             hill.AddComponent<MeshFilter>().sharedMesh = mesh;
             MeshRenderer renderer = hill.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = CommunityMaterialLibrary.Get(
-                new Color(0.24f, 0.27f, 0.22f));
+            CommunityMaterialLibrary.ApplySurface(renderer,
+                new Color(0.24f, 0.27f, 0.22f),
+                ProceduralSurfaceTextures.Surface.Concrete, new Vector2(7f, 3f));
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             generated.Add(hill);
@@ -386,8 +387,10 @@ namespace BattleClubs.World
                 return ProceduralSurfaceTextures.Surface.Asphalt;
             if (objectName.StartsWith("House_"))
                 return ProceduralSurfaceTextures.Surface.Brick;
-            if (objectName == "CentralCourt" || objectName.StartsWith("Court"))
+            if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
+            if (objectName.StartsWith("Court"))
+                return ProceduralSurfaceTextures.Surface.Concrete;
             if (objectName == "Roof" || objectName == "RoofParapet" || objectName == "AlleyCover")
                 return ProceduralSurfaceTextures.Surface.Concrete;
             return ProceduralSurfaceTextures.Surface.Plaster;
