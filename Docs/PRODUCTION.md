@@ -61,3 +61,9 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 **Builds Android:** automação de APK no branch `main` foi pausada para não gerar builds durante a fase de desenvolvimento. Não executar nem publicar APK até solicitação explícita e conclusão do jogo.
 
 **Regra de transparência:** uma tarefa só muda para concluída quando o arquivo foi gravado e a integração/teste correspondente foi confirmado. Plano não é asset pronto; código de geração não é captura de jogo.
+
+
+### 21/11/2026 — Contrato técnico do multiplayer
+- Criado `Docs/ONLINE_MULTIPLAYER_ARCHITECTURE.md` com arquitetura dedicada autoritativa, responsabilidades do servidor, estado mínimo replicado, fluxos de ataque/derrubada/reanimação, ciclo de vida da sala, requisitos de segurança e fases de validação.
+- O SDK/provedor permanece deliberadamente em aberto até uma prova técnica Android + PC com 2–4 clientes, medição de latência/custo e confirmação de suporte a servidor dedicado. Nenhuma dependência de rede foi instalada e nenhuma partida online foi declarada pronta.
+- Registrada a regra pendente de design sobre o destino de jogadores derrubados; não implementar bleed-out ou finalização sem decisão explícita no GAME_DESIGN.
