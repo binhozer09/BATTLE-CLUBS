@@ -107,6 +107,9 @@ namespace BattleClubs.Gameplay
 
                 Combatant candidate = hit.GetComponentInParent<Combatant>();
                 if (candidate == null || candidate.State != PlayerLifeState.Alive) continue;
+                Combatant attacker = GetComponent<Combatant>();
+                if (attacker != null && attacker.HasTeamAssignment &&
+                    candidate.TeamId == attacker.TeamId) continue;
 
                 float distance = (candidate.transform.position - transform.position).sqrMagnitude;
                 if (distance < nearestDistance)
