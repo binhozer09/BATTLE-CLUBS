@@ -150,3 +150,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `BatAttack.cs` mantém o fluxo local nas cenas offline e encaminha o ataque ao servidor quando o jogador está spawnado em NGO.
 - Atualizada a documentação de integração: o prefab precisa de `NetworkObject`, `NetworkCombatantAuthority`, ponto de impacto configurado e `NetworkTransform`; o servidor deve atribuir as equipes.
 - Ainda não foi executado Unity Editor, compilação ou teste Host/Client. Reanimação online, movimento, lobby/matchmaking e equipes/score autoritativos seguem pendentes.
+
+
+### 21/11/2026 — Primeira autoridade de reanimação online
+- Criado `NetworkReviveAuthority.cs`: o servidor valida companheiro derrubado, equipe, distância e duração de quatro segundos; publica progresso e estado da interação.
+- `ReviveInteraction.cs` agora encaminha início/cancelamento para a autoridade de rede quando o jogador está spawnado em NGO, preservando o fluxo local offline.
+- O prefab precisa conter `NetworkObject`, `Combatant`, `NetworkCombatantAuthority` e `NetworkReviveAuthority`, com origens de ataque e reanimação configuradas.
+- Atribuição de equipes, movimento replicado, lobby/matchmaking e pontuação online ainda não estão concluídos. Sem compilação/teste Unity nesta etapa.
