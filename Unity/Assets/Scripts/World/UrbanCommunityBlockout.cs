@@ -125,6 +125,7 @@ namespace BattleClubs.World
             const int alongSegments = 28;
             const int depthSegments = 10;
             var vertices = new Vector3[(alongSegments + 1) * (depthSegments + 1)];
+            var uvs = new Vector2[vertices.Length];
             var triangles = new int[alongSegments * depthSegments * 6];
 
             for (int z = 0; z <= depthSegments; z++)
@@ -142,8 +143,11 @@ namespace BattleClubs.World
                     Vector2 point = extendAlongX
                         ? edge + new Vector2(outwardSign * distance, 0f)
                         : edge + new Vector2(0f, outwardSign * distance);
-                    vertices[z * (alongSegments + 1) + x] =
-                        new Vector3(point.x, terrace - d * 1.8f, point.y);
+                    int vertexIndex = z * (alongSegments + 1) + x;
+                    vertices[vertexIndex] = new Vector3(point.x, terrace - d * 1.8f, point.y);
+                    // Explicit UVs are required: without them the hillside samples
+                    // one texel and appears as a flat color despite its material.
+                    uvs[vertexIndex] = new Vector2(t * 7f, d * 3f);
                 }
             }
 
@@ -162,6 +166,7 @@ namespace BattleClubs.World
             Mesh mesh = new Mesh { name = objectName + "_Mesh" };
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             mesh.vertices = vertices;
+            mesh.uv = uvs;
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
