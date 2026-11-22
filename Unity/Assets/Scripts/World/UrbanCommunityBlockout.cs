@@ -476,37 +476,6 @@ namespace BattleClubs.World
 
         private void BuildMainStreetDetails(Vector3 origin, float width, float depth)
         {
-            // Narrow concrete sidewalks run along both sides of every cross street.
-            // Their low profile keeps the route traversable while clearly separating
-            // pedestrian edges from the asphalt combat lanes.
-            const float sidewalkWidth = 1.05f;
-            const float sidewalkHeight = 0.10f;
-            for (int x = 0; x < blocksX - 1; x++)
-            {
-                float roadX = origin.x + (x + 1) * blockSize + x * roadWidth + roadWidth * 0.5f;
-                for (int side = -1; side <= 1; side += 2)
-                {
-                    CreatePrimitive(PrimitiveType.Cube, "Street_Sidewalk",
-                        new Vector3(roadX + side * (roadWidth * 0.5f - sidewalkWidth * 0.5f),
-                            sidewalkHeight * 0.5f, origin.z + depth * 0.5f),
-                        new Vector3(sidewalkWidth, sidewalkHeight, depth),
-                        new Color(0.58f, 0.57f, 0.53f));
-                }
-            }
-
-            for (int z = 0; z < blocksZ - 1; z++)
-            {
-                float roadZ = origin.z + (z + 1) * blockSize + z * roadWidth + roadWidth * 0.5f;
-                for (int side = -1; side <= 1; side += 2)
-                {
-                    CreatePrimitive(PrimitiveType.Cube, "Street_Sidewalk",
-                        new Vector3(origin.x + width * 0.5f, sidewalkHeight * 0.5f,
-                            roadZ + side * (roadWidth * 0.5f - sidewalkWidth * 0.5f)),
-                        new Vector3(width, sidewalkHeight, sidewalkWidth),
-                        new Color(0.58f, 0.57f, 0.53f));
-                }
-            }
-
             // Dashed center markings on the wider cross streets.
             for (int x = 0; x < blocksX - 1; x++)
             {
