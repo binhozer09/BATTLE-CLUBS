@@ -38,7 +38,13 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - O construtor da cena de teste agora inclui `Combatant` e `HumanoidAnimationDriver` no objeto raiz do jogador, preparando a hierarquia para substituição do visual provisório.
 - Documentado o procedimento em `Docs/HUMANOID_ANIMATION_SETUP.md`. Não foi possível compilar ou validar no Unity Editor nesta sessão.
 
-### 21/11/2026 — Correção do formato de partida e kits\n- Corrigida a divergência entre a especificação original (cinco equipes de quatro jogadores) e a implementação anterior (quatro equipes de cinco). `TeamMatchRules` agora fixa cinco equipes, quatro vagas por equipe e 20 jogadores no total.\n- `UrbanCommunityBlockout` agora cria cinco marcadores de nascimento, um por equipe.\n- `ClubKitApplier` agora possui cinco paletas provisórias e `TeamMatchRules.TryAddPlayer` aplica automaticamente o kit correspondente quando encontra o componente no personagem.\n- Atualizados README e documentos de mapa/kits. Ainda falta validar os pontos de nascimento, os renderers e a atribuição de equipe no Unity Editor.\n\n### 21/11/2026 — Fundação da produção visual
+### 21/11/2026 — Correção do formato de partida e kits
+- Corrigida a divergência entre a especificação original (cinco equipes de quatro jogadores) e a implementação anterior (quatro equipes de cinco). `TeamMatchRules` agora fixa cinco equipes, quatro vagas por equipe e 20 jogadores no total.
+- `UrbanCommunityBlockout` agora cria cinco marcadores de nascimento, um por equipe.
+- `ClubKitApplier` agora possui cinco paletas provisórias e `TeamMatchRules.TryAddPlayer` aplica automaticamente o kit correspondente quando encontra o componente no personagem.
+- Atualizados README e documentos de mapa/kits. Ainda falta validar os pontos de nascimento, os renderers e a atribuição de equipe no Unity Editor.
+
+### 21/11/2026 — Fundação da produção visual
 - Adicionado ao `UrbanCommunityBlockout` um relevo de morro em malhas 3D procedurais nas quatro bordas externas do mapa, com variação de altura e silhueta irregular; integrado à geração principal do cenário. Ainda precisa de inspeção visual no Unity para ajustar escala, normais e enquadramento.
 - Criada a branch `production/3d-art-foundation`, separando a produção original da linha principal.
 - Adicionado o gerador de cinco texturas tileáveis originais: tijolo aparente, reboco pintado, concreto, asfalto e piso de quadra.
@@ -51,7 +57,7 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Integrado ao HUD Android o botão de resgate por toque contínuo: procura aliado caído, exibe progresso e cancela se o jogador soltar ou sair do botão. Continua sendo resgate local, sem autoridade/replicação de rede.
 - Criado `HumanoidAnimationDriver.cs` para ligar velocidade, salto/queda e estados de vida ao Animator Humanoid; `ThirdPersonMotor` agora expõe telemetria de movimento para animação.
 - Documentado o contrato de rig, hierarquia, parâmetros do Animator e critérios de validação em `Docs/HUMANOID_ANIMATION_SETUP.md`. O modelo 3D e os clipes finais ainda não foram adicionados.
-- Ainda não há personagem final, captura renderizada, APK de produção ou validação visual no Unity Editor. O código precisa ser importado e executado no Unity para confirmar escala, colisões e desempenho.
+- Ainda não há personagem final, captura renderizada, APK de produção ou validação visual no Unity Editor. O código precisa ser importado e executado na Unity para confirmar escala, colisões e desempenho.
 
 ## Como acompanhar
 - Commits da produção: https://github.com/binhozer09/BATTLE-CLUBS/commits/production/3d-art-foundation
@@ -62,18 +68,15 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 
 **Regra de transparência:** uma tarefa só muda para concluída quando o arquivo foi gravado e a integração/teste correspondente foi confirmado. Plano não é asset pronto; código de geração não é captura de jogo.
 
-
 ### 21/11/2026 — Contrato técnico do multiplayer
 - Criado `Docs/ONLINE_MULTIPLAYER_ARCHITECTURE.md` com arquitetura dedicada autoritativa, responsabilidades do servidor, estado mínimo replicado, fluxos de ataque/derrubada/reanimação, ciclo de vida da sala, requisitos de segurança e fases de validação.
 - O SDK/provedor permanece deliberadamente em aberto até uma prova técnica Android + PC com 2–4 clientes, medição de latência/custo e confirmação de suporte a servidor dedicado. Nenhuma dependência de rede foi instalada e nenhuma partida online foi declarada pronta.
 - Registrada a regra pendente de design sobre o destino de jogadores derrubados; não implementar bleed-out ou finalização sem decisão explícita no GAME_DESIGN.
 
-
 ### 21/11/2026 — Integridade da eliminação e pontuação
 - Revisado `TeamMatchRules.cs`: uma equipe só é considerada eliminada quando possui exatamente quatro integrantes registrados e todos estão no estado `Eliminated`. Listas incompletas ou com referências nulas não podem encerrar uma equipe por engano.
 - Adicionado `GetPointsForTeam`, que soma três pontos apenas por equipes adversárias eliminadas. `GetWinnerPoints` agora retorna a pontuação da única equipe sobrevivente, evitando contar a própria equipe vencedora/derrotada no cálculo global.
 - Alteração gravada e relida no GitHub. Ainda não executada no Unity Editor nem coberta por testes automatizados nesta sessão.
-
 
 ### 21/11/2026 — Identidade de equipe no combate local
 - `Combatant` agora mantém o identificador da equipe atribuída por `TeamMatchRules` ao registrar o jogador.
@@ -81,19 +84,16 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `ReviveInteraction` restringe a reanimação aos integrantes da mesma equipe quando há atribuição de equipe. Personagens de cenas de treino sem equipe continuam usando o comportamento local sem cadastro.
 - Essas proteções são regras locais de gameplay; em partidas online, a mesma validação deverá ser repetida no servidor autoritativo. Alterações gravadas no GitHub, ainda sem compilação Unity ou teste multiplayer.
 
-
 ### 21/11/2026 — Validação de elenco antes do início da partida
 - `MatchTeam.HasCompleteRoster` valida quatro jogadores não nulos e únicos, com `TeamId` correspondente ao time em que foram registrados.
 - `TeamMatchRules.IsReadyToStart` só libera a condição de partida pronta quando as cinco equipes estão completas (20 jogadores registrados corretamente).
 - `CountActiveTeams` e `GetSoleSurvivingTeam` não retornam resultados de partida antes da formação completa dos elencos, evitando declarar vencedor prematuramente durante o preenchimento das vagas.
 - Alteração conferida no GitHub; ainda depende de compilação e testes no Unity Editor.
 
-
 ### 21/11/2026 — Validação de ações de combate e reanimação
 - `BatAttack` agora recusa ataques de um Combatant que não esteja Alive. Quando o atacante pertence a uma equipe, alvos sem equipe atribuída e companheiros são ignorados.
 - `ReviveInteraction` agora exige que o reviver esteja Alive e mantém a verificação de elegibilidade durante todo o progresso; se a condição de equipe/estado deixar de ser válida, a ação é cancelada.
 - As verificações continuam locais e não substituem validação autoritativa no servidor. Alterações relidas no GitHub; não houve execução no Unity Editor nesta sessão.
-
 
 ### 21/11/2026 — Ciclo de vida local da partida
 - Adicionado `MatchPhase`: `WaitingForPlayers`, `InProgress` e `Finished`.
@@ -102,3 +102,8 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Se nenhuma equipe sobreviver, o estado permanece sem vencedor; regra de empate/derrota simultânea não foi inventada porque o documento de design ainda não a define.
 - Corrigida também a documentação de kits: cinco definições, índices de equipe 0–4.
 - Código e documentação gravados na branch de produção; ainda sem compilação ou teste no Unity Editor. Em multiplayer, o servidor autoritativo deverá controlar essas transições.
+
+### 21/11/2026 — Correção de seleção de alvo do ataque
+- Revisado `BatAttack.FindNearestTarget()`: o método usava a referência `attacker` sem declará-la no escopo local, o que causaria erro de compilação C#.
+- Adicionada a obtenção do `Combatant` atacante no próprio método antes da filtragem de aliados, preservando a regra contra fogo amigo.
+- Correção gravada na branch de produção. Ainda precisa de compilação real no Unity Editor e teste de combate para confirmar o comportamento completo.
