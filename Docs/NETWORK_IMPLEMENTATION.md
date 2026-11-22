@@ -36,7 +36,20 @@ Responsabilidades atuais:
 
 - Não cria matchmaking, lista pública de salas ou convites.
 - Não distribui automaticamente jogadores nas cinco equipes.
-- Não implementa movimento, dano, derrubada, reanimação ou pontuação autoritativos pela rede.
+- Ainda não implementa movimento replicado, reanimação autoritativa, distribuição automática de equipes ou pontuação replicada.
+- O combate recebeu uma primeira camada autoritativa: `NetworkCombatantAuthority` recebe pedido de ataque do dono do jogador, aplica cooldown no servidor, procura o alvo por física no servidor, rejeita aliados e exige que o alvo também seja um `NetworkObject` ativo. O servidor aplica o acerto em `Combatant` e replica quantidade de acertos/estado de vida por `NetworkVariable`.
+- `BatAttack` encaminha o pedido ao servidor quando o jogador está em uma sessão NGO; o fluxo local anterior permanece para cenas sem rede.
+
+## Integração necessária para testar o combate online
+
+1. Adicionar `NetworkCombatantAuthority` ao mesmo prefab do jogador que contém `NetworkObject` e `Combatant`.
+2. Atribuir `hitOrigin` no Inspector, na posição de contato do taco.
+3. Garantir que o prefab esteja registrado em `NetworkManager > Network Prefabs` e usado como `Player Prefab`.
+4. Adicionar um `NetworkTransform` configurado para replicar a posição do jogador; o componente de combate pressupõe que o servidor conhece as posições atuais.
+5. Confirmar que os colliders dos jogadores estão nas camadas incluídas em `targetLayers`.
+6. Atribuir equipe no servidor antes da partida para que a filtragem de aliados funcione.
+
+**Limite desta etapa:** a camada ainda não foi compilada ou executada no Unity Editor. Não declarar combate online validado até testar Host/Client e conferir replicação de acertos e derrubadas.
 - Não configura Relay, lobby cloud ou hospedagem de servidores.
 - Não comprova suporte a 20 jogadores simultâneos até executar teste de carga.
 
