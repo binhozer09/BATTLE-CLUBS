@@ -111,6 +111,19 @@ namespace BattleClubs.Editor
             visual.transform.localRotation = Quaternion.identity;
             visual.transform.localScale = Vector3.one;
 
+            // FBX pivots are not guaranteed to sit at the soles of the feet.
+            // Align the visible humanoid's lowest rendered point with the
+            // CharacterController's bottom so the mesh cannot start below the floor.
+            Renderer[] bodyRenderers = visual.GetComponentsInChildren<Renderer>(true);
+            if (bodyRenderers.Length > 0)
+            {
+                Bounds bodyBounds = bodyRenderers[0].bounds;
+                for (int i = 1; i < bodyRenderers.Length; i++)
+                    bodyBounds.Encapsulate(bodyRenderers[i].bounds);
+                float feetOffset = characterController.bounds.min.y - bodyBounds.min.y;
+                visual.transform.position += Vector3.up * feetOffset;
+            }
+
             Animator animator = visual.GetComponentInChildren<Animator>(true);
             if (animator == null || animator.avatar == null || !animator.avatar.isValid || !animator.isHuman)
                 throw new System.Exception("O FBX KinemIQ foi encontrado, mas não possui Avatar Humanoid válido.");
