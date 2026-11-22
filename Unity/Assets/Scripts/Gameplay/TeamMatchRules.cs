@@ -45,6 +45,13 @@ namespace BattleClubs.Gameplay
         }
     }
 
+    public enum MatchPhase
+    {
+        WaitingForPlayers,
+        InProgress,
+        Finished
+    }
+
     /// <summary>
     /// Match format defined by GAME_DESIGN.md: five teams with four players each.
     /// This is local match bookkeeping only; an online authority must own these rules.
@@ -57,6 +64,9 @@ namespace BattleClubs.Gameplay
         [SerializeField] private int pointsPerEliminatedTeam = 3;
 
         private const int RequiredTeamCount = 5;
+
+        public MatchPhase Phase { get; private set; } = MatchPhase.WaitingForPlayers;
+        public MatchTeam WinnerTeam { get; private set; }
 
         private void Awake()
         {
@@ -126,7 +136,8 @@ namespace BattleClubs.Gameplay
 
         public bool TryAddPlayer(string teamId, Combatant player)
         {
-            if (player == null || teams == null) return false;
+            if (Phase != MatchPhase.WaitingForPlayers || player == null || teams == null)
+                return false;
 
             for (int i = 0; i < TeamCount; i++)
             {
@@ -160,6 +171,31 @@ namespace BattleClubs.Gameplay
                 kitApplier.ApplyKit(teamIndex, team.players.Count);
 
             return true;
+        }
+
+        /// <summary>
+        /// Locks roster registration and starts only a fully populated 5x4 match.
+        /// A dedicated server must call/authorize this transition in online play.
+        /// </summary>
+        public bool TryStartMatch()
+        {
+            if (Phase != MatchPhase.WaitingForPlayers || !IsReadyToStart)
+                return false;
+
+            WinnerTeam = null;
+            Phase = MatchPhase.InProgress;
+            return true;
+        }
+
+        private void Update()
+        {
+            if (Phase != MatchPhase.InProgress) return;
+
+            MatchTeam survivor = GetSoleSurvivingTeam();
+            if (survivor == null) return;
+
+            WinnerTeam = survivor;
+            Phase = MatchPhase.Finished;
         }
 
         public int CountActiveTeams()
@@ -198,8 +234,9 @@ namespace BattleClubs.Gameplay
         /// </summary>
         public int GetWinnerPoints()
         {
-            MatchTeam winner = GetSoleSurvivingTeam();
-            return winner == null ? 0 : GetPointsForTeam(winner);
+            return Phase == MatchPhase.Finished && WinnerTeam != null
+                ? GetPointsForTeam(WinnerTeam)
+                : 0;
         }
 
         public MatchTeam GetSoleSurvivingTeam()
