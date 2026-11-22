@@ -175,7 +175,12 @@ namespace BattleClubs.Editor
             EnsureAnimatorTransition(locomotion, airborne, "Grounded", AnimatorConditionMode.IfNot, 0f);
             EnsureAnimatorTransition(airborne, locomotion, "Grounded", AnimatorConditionMode.If, 0f);
             EnsureAnimatorTransition(machine, attack, "Attack", AnimatorConditionMode.If, 0f);
+            // Any-State attack/downed transitions must have a route back out.
+            // Without these, the generated player can remain stuck in the
+            // attack or downed state even after the trigger/state is cleared.
+            EnsureExitTimeTransition(attack, locomotion, 0.85f);
             EnsureAnimatorTransition(machine, downed, "Downed", AnimatorConditionMode.If, 0f);
+            EnsureAnimatorTransition(downed, locomotion, "Downed", AnimatorConditionMode.IfNot, 0f);
             EnsureAnimatorTransition(machine, eliminated, "Eliminated", AnimatorConditionMode.If, 0f);
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
@@ -239,6 +244,17 @@ namespace BattleClubs.Editor
             created.hasExitTime = false;
             created.duration = 0.08f;
             created.AddCondition(mode, threshold, parameter);
+        }
+
+        private static void EnsureExitTimeTransition(AnimatorState from, AnimatorState to, float exitTime)
+        {
+            foreach (AnimatorStateTransition transition in from.transitions)
+                if (transition.destinationState == to) return;
+
+            AnimatorStateTransition created = from.AddTransition(to);
+            created.hasExitTime = true;
+            created.exitTime = Mathf.Clamp01(exitTime);
+            created.duration = 0.08f;
         }
 
         private static GameObject LoadHumanoidMannequin()
