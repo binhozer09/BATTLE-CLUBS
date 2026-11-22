@@ -10,7 +10,7 @@ on:
       - 'Unity/**'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-android:
@@ -84,6 +84,7 @@ jobs:
           from pathlib import Path
 
           output = Path("Unity/Assets/Resources/BC_PBR")
+          sources = ["BATTLE CLUBS PBR texture sources", "All downloaded surface sets are CC0 1.0 from ambientCG."]
           materials = {
               "Plaster": ("plaster wall", "2K-JPG"),
               "ConcreteBlock": ("concrete block", "2K-JPG"),
@@ -138,8 +139,23 @@ jobs:
                   found.add(kind)
               if "Color" not in found:
                   raise RuntimeError("Downloaded PBR archive has no Color map for " + surface + ": " + asset.get("id", "?"))
-              print(surface + ": " + asset.get("id", "?") + " (" + asset.get("title", "") + ") maps=" + ",".join(sorted(found)))
+              asset_id = asset.get("id", "?")
+              title = asset.get("title", "")
+              sources.append(surface + ": " + asset_id + " - " + title + " - https://ambientcg.com/a/" + asset_id)
+              print(surface + ": " + asset_id + " (" + title + ") maps=" + ",".join(sorted(found)))
+          (output / "SOURCES.txt").write_text("\\n".join(sources) + "\\n", encoding="utf-8")
           PY
+
+      - name: Keep downloaded CC0 PBR maps in the project branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Unity/Assets/Resources/BC_PBR
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: add CC0 scanned PBR surface maps"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Generate test scene and build Android APK
         shell: bash
