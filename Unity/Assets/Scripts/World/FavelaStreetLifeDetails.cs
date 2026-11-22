@@ -155,7 +155,20 @@ namespace BattleClubs.World
             item.transform.position = position;
             item.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             item.transform.localScale = scale;
-            SetColor(item, color);
+            Renderer renderer = item.GetComponent<Renderer>();
+            bool keepFlatColor = objectName.Contains("Laundry") ||
+                objectName.Contains("Clothespin") || objectName.Contains("Sign") ||
+                objectName.Contains("Awning");
+            if (renderer != null && !keepFlatColor)
+            {
+                bool concrete = objectName.Contains("Meter") || objectName.Contains("Conduit") ||
+                    objectName.Contains("Shutter") || objectName.Contains("Slat");
+                CommunityMaterialLibrary.ApplySurface(renderer, color,
+                    concrete ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete
+                             : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Plaster,
+                    new Vector2(Mathf.Max(1f, scale.x * 0.6f), Mathf.Max(1f, scale.y * 0.6f)));
+            }
+            else SetColor(item, color);
             generated.Add(item);
         }
 
