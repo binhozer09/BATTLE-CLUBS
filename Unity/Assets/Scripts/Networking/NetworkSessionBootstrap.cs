@@ -98,7 +98,6 @@ namespace BattleClubs.Networking
 
             networkManager.NetworkConfig.NetworkTransport = transport;
             networkManager.NetworkConfig.ConnectionApproval = true;
-            networkManager.NetworkConfig.MaxConnectedClients = (ushort)Mathf.Clamp(maxPlayers, 1, 20);
             networkManager.ConnectionApprovalCallback = ApproveConnection;
         }
 
