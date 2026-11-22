@@ -27,9 +27,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - O construtor da cena de teste adiciona `TeamSpawnManager` ao objeto do mapa. Essa lógica é local e provisória; no multiplayer o servidor deverá validar e autorizar os pontos de nascimento.
 
 ### 21/11/2026 — Correção do HUD e diagnóstico de compilação
-- O log da execução Unity mais recente no `main` apontou erro C# `CS1022` em `BattleClubsMobileHUD.cs`, causado por uma chave de fechamento extra após `TouchLookPad`. A estrutura de namespace foi corrigida no `main`.
-- A versão da branch de produção foi reconciliada para manter simultaneamente o controle de câmera por toque no lado direito e o botão de resgate por pressão contínua; o HUD não foi recriado.
-- A execução anterior chegou à etapa de compilação do Unity, mas falhou no erro de sintaxe do HUD; portanto não existe APK válido dessa execução. A correção foi gravada, mas ainda precisa de uma nova compilação de validação. Não executar publicação de APK nesta fase.
+- O log da execução Unity mais recente no `main` apontou erro C# `CS1022` em `BattleClubsMobileHUD.cs`, causado por uma chave extra após `TouchLookPad`. A estrutura de namespace foi corrigida no `main`.
+- Na revisão seguinte da branch de produção, foi detectado e corrigido outro problema estrutural: `TouchLookPad` estava declarado dentro de `HoldSprint`, impedindo sua resolução pelo construtor do HUD. Agora os dois componentes são classes independentes no namespace `BattleClubs.UI`.
+- A versão de produção mantém câmera por toque no lado direito e resgate por pressão contínua; o HUD existente não foi recriado.
+- A execução anterior falhou antes de gerar APK. A correção ainda precisa de uma nova compilação Unity; não publicar APK nesta fase.
 
 ### 21/11/2026 — Ferramenta de integração humanoide
 - Criado `HumanoidAnimationSetupWizard.cs` com comandos no menu BATTLE CLUBS para gerar/atualizar o Animator Controller base (`Assets/Animation/BC_Humanoid.controller`) e validar o Avatar Humanoid selecionado. A ferramenta configura referências do `HumanoidAnimationDriver`, desativa root motion e verifica os componentes de gameplay no objeto raiz.
