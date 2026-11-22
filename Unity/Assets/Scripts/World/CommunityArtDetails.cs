@@ -222,7 +222,7 @@ namespace BattleClubs.World
                 line.SetPosition(i, point);
             }
 
-            line.sharedMaterial = CommunityMaterialLibrary.Get(CableColor);
+            line.sharedMaterial = CommunityMaterialLibrary.Get(CableColor,\n                BattleClubs.Art.ProceduralSurfaceTextures.Get(BattleClubs.Art.ProceduralSurfaceTextures.Surface.PaintedMetal));
             generated.Add(cable);
         }
 
@@ -237,10 +237,9 @@ namespace BattleClubs.World
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer != null)
             {
-                bool metal = objectName.Contains("Cable") || objectName.Contains("Pipe") ||
-                    objectName.Contains("Drain_Grate");
+                bool metal = objectName.Contains("Drain_Grate");
                 CommunityMaterialLibrary.ApplySurface(renderer, color,
-                    metal ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete
+                    metal ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.PaintedMetal
                           : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete,
                     new Vector2(Mathf.Max(1f, scale.x * 0.45f), Mathf.Max(1f, scale.y * 0.45f)));
             }
