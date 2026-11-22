@@ -158,14 +158,7 @@ namespace BattleClubs.World
                 line.SetPosition(i, point);
             }
 
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null) shader = Shader.Find("Sprites/Default");
-            if (shader != null)
-            {
-                Material material = new Material(shader);
-                material.color = CableColor;
-                line.sharedMaterial = material;
-            }
+            line.sharedMaterial = CommunityMaterialLibrary.Get(CableColor);
             generated.Add(cable);
         }
 
