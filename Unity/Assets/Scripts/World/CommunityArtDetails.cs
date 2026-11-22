@@ -114,7 +114,8 @@ namespace BattleClubs.World
             MeshCollider collider = ramp.AddComponent<MeshCollider>();
             collider.sharedMesh = mesh;
             MeshRenderer renderer = ramp.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = CommunityMaterialLibrary.Get(StepColor);
+            CommunityMaterialLibrary.ApplySurface(renderer, StepColor,
+                BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete, new Vector2(1.5f, 1f));
 
             generated.Add(ramp);
             generatedMeshes.Add(mesh);
@@ -210,7 +211,14 @@ namespace BattleClubs.World
             item.transform.localScale = scale;
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer != null)
-                renderer.sharedMaterial = CommunityMaterialLibrary.Get(color);
+            {
+                bool metal = objectName.Contains("Cable") || objectName.Contains("Pipe") ||
+                    objectName.Contains("Drain_Grate");
+                CommunityMaterialLibrary.ApplySurface(renderer, color,
+                    metal ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete
+                          : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete,
+                    new Vector2(Mathf.Max(1f, scale.x * 0.45f), Mathf.Max(1f, scale.y * 0.45f)));
+            }
             generated.Add(item);
         }
 
