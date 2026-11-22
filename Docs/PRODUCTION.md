@@ -128,3 +128,11 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `CommunityArtDetails.cs` e `FavelaStreetLifeDetails.cs` passaram a compartilhar materiais em vez de instanciar um Material exclusivo para cada escada, peça de fiação, roupa no varal e detalhe de fachada.
 - A mudança reduz alocações duplicadas de materiais e prepara o cenário para uma etapa posterior de batching/otimização. Não significa que a geometria procedural já esteja combinada em poucos draw calls.
 - Ainda depende de abrir a cena no Unity 2022.3.62f1 e medir memória, draw calls e FPS em Android/PC; nenhum benchmark foi executado nesta sessão.
+
+
+### 21/11/2026 — Compartilhamento de materiais no mapa procedural
+- Ampliada `CommunityMaterialLibrary` para cachear materiais por cor e textura, em vez de criar uma instância por objeto procedural.
+- A escala das texturas agora é aplicada por renderer com `MaterialPropertyBlock`, preservando variações de tamanho entre casas, fachadas, ruas e detalhes sem multiplicar materiais.
+- `UrbanCommunityBlockout` passou a usar a biblioteca tanto nas construções/superfícies quanto no relevo de fundo. Os geradores de escadarias e detalhes de rua já utilizavam a mesma biblioteca.
+- A mudança reduz a quantidade de instâncias de Material; não comprova FPS nem reduz automaticamente a quantidade de draw calls. Medir no Unity Profiler e em dispositivos Android/PC continua obrigatório.
+- Nenhuma compilação ou execução Unity foi realizada nesta etapa.
