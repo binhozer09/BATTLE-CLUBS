@@ -111,10 +111,31 @@ namespace BattleClubs.World
             CreateCube("Small_Mercadinho_Sign",
                 new Vector3(center.x, 2.95f, faceZ - side * 0.12f),
                 new Vector3(2.9f, 0.48f, 0.12f), signColor);
+            string[] shopNames = { "MERCADINHO", "BARBEARIA", "LANCHONETE" };
+            CreateShopSignLabel(shopNames[(center.x.GetHashCode() ^ center.z.GetHashCode()) & 3] == null
+                ? "MERCADINHO" : shopNames[Mathf.Abs(Mathf.RoundToInt(center.x + center.z)) % shopNames.Length],
+                new Vector3(center.x, 2.95f, faceZ - side * 0.20f), side);
             CreateCube("Shop_Awning",
                 new Vector3(center.x, 2.55f, faceZ - side * 0.55f),
                 new Vector3(3.15f, 0.12f, 0.9f),
                 new Color(0.57f, 0.22f, 0.17f), side * 5f);
+        }
+
+        private void CreateShopSignLabel(string label, Vector3 position, int side)
+        {
+            GameObject sign = new GameObject("Shop_Sign_Lettering");
+            sign.transform.SetParent(transform, true);
+            sign.transform.position = position;
+            sign.transform.rotation = Quaternion.Euler(0f, side > 0 ? 180f : 0f, 0f);
+            TextMesh lettering = sign.AddComponent<TextMesh>();
+            lettering.text = label;
+            lettering.anchor = TextAnchor.MiddleCenter;
+            lettering.alignment = TextAlignment.Center;
+            lettering.fontSize = 48;
+            lettering.characterSize = 0.075f;
+            lettering.color = new Color(0.16f, 0.13f, 0.10f);
+            lettering.richText = false;
+            generated.Add(sign);
         }
 
         private void BuildFacadeUtility(Vector3 center, int side)
