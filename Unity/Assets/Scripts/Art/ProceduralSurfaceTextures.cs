@@ -9,9 +9,9 @@ namespace BattleClubs.Art
     /// </summary>
     public static class ProceduralSurfaceTextures
     {
-        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt }
+        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt, PaintedMetal }
 
-        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt;
+        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt, paintedMetal;
 
         public static Texture2D Get(Surface surface)
         {
@@ -22,6 +22,7 @@ namespace BattleClubs.Art
                 case Surface.CorrugatedMetal: return corrugatedMetal ?? (corrugatedMetal = BuildCorrugatedMetal());
                 case Surface.Foliage: return foliage ?? (foliage = BuildFoliage());
                 case Surface.HillsideDirt: return hillsideDirt ?? (hillsideDirt = BuildHillsideDirt());
+                case Surface.PaintedMetal: return paintedMetal ?? (paintedMetal = BuildPaintedMetal());
                 case Surface.Concrete: return concrete ?? (concrete = BuildNoise("Concrete", 256, 256, 0.48f, 0.13f, 0.055f));
                 case Surface.Asphalt: return asphalt ?? (asphalt = BuildAsphalt());
                 case Surface.Court: return court ?? (court = BuildCourt());
@@ -234,6 +235,29 @@ namespace BattleClubs.Art
                 Color leaf = Color.Lerp(new Color(0.055f, 0.16f, 0.055f),
                     new Color(0.30f, 0.43f, 0.13f), shade);
                 pixels[y * size + x] = leaf;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            return texture;
+        }
+
+
+        private static Texture2D BuildPaintedMetal()
+        {
+            const int size = 256;
+            var texture = NewTexture("BC_Painted_Worn_Metal", size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float broad = Mathf.PerlinNoise(x * 0.018f + 6f, y * 0.021f + 12f);
+                float scratches = Mathf.PerlinNoise(x * 0.19f + 3f, y * 0.035f + 8f);
+                float rust = Mathf.PerlinNoise(x * 0.047f + 15f, y * 0.052f + 1f);
+                float value = 0.31f + broad * 0.19f + scratches * 0.08f;
+                Color paint = new Color(value * 0.86f, value * 0.91f, value * 0.89f);
+                if (rust > 0.77f)
+                    paint = Color.Lerp(paint, new Color(0.34f, 0.20f, 0.12f), (rust - 0.77f) * 2.8f);
+                pixels[y * size + x] = paint;
             }
             texture.SetPixels32(pixels);
             texture.Apply(true, true);
