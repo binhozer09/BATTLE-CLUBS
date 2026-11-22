@@ -192,15 +192,15 @@ namespace BattleClubs.World
             Renderer renderer = item.GetComponent<Renderer>();
             bool keepFlatColor = objectName.Contains("Laundry") ||
                 objectName.Contains("Clothespin") || objectName.Contains("Sign") ||
-                objectName.Contains("Awning");
+                objectName.Contains("Awning") || objectName == "Meter_Display";
             if (renderer != null && !keepFlatColor)
             {
-                bool concrete = objectName.Contains("Meter") || objectName.Contains("Conduit") ||
+                bool metal = objectName.Contains("Meter") || objectName.Contains("Conduit") ||
                     objectName.Contains("Shutter") || objectName.Contains("Slat");
                 CommunityMaterialLibrary.ApplySurface(renderer, color,
-                    concrete ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete
-                             : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Plaster,
-                    new Vector2(Mathf.Max(1f, scale.x * 0.6f), Mathf.Max(1f, scale.y * 0.6f)));
+                    metal ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.PaintedMetal
+                          : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Plaster,
+                    new Vector2(Mathf.Max(1f, scale.x * 0.6f), Mathf.Max(1f, (scale.z > scale.y ? scale.z : scale.y) * 0.6f)));
             }
             else SetColor(item, color);
             generated.Add(item);
