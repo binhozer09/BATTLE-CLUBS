@@ -386,9 +386,14 @@ namespace BattleClubs.World
             if (objectName == "Map_Ground" || objectName == "RoadDash")
                 return ProceduralSurfaceTextures.Surface.Asphalt;
             if (objectName.StartsWith("House_"))
-                return (objectName.GetHashCode() & 3) == 0
+            {
+                int stableHash = 17;
+                for (int i = 0; i < objectName.Length; i++)
+                    stableHash = stableHash * 31 + objectName[i];
+                return (stableHash & 3) == 0
                     ? ProceduralSurfaceTextures.Surface.Brick
                     : ProceduralSurfaceTextures.Surface.Plaster;
+            }
             if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
             if (objectName.StartsWith("Court"))
