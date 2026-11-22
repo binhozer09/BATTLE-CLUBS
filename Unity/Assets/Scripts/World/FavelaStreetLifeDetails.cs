@@ -112,8 +112,7 @@ namespace BattleClubs.World
                 new Vector3(center.x, 2.95f, faceZ - side * 0.12f),
                 new Vector3(2.9f, 0.48f, 0.12f), signColor);
             string[] shopNames = { "MERCADINHO", "BARBEARIA", "LANCHONETE" };
-            CreateShopSignLabel(shopNames[(center.x.GetHashCode() ^ center.z.GetHashCode()) & 3] == null
-                ? "MERCADINHO" : shopNames[Mathf.Abs(Mathf.RoundToInt(center.x + center.z)) % shopNames.Length],
+            CreateShopSignLabel(shopNames[Mathf.Abs(Mathf.RoundToInt(center.x * 3f + center.z * 7f)) % shopNames.Length],
                 new Vector3(center.x, 2.95f, faceZ - side * 0.20f), side);
             CreateCube("Shop_Awning",
                 new Vector3(center.x, 2.55f, faceZ - side * 0.55f),
