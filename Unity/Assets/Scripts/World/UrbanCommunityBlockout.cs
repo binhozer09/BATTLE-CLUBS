@@ -300,7 +300,7 @@ namespace BattleClubs.World
             MeshRenderer renderer = hill.AddComponent<MeshRenderer>();
             CommunityMaterialLibrary.ApplySurface(renderer,
                 new Color(0.24f, 0.27f, 0.22f),
-                ProceduralSurfaceTextures.Surface.Concrete, new Vector2(7f, 3f));
+                ProceduralSurfaceTextures.Surface.HillsideDirt, new Vector2(7f, 3f));
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             generated.Add(hill);
@@ -761,8 +761,13 @@ namespace BattleClubs.World
             {
                 Texture texture = ProceduralSurfaceTextures.Get(ResolveSurface(objectName));
                 renderer.sharedMaterial = CommunityMaterialLibrary.Get(color, texture);
-                CommunityMaterialLibrary.SetTextureScale(renderer, new Vector2(
-                    Mathf.Max(1f, scale.x * 0.35f), Mathf.Max(1f, scale.y * 0.35f)));
+                bool horizontalSurface = objectName == "Map_Ground" || objectName == "CentralCourt" ||
+                    objectName == "Roof" || objectName == "RoofParapet" ||
+                    objectName.StartsWith("Alley_") || objectName.StartsWith("Road_") ||
+                    objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle";
+                float textureU = Mathf.Max(1f, scale.x * 0.35f);
+                float textureV = Mathf.Max(1f, (horizontalSurface ? scale.z : scale.y) * 0.35f);
+                CommunityMaterialLibrary.SetTextureScale(renderer, new Vector2(textureU, textureV));
             }
 
             generated.Add(item);
@@ -773,7 +778,7 @@ namespace BattleClubs.World
         {
             if (objectName == "Map_Ground" || objectName == "RoadDash")
                 return ProceduralSurfaceTextures.Surface.Asphalt;
-            if (objectName.StartsWith("House_"))
+            if (objectName.StartsWith("House_") || objectName.StartsWith("Hillside_House_"))
             {
                 int stableHash = 17;
                 for (int i = 0; i < objectName.Length; i++)
@@ -782,6 +787,12 @@ namespace BattleClubs.World
             }
             if (objectName.StartsWith("Vegetation_Tree_Canopy") || objectName.StartsWith("Vegetation_Shrub"))
                 return ProceduralSurfaceTextures.Surface.Foliage;
+            if (objectName.StartsWith("Vegetation_Tree_Trunk") || objectName == "FrontDoor")
+                return ProceduralSurfaceTextures.Surface.Wood;
+            if (objectName == "Road_Crosswalk_Stripe" || objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle")
+                return ProceduralSurfaceTextures.Surface.Concrete;
+            if (objectName.StartsWith("Alley_Concrete") || objectName.StartsWith("Alley_Low_Curb") || objectName == "DoorStep")
+                return ProceduralSurfaceTextures.Surface.Concrete;
             if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
             if (objectName.StartsWith("Court"))
