@@ -164,14 +164,8 @@ namespace BattleClubs.World
             hill.transform.position = origin;
             hill.AddComponent<MeshFilter>().sharedMesh = mesh;
             MeshRenderer renderer = hill.AddComponent<MeshRenderer>();
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (shader != null)
-            {
-                Material material = new Material(shader);
-                material.color = new Color(0.24f, 0.27f, 0.22f);
-                renderer.sharedMaterial = material;
-            }
+            renderer.sharedMaterial = CommunityMaterialLibrary.Get(
+                new Color(0.24f, 0.27f, 0.22f));
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             generated.Add(hill);
@@ -369,18 +363,10 @@ namespace BattleClubs.World
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null) shader = Shader.Find("Standard");
-                if (shader != null)
-                {
-                    Material material = new Material(shader);
-                    material.color = color;
-                    ProceduralSurfaceTextures.Surface surface = ResolveSurface(objectName);
-                    material.mainTexture = ProceduralSurfaceTextures.Get(surface);
-                    material.mainTextureScale = new Vector2(
-                        Mathf.Max(1f, scale.x * 0.35f), Mathf.Max(1f, scale.y * 0.35f));
-                    renderer.sharedMaterial = material;
-                }
+                Texture texture = ProceduralSurfaceTextures.Get(ResolveSurface(objectName));
+                renderer.sharedMaterial = CommunityMaterialLibrary.Get(color, texture);
+                CommunityMaterialLibrary.SetTextureScale(renderer, new Vector2(
+                    Mathf.Max(1f, scale.x * 0.35f), Mathf.Max(1f, scale.y * 0.35f)));
             }
 
             generated.Add(item);
