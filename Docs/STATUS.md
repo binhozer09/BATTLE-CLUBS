@@ -89,3 +89,9 @@ Foi adicionado `HumanoidAssetBootstrap.cs` ao Editor. O menu `BATTLE CLUBS/Chara
 - Reservado o bloco central do layout 5x5 como praça/quadra aberta. O gerador de casas não constrói fachadas nesse bloco; os geradores de escadarias, varais, mercadinhos e medidores também deixam essa área livre.
 - A quadra central passa a ocupar uma área sem casas nem objetos de rua atravessando o piso, reduzindo interseções visuais e obstáculos indevidos na principal área de combate.
 - Alterações gravadas na branch `feature/humanoid-character-integration`. Ainda precisam ser importadas e verificadas no Unity Editor: colisões, navegação a pé, alinhamento dos geradores e aparência em execução não foram testados nesta sessão.
+
+
+### 22/11/2026 — Limpeza de recursos dos geradores do cenário
+- `UrbanCommunityBlockout` agora rastreia e libera as meshes de relevo procedural quando o mapa é regenerado ou destruído, evitando acumular meshes órfãs durante recriações no Editor/Play Mode.
+- `CommunityArtDetails` agora reutiliza `CommunityMaterialLibrary` nos cabos de energia em vez de criar um Material exclusivo para cada trecho de LineRenderer.
+- São correções de gerenciamento de recursos e redução de materiais duplicados; não representam benchmark de FPS nem validação visual. A compilação e o teste de regeneração ainda dependem do Unity Editor.
