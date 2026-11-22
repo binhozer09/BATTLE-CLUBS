@@ -164,3 +164,11 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - O pacote upstream declara 35 animações humanoides CC0 e inclui o FBX `KinemIQ_Mannequin.fbx`; fonte e licença documentadas em `Docs/HUMANOID_ASSET_IMPORT.md`.
 - O menu de importação evita exigir que o usuário baixe manualmente arquivos no celular.
 - Limite: a conexão GitHub disponível nesta sessão não envia binários FBX ao repositório e não há Unity Editor remoto conectado. Portanto, o pacote ainda não foi materializado/importado no projeto nesta sessão. O mannequin não é fotorrealista; Avatar, clips e integração na cena precisam ser validados no Unity Editor.
+
+
+## 22/11/2026 — Integração do espaço central da favela
+
+- Revisada a composição dos três geradores existentes: `UrbanCommunityBlockout`, `CommunityArtDetails` e `FavelaStreetLifeDetails` continuam sendo usados, sem duplicar sistemas.
+- Reservado o bloco central do layout 5x5 como praça/quadra aberta. O gerador de casas não constrói fachadas nesse bloco; os geradores de escadarias, varais, mercadinhos e medidores também deixam essa área livre.
+- A quadra central passa a ocupar uma área sem casas nem objetos de rua atravessando o piso, reduzindo interseções visuais e obstáculos indevidos na principal área de combate.
+- Alterações gravadas na branch `feature/humanoid-character-integration`. Ainda precisam ser importadas e verificadas no Unity Editor: colisões, navegação a pé, alinhamento dos geradores e aparência em execução não foram testados nesta sessão.
