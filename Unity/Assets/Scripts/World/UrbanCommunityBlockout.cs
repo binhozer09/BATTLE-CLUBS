@@ -63,7 +63,7 @@ namespace BattleClubs.World
             Vector3 origin = transform.position;
 
             GameObject ground = CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
-                origin + new Vector3(totalX * 0.5f, -0.65f, totalZ * 0.5f),
+                origin + new Vector3(totalX * 0.5f, -0.5f, totalZ * 0.5f),
                 new Vector3(totalX + roadWidth, 1f, totalZ + roadWidth), Asphalt);
             // Keep the playable floor's physics surface explicit and non-trigger.
             // CreatePrimitive normally adds this BoxCollider, but enforce it here so
