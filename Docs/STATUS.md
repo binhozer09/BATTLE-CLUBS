@@ -54,3 +54,8 @@ O projeto ainda depende de um modelo humanoide licenciado e clipes de animação
 ## Atualização — otimização de materiais do cenário
 
 Foi adicionada `CommunityMaterialLibrary.cs` para reutilizar materiais por cor nos detalhes de escadarias, fiação, varais, mercadinhos e infraestrutura das fachadas. Os geradores `CommunityArtDetails` e `FavelaStreetLifeDetails` agora compartilham essas instâncias, reduzindo a criação repetida de materiais. Isso ainda não substitui a otimização de malhas/draw calls nem uma medição real no Unity; validar memória e desempenho em Android e PC continua pendente.
+
+
+## Atualização — cache compartilhado de materiais do mapa
+
+O gerador principal do mapa agora compartilha materiais por combinação de cor e textura através de `CommunityMaterialLibrary`. A escala individual de textura é enviada por `MaterialPropertyBlock`, permitindo reutilizar o mesmo material em objetos de dimensões diferentes. A mudança também cobre as quatro malhas do relevo de fundo e complementa a otimização já aplicada aos detalhes de escadarias e fachadas. Ainda falta confirmar a compilação, inspecionar o resultado visual e medir draw calls, memória e FPS no Unity Profiler em Android/PC.
