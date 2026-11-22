@@ -9,9 +9,9 @@ namespace BattleClubs.Art
     /// </summary>
     public static class ProceduralSurfaceTextures
     {
-        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt, PaintedMetal }
+        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt, PaintedMetal, Plastic }
 
-        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt, paintedMetal;
+        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt, paintedMetal, plastic;
 
         public static Texture2D Get(Surface surface)
         {
@@ -23,6 +23,7 @@ namespace BattleClubs.Art
                 case Surface.Foliage: return foliage ?? (foliage = BuildFoliage());
                 case Surface.HillsideDirt: return hillsideDirt ?? (hillsideDirt = BuildHillsideDirt());
                 case Surface.PaintedMetal: return paintedMetal ?? (paintedMetal = BuildPaintedMetal());
+                case Surface.Plastic: return plastic ?? (plastic = BuildPlastic());
                 case Surface.Concrete: return concrete ?? (concrete = BuildNoise("Concrete", 256, 256, 0.48f, 0.13f, 0.055f));
                 case Surface.Asphalt: return asphalt ?? (asphalt = BuildAsphalt());
                 case Surface.Court: return court ?? (court = BuildCourt());
@@ -258,6 +259,26 @@ namespace BattleClubs.Art
                 if (rust > 0.77f)
                     paint = Color.Lerp(paint, new Color(0.34f, 0.20f, 0.12f), (rust - 0.77f) * 2.8f);
                 pixels[y * size + x] = paint;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            return texture;
+        }
+
+
+        private static Texture2D BuildPlastic()
+        {
+            const int size = 256;
+            var texture = NewTexture("BC_Aged_Blue_Water_Tank_Plastic", size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float broad = Mathf.PerlinNoise(x * 0.022f + 4f, y * 0.025f + 9f);
+                float grain = Mathf.PerlinNoise(x * 0.24f + 8f, y * 0.21f + 2f);
+                float shade = 0.78f + broad * 0.12f + grain * 0.035f;
+                Color c = new Color(0.075f, 0.16f, 0.19f) * shade;
+                pixels[y * size + x] = c;
             }
             texture.SetPixels32(pixels);
             texture.Apply(true, true);
