@@ -7,6 +7,7 @@ on:
       - feature/favela-map-worldbuilding
     paths:
       - '.github/workflows/android-apk.yml'
+      - 'Unity/**'
 
 permissions:
   contents: read
@@ -72,6 +73,73 @@ jobs:
           unzip -q /tmp/KinemIQ_Free_Animations_CC0_FBX.zip -d Unity/Assets/ThirdParty/KinemIQ
           find Unity/Assets/ThirdParty/KinemIQ -iname '*Mannequin*.fbx' -o -iname '*.fbx' | head -40
           test -n "$(find Unity/Assets/ThirdParty/KinemIQ -iname 'KinemIQ_Mannequin.fbx' -print -quit)"
+
+      - name: Download real CC0 PBR surface maps
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p Unity/Assets/Resources/BC_PBR
+          python3 - <<'PY'
+          import io, json, os, re, urllib.parse, urllib.request, zipfile
+          from pathlib import Path
+
+          output = Path("Unity/Assets/Resources/BC_PBR")
+          materials = {
+              "Plaster": ("plaster wall", "2K-JPG"),
+              "ConcreteBlock": ("concrete block", "2K-JPG"),
+              "Concrete": ("concrete wall", "2K-JPG"),
+              "Asphalt": ("asphalt road", "2K-JPG"),
+              "Court": ("worn concrete floor", "2K-JPG"),
+              "Wood": ("weathered wood", "2K-JPG"),
+              "CorrugatedMetal": ("corrugated metal", "2K-JPG"),
+              "Foliage": ("grass", "2K-JPG"),
+              "HillsideDirt": ("forest ground", "2K-JPG"),
+              "PaintedMetal": ("rusty painted metal", "2K-JPG"),
+              "Plastic": ("aged plastic", "1K-JPG"),
+              "PVC": ("white plastic", "1K-JPG"),
+          }
+
+          def fetch(url):
+              request = urllib.request.Request(url, headers={"User-Agent": "BattleClubs-Game-Asset-Importer/1.0"})
+              with urllib.request.urlopen(request, timeout=90) as response:
+                  return response.read()
+
+          for surface, (query, resolution) in materials.items():
+              params = urllib.parse.urlencode({
+                  "type": "material", "q": query, "limit": 12,
+                  "sort": "popular", "include": "title,downloads"
+              })
+              api = "https://ambientcg.com/api/v3/assets?" + params
+              data = json.loads(fetch(api).decode("utf-8"))
+              assets = data.get("assets", [])
+              selected = None
+              for asset in assets:
+                  downloads = asset.get("downloads", [])
+                  choice = next((d for d in downloads if d.get("attributes") == resolution and d.get("extension") == "zip"), None)
+                  if choice is None:
+                      choice = next((d for d in downloads if d.get("attributes") == "1K-JPG" and d.get("extension") == "zip"), None)
+                  if choice and choice.get("url"):
+                      selected = (asset, choice)
+                      break
+              if not selected:
+                  raise RuntimeError("No CC0 PBR download found for " + surface + " (" + query + ")")
+              asset, download = selected
+              archive = zipfile.ZipFile(io.BytesIO(fetch(download["url"])))
+              found = set()
+              for member in archive.namelist():
+                  base = os.path.basename(member)
+                  match = re.search(r"_(Color|NormalGL|Roughness)\\.(jpg|jpeg|png)$", base, re.I)
+                  if not match:
+                      continue
+                  kind = match.group(1)
+                  ext = match.group(2).lower()
+                  target = output / (surface + "_" + kind + "." + ext)
+                  target.write_bytes(archive.read(member))
+                  found.add(kind)
+              if "Color" not in found:
+                  raise RuntimeError("Downloaded PBR archive has no Color map for " + surface + ": " + asset.get("id", "?"))
+              print(surface + ": " + asset.get("id", "?") + " (" + asset.get("title", "") + ") maps=" + ",".join(sorted(found)))
+          PY
 
       - name: Generate test scene and build Android APK
         shell: bash
