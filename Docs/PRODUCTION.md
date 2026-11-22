@@ -87,3 +87,9 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `TeamMatchRules.IsReadyToStart` só libera a condição de partida pronta quando as cinco equipes estão completas (20 jogadores registrados corretamente).
 - `CountActiveTeams` e `GetSoleSurvivingTeam` não retornam resultados de partida antes da formação completa dos elencos, evitando declarar vencedor prematuramente durante o preenchimento das vagas.
 - Alteração conferida no GitHub; ainda depende de compilação e testes no Unity Editor.
+
+
+### 21/11/2026 — Validação de ações de combate e reanimação
+- `BatAttack` agora recusa ataques de um Combatant que não esteja Alive. Quando o atacante pertence a uma equipe, alvos sem equipe atribuída e companheiros são ignorados.
+- `ReviveInteraction` agora exige que o reviver esteja Alive e mantém a verificação de elegibilidade durante todo o progresso; se a condição de equipe/estado deixar de ser válida, a ação é cancelada.
+- As verificações continuam locais e não substituem validação autoritativa no servidor. Alterações relidas no GitHub; não houve execução no Unity Editor nesta sessão.
