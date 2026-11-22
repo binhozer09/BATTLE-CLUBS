@@ -143,7 +143,7 @@ jobs:
               title = asset.get("title", "")
               sources.append(surface + ": " + asset_id + " - " + title + " - https://ambientcg.com/a/" + asset_id)
               print(surface + ": " + asset_id + " (" + title + ") maps=" + ",".join(sorted(found)))
-          (output / "SOURCES.txt").write_text("\\n".join(sources) + "\\n", encoding="utf-8")
+          (output / "SOURCES.txt").write_text("\n".join(sources) + "\n", encoding="utf-8")
           PY
 
       - name: Keep downloaded CC0 PBR maps in the project branch
