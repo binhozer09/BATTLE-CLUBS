@@ -100,21 +100,32 @@ namespace BattleClubs.Editor
             root.AddComponent<Combatant>();
             root.AddComponent<HumanoidAnimationDriver>();
 
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Player_Body_Visual";
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 1f, 0f);
-            body.transform.localScale = new Vector3(0.78f, 0.92f, 0.78f);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            SetColor(body, new Color(0.13f, 0.29f, 0.52f));
+            GameObject mannequin = LoadHumanoidMannequin();
+            GameObject visual = PrefabUtility.InstantiatePrefab(mannequin) as GameObject;
+            if (visual == null)
+                throw new System.Exception("Não foi possível instanciar o FBX humanoide KinemIQ.");
+            visual.name = "Visual_Humanoid";
+            visual.transform.SetParent(root.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+            visual.transform.localScale = Vector3.one;
 
-            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.name = "Player_Head_Visual";
-            head.transform.SetParent(root.transform, false);
-            head.transform.localPosition = new Vector3(0f, 2.03f, 0f);
-            head.transform.localScale = new Vector3(0.48f, 0.48f, 0.48f);
-            Object.DestroyImmediate(head.GetComponent<Collider>());
-            SetColor(head, new Color(0.57f, 0.39f, 0.28f));
+            Animator animator = visual.GetComponentInChildren<Animator>(true);
+            if (animator == null || animator.avatar == null || !animator.avatar.isValid || !animator.isHuman)
+                throw new System.Exception("O FBX KinemIQ foi encontrado, mas não possui Avatar Humanoid válido.");
+            animator.applyRootMotion = false;
+            RuntimeAnimatorController controller =
+                AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>("Assets/Animation/BC_Humanoid.controller");
+            if (controller != null) animator.runtimeAnimatorController = controller;
+
+            HumanoidAnimationDriver animationDriver = root.GetComponent<HumanoidAnimationDriver>();
+            SerializedObject driverData = new SerializedObject(animationDriver);
+            driverData.FindProperty("animator").objectReferenceValue = animator;
+            driverData.FindProperty("motor").objectReferenceValue = root.GetComponent<ThirdPersonMotor>();
+            driverData.FindProperty("combatant").objectReferenceValue = root.GetComponent<Combatant>();
+            driverData.ApplyModifiedProperties();
+            if (visual.GetComponent<BattleClubs.Characters.ClubKitApplier>() == null)
+                visual.AddComponent<BattleClubs.Characters.ClubKitApplier>();
 
             GameObject bat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             bat.name = "Bat_Visual";
@@ -125,6 +136,25 @@ namespace BattleClubs.Editor
             Object.DestroyImmediate(bat.GetComponent<Collider>());
             SetColor(bat, new Color(0.36f, 0.22f, 0.12f));
             return root;
+        }
+
+        private static GameObject LoadHumanoidMannequin()
+        {
+            string[] guids = AssetDatabase.FindAssets("KinemIQ_Mannequin t:Model",
+                new[] { "Assets/ThirdParty/KinemIQ" });
+            if (guids.Length == 0)
+                throw new System.Exception("Modelo humanoide ausente. O pacote CC0 KinemIQ precisa ser baixado antes de gerar a cena; o build foi interrompido para não criar outro boneco de cápsula.");
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            ModelImporter importer = AssetImporter.GetAtPath(assetPath) as ModelImporter;
+            if (importer != null && importer.animationType != ModelImporterAnimationType.Human)
+            {
+                importer.animationType = ModelImporterAnimationType.Human;
+                importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+                importer.SaveAndReimport();
+            }
+            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (model == null) throw new System.Exception("FBX humanoide não pôde ser carregado: " + assetPath);
+            return model;
         }
 
         private static void CreateTrainingDummy(Vector3 position, Color color, string objectName)
