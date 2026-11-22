@@ -16,6 +16,13 @@ namespace BattleClubs.Gameplay
 
         public int HitsReceived { get; private set; }
         public PlayerLifeState State => state;
+        public string TeamId { get; private set; } = string.Empty;
+        public bool HasTeamAssignment => !string.IsNullOrWhiteSpace(TeamId);
+
+        public void AssignTeam(string teamId)
+        {
+            TeamId = teamId == null ? string.Empty : teamId.Trim();
+        }
 
         public void ReceiveBatHit()
         {
