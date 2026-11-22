@@ -31,6 +31,7 @@ namespace BattleClubs.World
         [SerializeField] private bool addCourtMarkings = true;
 
         private readonly List<GameObject> generated = new List<GameObject>();
+        private readonly List<Mesh> generatedMeshes = new List<Mesh>();
 
         private static readonly Color Asphalt = new Color(0.19f, 0.205f, 0.20f);
         private static readonly Color Concrete = new Color(0.43f, 0.43f, 0.40f);
@@ -164,6 +165,7 @@ namespace BattleClubs.World
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
+            generatedMeshes.Add(mesh);
 
             GameObject hill = new GameObject(objectName);
             hill.transform.SetParent(transform, false);
@@ -403,6 +405,14 @@ namespace BattleClubs.World
                 else DestroyImmediate(generated[i]);
             }
             generated.Clear();
+
+            for (int i = generatedMeshes.Count - 1; i >= 0; i--)
+            {
+                if (generatedMeshes[i] == null) continue;
+                if (Application.isPlaying) Destroy(generatedMeshes[i]);
+                else DestroyImmediate(generatedMeshes[i]);
+            }
+            generatedMeshes.Clear();
         }
     }
 }
