@@ -143,3 +143,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Criado `NetworkSessionBootstrap.cs` com entrada Host, servidor dedicado e cliente IPv4; capacidade limitada a 20 jogadores; aprovação de conexão valida sala disponível e versão do protocolo.
 - Documentado o setup do NetworkManager e o escopo ainda pendente em `Docs/NETWORK_IMPLEMENTATION.md`.
 - Esta entrega é somente a fundação de sessão/transporte. Ainda não implementa matchmaking, distribuição 5x4, sincronização de gameplay ou autoridade de combate. Exige configuração do prefab de jogador e validação no Unity Editor; nenhuma conexão real foi testada nesta sessão.
+
+
+### 21/11/2026 — Primeira autoridade de combate online
+- Criado `NetworkCombatantAuthority.cs` para processar ataques no servidor, validar estado/cooldown/equipe/alvo e replicar acertos e estado de vida por `NetworkVariable`.
+- `BatAttack.cs` mantém o fluxo local nas cenas offline e encaminha o ataque ao servidor quando o jogador está spawnado em NGO.
+- Atualizada a documentação de integração: o prefab precisa de `NetworkObject`, `NetworkCombatantAuthority`, ponto de impacto configurado e `NetworkTransform`; o servidor deve atribuir as equipes.
+- Ainda não foi executado Unity Editor, compilação ou teste Host/Client. Reanimação online, movimento, lobby/matchmaking e equipes/score autoritativos seguem pendentes.
