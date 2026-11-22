@@ -95,7 +95,15 @@ A política para iniciar com menos de 20 jogadores, preencher vagas com bots ou 
 - Testar com 20 clientes simulados e, depois, dispositivos Android reais e PCs.
 - Garantir compatibilidade de versão e impedir que builds incompatíveis entrem na mesma sala.
 
-## 7. Plano de implementação
+## 7. Implementação iniciada — camada de sessão
+
+Foi adicionada a primeira camada de sessão usando Netcode for GameObjects 1.9.1 e Unity Transport 1.4.0, versões compatíveis com a linha Unity 2022.3. O componente `NetworkSessionBootstrap` permite iniciar Host, servidor dedicado e cliente por IPv4, limita a sala a 20 conexões e valida a versão do protocolo na aprovação de conexão.
+
+Esta camada ainda não é matchmaking nem gameplay online: equipe, spawn, movimento, dano, reanimação e pontuação continuam locais até serem migrados para autoridade do servidor. É necessário configurar um prefab de jogador com `NetworkObject` no NetworkManager e validar no Unity antes de considerar a conexão funcional.
+
+Detalhes de configuração: `Docs/NETWORK_IMPLEMENTATION.md`.
+
+## 8. Plano de implementação
 
 | Fase | Entrega | Critério de saída |
 |---|---|---|
@@ -106,7 +114,7 @@ A política para iniciar com menos de 20 jogadores, preencher vagas com bots ou 
 | E. Escala e segurança | Teste com 20 clientes e abuso de mensagens | Metas de desempenho definidas e atingidas |
 | F. Cross-play de produção | Android + PC em ambiente hospedado | Teste prolongado, reconexão e encerramento aprovados |
 
-## 8. Estado atual do repositório
+## 9. Estado atual do repositório
 
 A implementação atual contém sistemas locais de movimento, câmera, ataque, estado de combate, reanimação e distribuição de spawn. O manifest Unity consultado contém apenas módulos internos de Animation, Physics e UGUI; não há SDK de rede declarado nele. A documentação de status também registra que multiplayer online, lobby, matchmaking e servidor autoritativo ainda estão pendentes.
 
@@ -116,7 +124,7 @@ Portanto:
 - dano e reanimação locais precisam ser migrados para comandos validados;
 - nenhuma build ou teste de rede é considerado concluído até ser executado e registrado.
 
-## 9. Referências internas
+## 10. Referências internas
 
 - Docs/GAME_DESIGN.md — regras e formato de partida.
 - Docs/MAP_AND_REVIVE_SETUP.md — mapa, spawns e reanimação local.

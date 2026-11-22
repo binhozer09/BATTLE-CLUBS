@@ -19,6 +19,7 @@ namespace BattleClubs.World
         [SerializeField] private int randomSeed = 8031;
 
         private readonly List<GameObject> generated = new List<GameObject>();
+        private readonly List<Mesh> generatedMeshes = new List<Mesh>();
         private static readonly Color StepColor = new Color(0.38f, 0.37f, 0.34f);
         private static readonly Color CableColor = new Color(0.055f, 0.06f, 0.065f);
         private static readonly Color PipeColor = new Color(0.20f, 0.25f, 0.26f);
@@ -48,7 +49,9 @@ namespace BattleClubs.World
             for (int x = 0; x < blocksX; x++)
             for (int z = 0; z < blocksZ; z++)
             {
-                if ((x + z) % 2 != 0) continue;
+                // Keep the reserved central plaza free of stair geometry.
+                if ((x + z) % 2 != 0 || (blocksX >= 3 && blocksZ >= 3 &&
+                    x == blocksX / 2 && z == blocksZ / 2)) continue;
                 float lane = Mathf.Min(alleyWidth * 0.72f, 3.4f);
                 float startX = origin.x + x * cell + 1.5f;
                 float centerZ = origin.z + z * cell + blockSize * 0.5f;
@@ -77,7 +80,45 @@ namespace BattleClubs.World
                             centerZ + side * (lane * 0.5f + 0.12f)),
                         new Vector3(steps * tread, 0.34f, 0.22f), StepColor, yaw);
                 }
+
+                // The stair flight rises above the flat alley. A collidable sloped
+                // transition returns it smoothly to street level in the next road.
+                // Without this connector, the last step ends as an abrupt drop.
+                CreateStreetTransitionRamp(endX, centerZ, lane, steps * rise,
+                    Mathf.Max(roadWidth * 0.45f, 2.5f));
             }
+        }
+
+        private void CreateStreetTransitionRamp(float startX, float centerZ,
+            float width, float height, float length)
+        {
+            GameObject ramp = new GameObject("Stair_To_Street_Ramp");
+            ramp.transform.SetParent(transform, true);
+            ramp.transform.position = new Vector3(startX, 0f, centerZ);
+
+            float halfWidth = width * 0.5f;
+            Mesh mesh = new Mesh { name = "Stair_To_Street_Ramp_Mesh" };
+            mesh.vertices = new[]
+            {
+                new Vector3(0f, height, -halfWidth),
+                new Vector3(0f, height, halfWidth),
+                new Vector3(length, 0f, -halfWidth),
+                new Vector3(length, 0f, halfWidth)
+            };
+            // Winding keeps the visible/collision surface facing upward.
+            mesh.triangles = new[] { 0, 1, 2, 1, 3, 2 };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            ramp.AddComponent<MeshFilter>().sharedMesh = mesh;
+            MeshCollider collider = ramp.AddComponent<MeshCollider>();
+            collider.sharedMesh = mesh;
+            MeshRenderer renderer = ramp.AddComponent<MeshRenderer>();
+            CommunityMaterialLibrary.ApplySurface(renderer, StepColor,
+                BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete, new Vector2(1.5f, 1f));
+
+            generated.Add(ramp);
+            generatedMeshes.Add(mesh);
         }
 
         private void BuildOverheadCables(Vector3 origin, float width, float depth, float cell)
@@ -156,14 +197,7 @@ namespace BattleClubs.World
                 line.SetPosition(i, point);
             }
 
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null) shader = Shader.Find("Sprites/Default");
-            if (shader != null)
-            {
-                Material material = new Material(shader);
-                material.color = CableColor;
-                line.sharedMaterial = material;
-            }
+            line.sharedMaterial = CommunityMaterialLibrary.Get(CableColor);
             generated.Add(cable);
         }
 
@@ -176,13 +210,14 @@ namespace BattleClubs.World
             item.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             item.transform.localScale = scale;
             Renderer renderer = item.GetComponent<Renderer>();
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (renderer != null && shader != null)
+            if (renderer != null)
             {
-                Material material = new Material(shader);
-                material.color = color;
-                renderer.sharedMaterial = material;
+                bool metal = objectName.Contains("Cable") || objectName.Contains("Pipe") ||
+                    objectName.Contains("Drain_Grate");
+                CommunityMaterialLibrary.ApplySurface(renderer, color,
+                    metal ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete
+                          : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete,
+                    new Vector2(Mathf.Max(1f, scale.x * 0.45f), Mathf.Max(1f, scale.y * 0.45f)));
             }
             generated.Add(item);
         }
@@ -196,6 +231,14 @@ namespace BattleClubs.World
                 else DestroyImmediate(generated[i]);
             }
             generated.Clear();
+
+            for (int i = generatedMeshes.Count - 1; i >= 0; i--)
+            {
+                if (generatedMeshes[i] == null) continue;
+                if (Application.isPlaying) Destroy(generatedMeshes[i]);
+                else DestroyImmediate(generatedMeshes[i]);
+            }
+            generatedMeshes.Clear();
         }
     }
 }

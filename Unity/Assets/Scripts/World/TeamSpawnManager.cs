@@ -36,8 +36,14 @@ namespace BattleClubs.World
             bool wasEnabled = controller != null && controller.enabled;
 
             if (wasEnabled) controller.enabled = false;
-            player.SetPositionAndRotation(destination, GetSpawnRotation(anchor));
-            if (wasEnabled) controller.enabled = true;
+            try
+            {
+                player.SetPositionAndRotation(destination, GetSpawnRotation(anchor));
+            }
+            finally
+            {
+                if (wasEnabled && controller != null) controller.enabled = true;
+            }
 
             return true;
         }
@@ -69,7 +75,7 @@ namespace BattleClubs.World
             cached = true;
         }
 
-        private Vector3 GetSpawnRotation(Transform anchor)
+        private Quaternion GetSpawnRotation(Transform anchor)
         {
             if (!faceMapCenter) return anchor.rotation;
             Vector3 center = Vector3.zero;

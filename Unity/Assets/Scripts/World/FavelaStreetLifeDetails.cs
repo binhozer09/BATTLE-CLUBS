@@ -42,6 +42,11 @@ namespace BattleClubs.World
             for (int x = 0; x < blocksX; x++)
             for (int z = 0; z < blocksZ; z++)
             {
+                // The central block is the open court; do not place laundry or
+                // shopfront props through its playable floor area.
+                if (blocksX >= 3 && blocksZ >= 3 &&
+                    x == blocksX / 2 && z == blocksZ / 2) continue;
+
                 Vector3 center = origin + new Vector3(
                     x * cell + blockSize * 0.5f, 0f,
                     z * cell + blockSize * 0.5f);
@@ -106,10 +111,30 @@ namespace BattleClubs.World
             CreateCube("Small_Mercadinho_Sign",
                 new Vector3(center.x, 2.95f, faceZ - side * 0.12f),
                 new Vector3(2.9f, 0.48f, 0.12f), signColor);
+            string[] shopNames = { "MERCADINHO", "BARBEARIA", "LANCHONETE" };
+            CreateShopSignLabel(shopNames[Mathf.Abs(Mathf.RoundToInt(center.x * 3f + center.z * 7f)) % shopNames.Length],
+                new Vector3(center.x, 2.95f, faceZ - side * 0.20f), side);
             CreateCube("Shop_Awning",
                 new Vector3(center.x, 2.55f, faceZ - side * 0.55f),
                 new Vector3(3.15f, 0.12f, 0.9f),
                 new Color(0.57f, 0.22f, 0.17f), side * 5f);
+        }
+
+        private void CreateShopSignLabel(string label, Vector3 position, int side)
+        {
+            GameObject sign = new GameObject("Shop_Sign_Lettering");
+            sign.transform.SetParent(transform, true);
+            sign.transform.position = position;
+            sign.transform.rotation = Quaternion.Euler(0f, side > 0 ? 180f : 0f, 0f);
+            TextMesh lettering = sign.AddComponent<TextMesh>();
+            lettering.text = label;
+            lettering.anchor = TextAnchor.MiddleCenter;
+            lettering.alignment = TextAlignment.Center;
+            lettering.fontSize = 48;
+            lettering.characterSize = 0.075f;
+            lettering.color = new Color(0.16f, 0.13f, 0.10f);
+            lettering.richText = false;
+            generated.Add(sign);
         }
 
         private void BuildFacadeUtility(Vector3 center, int side)
@@ -150,7 +175,20 @@ namespace BattleClubs.World
             item.transform.position = position;
             item.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             item.transform.localScale = scale;
-            SetColor(item, color);
+            Renderer renderer = item.GetComponent<Renderer>();
+            bool keepFlatColor = objectName.Contains("Laundry") ||
+                objectName.Contains("Clothespin") || objectName.Contains("Sign") ||
+                objectName.Contains("Awning");
+            if (renderer != null && !keepFlatColor)
+            {
+                bool concrete = objectName.Contains("Meter") || objectName.Contains("Conduit") ||
+                    objectName.Contains("Shutter") || objectName.Contains("Slat");
+                CommunityMaterialLibrary.ApplySurface(renderer, color,
+                    concrete ? BattleClubs.Art.ProceduralSurfaceTextures.Surface.Concrete
+                             : BattleClubs.Art.ProceduralSurfaceTextures.Surface.Plaster,
+                    new Vector2(Mathf.Max(1f, scale.x * 0.6f), Mathf.Max(1f, scale.y * 0.6f)));
+            }
+            else SetColor(item, color);
             generated.Add(item);
         }
 
@@ -158,12 +196,7 @@ namespace BattleClubs.World
         {
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer == null) return;
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (shader == null) return;
-            Material material = new Material(shader);
-            material.color = color;
-            renderer.sharedMaterial = material;
+            renderer.sharedMaterial = CommunityMaterialLibrary.Get(color);
         }
 
         private void ClearGenerated()

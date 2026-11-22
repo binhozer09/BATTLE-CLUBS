@@ -31,6 +31,7 @@ namespace BattleClubs.World
         [SerializeField] private bool addCourtMarkings = true;
 
         private readonly List<GameObject> generated = new List<GameObject>();
+        private readonly List<Mesh> generatedMeshes = new List<Mesh>();
 
         private static readonly Color Asphalt = new Color(0.19f, 0.205f, 0.20f);
         private static readonly Color Concrete = new Color(0.43f, 0.43f, 0.40f);
@@ -61,15 +62,30 @@ namespace BattleClubs.World
             float totalZ = blocksZ * blockSize + (blocksZ - 1) * roadWidth;
             Vector3 origin = transform.position;
 
-            CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
-                origin + new Vector3(totalX * 0.5f, -0.65f, totalZ * 0.5f),
+            GameObject ground = CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
+                origin + new Vector3(totalX * 0.5f, -0.5f, totalZ * 0.5f),
                 new Vector3(totalX + roadWidth, 1f, totalZ + roadWidth), Asphalt);
+            // Keep the playable floor's physics surface explicit and non-trigger.
+            // CreatePrimitive normally adds this BoxCollider, but enforce it here so
+            // later prefab or generator changes cannot leave a render-only floor.
+            BoxCollider groundCollider = ground.GetComponent<BoxCollider>();
+            if (groundCollider == null) groundCollider = ground.AddComponent<BoxCollider>();
+            groundCollider.center = Vector3.zero;
+            groundCollider.size = Vector3.one;
+            groundCollider.isTrigger = false;
+            groundCollider.enabled = true;
 
             // Narrow sidewalks and the two rows of houses form readable combat lanes.
             for (int x = 0; x < blocksX; x++)
             {
                 for (int z = 0; z < blocksZ; z++)
                 {
+                    // Reserve the central block as an open combat plaza. The court
+                    // occupies this space, so surrounding houses must not intersect it.
+                    if (blocksX >= 3 && blocksZ >= 3 &&
+                        x == blocksX / 2 && z == blocksZ / 2)
+                        continue;
+
                     Vector3 center = origin + new Vector3(x * cell + blockSize * 0.5f, 0f,
                         z * cell + blockSize * 0.5f);
                     BuildBlock(center, x, z);
@@ -118,6 +134,7 @@ namespace BattleClubs.World
             const int alongSegments = 28;
             const int depthSegments = 10;
             var vertices = new Vector3[(alongSegments + 1) * (depthSegments + 1)];
+            var uvs = new Vector2[vertices.Length];
             var triangles = new int[alongSegments * depthSegments * 6];
 
             for (int z = 0; z <= depthSegments; z++)
@@ -135,8 +152,11 @@ namespace BattleClubs.World
                     Vector2 point = extendAlongX
                         ? edge + new Vector2(outwardSign * distance, 0f)
                         : edge + new Vector2(0f, outwardSign * distance);
-                    vertices[z * (alongSegments + 1) + x] =
-                        new Vector3(point.x, terrace - d * 1.8f, point.y);
+                    int vertexIndex = z * (alongSegments + 1) + x;
+                    vertices[vertexIndex] = new Vector3(point.x, terrace - d * 1.8f, point.y);
+                    // Explicit UVs are required: without them the hillside samples
+                    // one texel and appears as a flat color despite its material.
+                    uvs[vertexIndex] = new Vector2(t * 7f, d * 3f);
                 }
             }
 
@@ -155,23 +175,25 @@ namespace BattleClubs.World
             Mesh mesh = new Mesh { name = objectName + "_Mesh" };
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             mesh.vertices = vertices;
+            mesh.uv = uvs;
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
+            generatedMeshes.Add(mesh);
 
             GameObject hill = new GameObject(objectName);
             hill.transform.SetParent(transform, false);
             hill.transform.position = origin;
             hill.AddComponent<MeshFilter>().sharedMesh = mesh;
+            // The hillside is generated from a custom mesh, so unlike primitives
+            // it does not receive a collider automatically.
+            MeshCollider hillCollider = hill.AddComponent<MeshCollider>();
+            hillCollider.sharedMesh = mesh;
+            hillCollider.convex = false;
             MeshRenderer renderer = hill.AddComponent<MeshRenderer>();
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (shader != null)
-            {
-                Material material = new Material(shader);
-                material.color = new Color(0.24f, 0.27f, 0.22f);
-                renderer.sharedMaterial = material;
-            }
+            CommunityMaterialLibrary.ApplySurface(renderer,
+                new Color(0.24f, 0.27f, 0.22f),
+                ProceduralSurfaceTextures.Surface.Concrete, new Vector2(7f, 3f));
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = true;
             generated.Add(hill);
@@ -191,7 +213,8 @@ namespace BattleClubs.World
                 float depth = buildingDepth * Random.Range(0.72f, 0.96f);
                 float xOffset = Random.Range(-half * 0.12f, half * 0.12f);
                 Vector3 position = center + new Vector3(xOffset, height * 0.5f, side * sideOffset);
-                Color wall = FacadePalette[Random.Range(0, FacadePalette.Length)];
+                // Exposed ordinary cement masonry blocks: keep the albedo neutral so the block texture is not tinted like clay brick or painted plaster.
+                Color wall = new Color(0.92f, 0.92f, 0.89f);
 
                 CreatePrimitive(PrimitiveType.Cube, "House_" + blockX + "_" + blockZ + "_" + side,
                     position, new Vector3(width, height, depth), wall);
@@ -216,61 +239,169 @@ namespace BattleClubs.World
                     CreatePrimitive(PrimitiveType.Cylinder, "WaterTankLid",
                         tankPosition + Vector3.up * 0.78f, new Vector3(1.2f, 0.06f, 1.2f), DarkMetal);
                 }
+
+                BuildRooftopDetails(roof, width, depth, blockX, blockZ, side);
             }
 
-            // Low cover at the block ends; the central alley remains open.
-            for (int side = -1; side <= 1; side += 2)
-            {
-                Vector3 wallPos = center + new Vector3(side * (half - 0.35f), 0.75f, 0f);
-                CreatePrimitive(PrimitiveType.Cube, "AlleyCover", wallPos,
-                    new Vector3(0.7f, 1.5f, lane * 0.9f), Concrete);
-            }
+            // Keep both ends of the alley completely open. Full-width cover walls
+            // here used to seal the passage between neighboring blocks and cut off
+            // the stair flights generated by CommunityArtDetails. Cover belongs
+            // beside combat lanes, never across their only traversal connection.
 
             // A small streetlight at alternating corners adds depth without cluttering every lane.
             if (addStreetLights && (blockX + blockZ) % 2 == 0)
                 BuildStreetLight(center + new Vector3(-half + 0.7f, 0f, -half + 0.7f));
         }
 
+
+        private void BuildRooftopDetails(Vector3 roof, float width, float depth,
+            int blockX, int blockZ, int side)
+        {
+            // Small rooftop rooms, patched metal roofs, antennas and laundry make
+            // the skyline feel inhabited instead of repeating identical flat boxes.
+            int variation = Mathf.Abs(blockX * 17 + blockZ * 31 + side * 13) % 10;
+            float roofTop = roof.y + 0.12f;
+
+            if (variation <= 3)
+            {
+                Vector3 room = roof + new Vector3(width * 0.22f, 0.88f, side * depth * 0.12f);
+                float roomWidth = Mathf.Clamp(width * 0.34f, 1.6f, 2.5f);
+                float roomDepth = Mathf.Clamp(depth * 0.42f, 1.4f, 2.2f);
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Utility_Room",
+                    room, new Vector3(roomWidth, 1.55f, roomDepth),
+                    new Color(0.62f, 0.59f, 0.51f));
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Corrugated_Canopy",
+                    room + Vector3.up * 0.82f,
+                    new Vector3(roomWidth + 0.24f, 0.12f, roomDepth + 0.24f),
+                    new Color(0.25f, 0.28f, 0.27f));
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Room_Door",
+                    room + new Vector3(0f, -0.18f, -side * (roomDepth * 0.5f + 0.07f)),
+                    new Vector3(0.52f, 1.05f, 0.07f), new Color(0.29f, 0.22f, 0.16f));
+            }
+
+            if (variation == 1 || variation == 4 || variation == 7)
+            {
+                Vector3 antenna = roof + new Vector3(-width * 0.28f, 1.05f, -side * depth * 0.22f);
+                CreatePrimitive(PrimitiveType.Cylinder, "Rooftop_Antenna_Mast",
+                    antenna, new Vector3(0.035f, 1.05f, 0.035f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Cube, "Rooftop_Antenna_Crossbar",
+                    antenna + Vector3.up * 0.72f,
+                    new Vector3(0.9f, 0.045f, 0.045f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Sphere, "Rooftop_Satellite_Dish",
+                    antenna + new Vector3(0.42f, -0.15f, 0f),
+                    new Vector3(0.52f, 0.12f, 0.52f), new Color(0.68f, 0.69f, 0.65f));
+            }
+
+            if (variation == 2 || variation == 5 || variation == 8)
+            {
+                float lineZ = roof.z - side * depth * 0.28f;
+                Vector3 lineStart = new Vector3(roof.x - width * 0.28f, roofTop + 1.15f, lineZ);
+                Vector3 lineEnd = new Vector3(roof.x + width * 0.28f, roofTop + 1.15f, lineZ);
+                CreatePrimitive(PrimitiveType.Cylinder, "Rooftop_Laundry_Line",
+                    (lineStart + lineEnd) * 0.5f,
+                    new Vector3(0.018f, Vector3.Distance(lineStart, lineEnd) * 0.5f, 0.018f),
+                    new Color(0.18f, 0.18f, 0.17f)).transform.rotation =
+                    Quaternion.FromToRotation(Vector3.up, (lineEnd - lineStart).normalized);
+
+                Color[] clothColors =
+                {
+                    new Color(0.72f, 0.22f, 0.18f), new Color(0.82f, 0.76f, 0.61f),
+                    new Color(0.18f, 0.31f, 0.48f), new Color(0.48f, 0.55f, 0.37f)
+                };
+                for (int i = 0; i < 3; i++)
+                {
+                    Vector3 cloth = Vector3.Lerp(lineStart, lineEnd, (i + 1) / 4f);
+                    CreatePrimitive(PrimitiveType.Cube, "Rooftop_Hanging_Cloth",
+                        cloth + Vector3.down * 0.32f,
+                        new Vector3(0.48f, 0.62f, 0.045f), clothColors[(variation + i) % clothColors.Length]);
+                }
+            }
+        }
+
         private void BuildFacade(Vector3 house, float width, float height, float depth,
             int side, int blockX, int blockZ)
         {
-            // The front of each row faces the playable alley.
+            // The front of each row faces the playable alley. Small architectural
+            // layers break up the old flat-box silhouette without adding asset dependencies.
             float frontZ = house.z - side * (depth * 0.5f + 0.055f);
             float windowY = Mathf.Min(height * 0.67f, height - 1.25f);
             float windowSpacing = width * 0.27f;
+            Color trim = new Color(0.84f, 0.79f, 0.67f);
+            Color shutter = new Color(0.22f, 0.25f, 0.24f);
+
+            // A continuous upper cornice gives each facade a readable roof edge.
+            CreatePrimitive(PrimitiveType.Cube, "FacadeCornice",
+                new Vector3(house.x, house.y + height * 0.5f - 0.12f, frontZ - side * 0.10f),
+                new Vector3(width + 0.22f, 0.20f, 0.24f), trim);
 
             for (int i = -1; i <= 1; i += 2)
             {
                 Vector3 window = new Vector3(house.x + i * windowSpacing, windowY, frontZ);
+                Vector3 faceOffset = new Vector3(0f, 0f, -side * 0.11f);
                 CreatePrimitive(PrimitiveType.Cube, "WindowFrame", window,
-                    new Vector3(1.12f, 1.05f, 0.12f), new Color(0.82f, 0.79f, 0.68f));
-                CreatePrimitive(PrimitiveType.Cube, "WindowGlass",
-                    window + new Vector3(0f, 0f, -side * 0.075f),
+                    new Vector3(1.12f, 1.05f, 0.12f), trim);
+                CreatePrimitive(PrimitiveType.Cube, "WindowGlass", window + faceOffset,
                     new Vector3(0.82f, 0.76f, 0.06f), Glass);
-                CreatePrimitive(PrimitiveType.Cube, "WindowDivider",
-                    window + new Vector3(0f, 0f, -side * 0.12f),
+                CreatePrimitive(PrimitiveType.Cube, "WindowDivider", window + faceOffset * 1.45f,
                     new Vector3(0.07f, 0.8f, 0.05f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Cube, "WindowSill",
+                    window + new Vector3(0f, -0.56f, -side * 0.14f),
+                    new Vector3(1.28f, 0.12f, 0.30f), Concrete);
+
+                // Occasional metal shutters make neighboring houses less repetitive.
+                if ((blockX + blockZ + i) % 3 == 0)
+                {
+                    CreatePrimitive(PrimitiveType.Cube, "WindowShutter",
+                        window + new Vector3(i * 0.57f, 0f, -side * 0.15f),
+                        new Vector3(0.12f, 1.02f, 0.16f), shutter);
+                }
             }
 
-            Vector3 door = new Vector3(house.x, 1.05f, frontZ);
-            CreatePrimitive(PrimitiveType.Cube, "FrontDoor", door,
+            Vector3 door = new Vector3(house.x, 1.05f, frontZ - side * 0.025f);
+            CreatePrimitive(PrimitiveType.Cube, "DoorFrame", door + Vector3.up * 0.04f,
+                new Vector3(1.24f, 2.22f, 0.18f), trim);
+            CreatePrimitive(PrimitiveType.Cube, "FrontDoor", door + new Vector3(0f, 0f, -side * 0.12f),
                 new Vector3(1.05f, 2.1f, 0.16f), new Color(0.27f, 0.19f, 0.14f));
             CreatePrimitive(PrimitiveType.Sphere, "DoorHandle",
-                door + new Vector3(0.34f, 0f, -side * 0.12f),
+                door + new Vector3(0.34f, 0f, -side * 0.24f),
                 new Vector3(0.09f, 0.09f, 0.09f), new Color(0.82f, 0.67f, 0.34f));
+            CreatePrimitive(PrimitiveType.Cube, "DoorStep",
+                door + new Vector3(0f, -0.98f, -side * 0.25f),
+                new Vector3(1.42f, 0.16f, 0.52f), Concrete);
 
-            // Simple projecting balcony/awning on some houses.
+            // A small awning over the entrance adds depth and a distinct street-level silhouette.
+            if ((blockX * 3 + blockZ) % 2 == 0)
+            {
+                CreatePrimitive(PrimitiveType.Cube, "DoorAwning",
+                    door + new Vector3(0f, 1.22f, -side * 0.48f),
+                    new Vector3(1.55f, 0.12f, 0.78f), shutter);
+                for (int post = -1; post <= 1; post += 2)
+                    CreatePrimitive(PrimitiveType.Cylinder, "AwningSupport",
+                        door + new Vector3(post * 0.64f, 0.63f, -side * 0.73f),
+                        new Vector3(0.035f, 0.62f, 0.035f), DarkMetal);
+            }
+
+            // Balcony railings use individual uprights instead of a single floating bar.
             if (Random.value > 0.42f && height > 5.2f)
             {
                 Vector3 balcony = new Vector3(house.x, windowY - 0.7f, frontZ - side * 0.45f);
+                float balconyWidth = width * 0.62f;
                 CreatePrimitive(PrimitiveType.Cube, "BalconySlab", balcony,
-                    new Vector3(width * 0.62f, 0.16f, 0.95f), Concrete);
-                CreatePrimitive(PrimitiveType.Cube, "BalconyRail",
-                    balcony + new Vector3(0f, 0.48f, -side * 0.42f),
-                    new Vector3(width * 0.6f, 0.08f, 0.08f), DarkMetal);
+                    new Vector3(balconyWidth + 0.18f, 0.16f, 0.95f), Concrete);
+                Vector3 railCenter = balcony + new Vector3(0f, 0.48f, -side * 0.42f);
+                CreatePrimitive(PrimitiveType.Cube, "BalconyRail", railCenter,
+                    new Vector3(balconyWidth, 0.08f, 0.08f), DarkMetal);
+                int bars = Mathf.Max(4, Mathf.RoundToInt(balconyWidth / 0.28f));
+                for (int bar = 0; bar <= bars; bar++)
+                {
+                    float x = -balconyWidth * 0.5f + balconyWidth * bar / bars;
+                    CreatePrimitive(PrimitiveType.Cube, "BalconyBar",
+                        railCenter + new Vector3(x, -0.23f, 0f),
+                        new Vector3(0.045f, 0.48f, 0.055f), DarkMetal);
+                }
             }
 
-            // Air-conditioning unit mounted beside a window.
+            // Air-conditioning unit with a drain pipe running down the wall.
             if (Random.value > 0.55f)
             {
                 Vector3 ac = new Vector3(house.x + width * 0.37f, windowY - 0.35f,
@@ -280,6 +411,9 @@ namespace BattleClubs.World
                 CreatePrimitive(PrimitiveType.Cube, "ACVent",
                     ac + new Vector3(0f, 0f, -side * 0.19f),
                     new Vector3(0.43f, 0.18f, 0.035f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Cylinder, "ACDrainPipe",
+                    ac + new Vector3(0.34f, -0.58f, -side * 0.08f),
+                    new Vector3(0.035f, 0.68f, 0.035f), new Color(0.67f, 0.68f, 0.63f));
             }
         }
 
@@ -319,6 +453,8 @@ namespace BattleClubs.World
 
         private void BuildCentralCourt(Vector3 origin, float width, float depth)
         {
+            // The central block is deliberately left clear by BuildBlock; this
+            // court becomes a real open landmark instead of clipping through houses.
             Vector3 center = origin + new Vector3(width * 0.5f, 0.08f, depth * 0.5f);
             CreatePrimitive(PrimitiveType.Cube, "CentralCourt",
                 center, new Vector3(12f, 0.16f, 9f), new Color(0.18f, 0.34f, 0.24f));
@@ -341,11 +477,11 @@ namespace BattleClubs.World
             // The fifth anchor sits along the north edge to keep all starts separated.
             Vector3[] positions =
             {
-                origin + new Vector3(3f, 0.15f, 3f),
-                origin + new Vector3(width - 3f, 0.15f, 3f),
-                origin + new Vector3(3f, 0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, 0.15f, depth - 3f),
-                origin + new Vector3(width * 0.5f, 0.15f, depth - 3f)
+                origin + new Vector3(3f, 0.05f, 3f),
+                origin + new Vector3(width - 3f, 0.05f, 3f),
+                origin + new Vector3(3f, 0.05f, depth - 3f),
+                origin + new Vector3(width - 3f, 0.05f, depth - 3f),
+                origin + new Vector3(width * 0.5f, 0.05f, depth - 3f)
             };
 
             for (int i = 0; i < positions.Length; i++)
@@ -369,18 +505,10 @@ namespace BattleClubs.World
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null) shader = Shader.Find("Standard");
-                if (shader != null)
-                {
-                    Material material = new Material(shader);
-                    material.color = color;
-                    ProceduralSurfaceTextures.Surface surface = ResolveSurface(objectName);
-                    material.mainTexture = ProceduralSurfaceTextures.Get(surface);
-                    material.mainTextureScale = new Vector2(
-                        Mathf.Max(1f, scale.x * 0.35f), Mathf.Max(1f, scale.y * 0.35f));
-                    renderer.sharedMaterial = material;
-                }
+                Texture texture = ProceduralSurfaceTextures.Get(ResolveSurface(objectName));
+                renderer.sharedMaterial = CommunityMaterialLibrary.Get(color, texture);
+                CommunityMaterialLibrary.SetTextureScale(renderer, new Vector2(
+                    Mathf.Max(1f, scale.x * 0.35f), Mathf.Max(1f, scale.y * 0.35f)));
             }
 
             generated.Add(item);
@@ -392,11 +520,24 @@ namespace BattleClubs.World
             if (objectName == "Map_Ground" || objectName == "RoadDash")
                 return ProceduralSurfaceTextures.Surface.Asphalt;
             if (objectName.StartsWith("House_"))
-                return ProceduralSurfaceTextures.Surface.Brick;
-            if (objectName == "CentralCourt" || objectName.StartsWith("Court"))
+            {
+                int stableHash = 17;
+                for (int i = 0; i < objectName.Length; i++)
+                    stableHash = stableHash * 31 + objectName[i];
+                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
+            }
+            if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
-            if (objectName == "Roof" || objectName == "RoofParapet" || objectName == "AlleyCover")
+            if (objectName.StartsWith("Court"))
                 return ProceduralSurfaceTextures.Surface.Concrete;
+            if (objectName == "Roof")
+                return ProceduralSurfaceTextures.Surface.Concrete;
+            if (objectName == "RoofParapet" || objectName == "AlleyCover")
+                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
+            if (objectName.Contains("Corrugated") || objectName.Contains("Canopy"))
+                return ProceduralSurfaceTextures.Surface.CorrugatedMetal;
+            if (objectName == "FrontDoor")
+                return ProceduralSurfaceTextures.Surface.Wood;
             return ProceduralSurfaceTextures.Surface.Plaster;
         }
 
@@ -409,6 +550,14 @@ namespace BattleClubs.World
                 else DestroyImmediate(generated[i]);
             }
             generated.Clear();
+
+            for (int i = generatedMeshes.Count - 1; i >= 0; i--)
+            {
+                if (generatedMeshes[i] == null) continue;
+                if (Application.isPlaying) Destroy(generatedMeshes[i]);
+                else DestroyImmediate(generatedMeshes[i]);
+            }
+            generatedMeshes.Clear();
         }
     }
 }

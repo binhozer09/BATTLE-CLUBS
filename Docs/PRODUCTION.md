@@ -113,3 +113,75 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Ajustada a elegibilidade em `ReviveInteraction`: personagens sem equipe continuam podendo interagir em cenas de treino quando ambos estão sem atribuição.
 - Se um dos personagens estiver atribuído a uma equipe, o outro também precisa estar atribuído à mesma equipe. Isso fecha o caso em que um personagem sem equipe poderia reanimar um jogador de equipe diferente.
 - Alteração gravada na branch de produção. Ainda depende de compilação e teste de gameplay no Unity Editor.
+
+
+### 21/11/2026 — Pipeline de integração do personagem 3D
+- Criado `HumanoidCharacterIntegrationWizard.cs` na branch `feature/humanoid-character-integration`.
+- O assistente recebe o Player_Root existente e um modelo FBX/prefab Humanoid selecionado, valida o Avatar e instancia o modelo como visual filho.
+- Conecta o Animator ao `HumanoidAnimationDriver` e ao `BatAttack`, adiciona `ClubKitApplier`, desativa Root Motion e remove somente os dois visuais provisórios conhecidos.
+- Criado `Docs/CHARACTER_INTEGRATION.md` com os requisitos de importação, integração e validação.
+- **Limite atual:** nenhum modelo FBX nem clipes foram adicionados. O assistente é a ponte de integração; não representa personagem final nem foi compilado/testado no Unity Editor.
+
+
+### 21/11/2026 — Otimização dos detalhes procedurais do cenário
+- Criada `CommunityMaterialLibrary.cs`, que reutiliza materiais por cor para objetos repetidos do cenário.
+- `CommunityArtDetails.cs` e `FavelaStreetLifeDetails.cs` passaram a compartilhar materiais em vez de instanciar um Material exclusivo para cada escada, peça de fiação, roupa no varal e detalhe de fachada.
+- A mudança reduz alocações duplicadas de materiais e prepara o cenário para uma etapa posterior de batching/otimização. Não significa que a geometria procedural já esteja combinada em poucos draw calls.
+- Ainda depende de abrir a cena no Unity 2022.3.62f1 e medir memória, draw calls e FPS em Android/PC; nenhum benchmark foi executado nesta sessão.
+
+
+### 21/11/2026 — Compartilhamento de materiais no mapa procedural
+- Ampliada `CommunityMaterialLibrary` para cachear materiais por cor e textura, em vez de criar uma instância por objeto procedural.
+- A escala das texturas agora é aplicada por renderer com `MaterialPropertyBlock`, preservando variações de tamanho entre casas, fachadas, ruas e detalhes sem multiplicar materiais.
+- `UrbanCommunityBlockout` passou a usar a biblioteca tanto nas construções/superfícies quanto no relevo de fundo. Os geradores de escadarias e detalhes de rua já utilizavam a mesma biblioteca.
+- A mudança reduz a quantidade de instâncias de Material; não comprova FPS nem reduz automaticamente a quantidade de draw calls. Medir no Unity Profiler e em dispositivos Android/PC continua obrigatório.
+- Nenhuma compilação ou execução Unity foi realizada nesta etapa.
+
+
+### 21/11/2026 — Primeira camada de sessão online
+- Adicionadas as dependências Unity Netcode for GameObjects 1.9.1 e Unity Transport 1.4.0 para o projeto Unity 2022.3.
+- Criado `NetworkSessionBootstrap.cs` com entrada Host, servidor dedicado e cliente IPv4; capacidade limitada a 20 jogadores; aprovação de conexão valida sala disponível e versão do protocolo.
+- Documentado o setup do NetworkManager e o escopo ainda pendente em `Docs/NETWORK_IMPLEMENTATION.md`.
+- Esta entrega é somente a fundação de sessão/transporte. Ainda não implementa matchmaking, distribuição 5x4, sincronização de gameplay ou autoridade de combate. Exige configuração do prefab de jogador e validação no Unity Editor; nenhuma conexão real foi testada nesta sessão.
+
+
+### 21/11/2026 — Primeira autoridade de combate online
+- Criado `NetworkCombatantAuthority.cs` para processar ataques no servidor, validar estado/cooldown/equipe/alvo e replicar acertos e estado de vida por `NetworkVariable`.
+- `BatAttack.cs` mantém o fluxo local nas cenas offline e encaminha o ataque ao servidor quando o jogador está spawnado em NGO.
+- Atualizada a documentação de integração: o prefab precisa de `NetworkObject`, `NetworkCombatantAuthority`, ponto de impacto configurado e `NetworkTransform`; o servidor deve atribuir as equipes.
+- Ainda não foi executado Unity Editor, compilação ou teste Host/Client. Reanimação online, movimento, lobby/matchmaking e equipes/score autoritativos seguem pendentes.
+
+
+### 21/11/2026 — Primeira autoridade de reanimação online
+- Criado `NetworkReviveAuthority.cs`: o servidor valida companheiro derrubado, equipe, distância e duração de quatro segundos; publica progresso e estado da interação.
+- `ReviveInteraction.cs` agora encaminha início/cancelamento para a autoridade de rede quando o jogador está spawnado em NGO, preservando o fluxo local offline.
+- O prefab precisa conter `NetworkObject`, `Combatant`, `NetworkCombatantAuthority` e `NetworkReviveAuthority`, com origens de ataque e reanimação configuradas.
+- Atribuição de equipes, movimento replicado, lobby/matchmaking e pontuação online ainda não estão concluídos. Sem compilação/teste Unity nesta etapa.
+
+
+### 21/11/2026 — Preparação automática dos assets humanoides CC0
+- Criado `Unity/Assets/Editor/HumanoidAssetBootstrap.cs` com download da release oficial KinemIQ FBX, verificação SHA-256 e extração segura para `Assets/ThirdParty/KinemIQ`.
+- O pacote upstream declara 35 animações humanoides CC0 e inclui o FBX `KinemIQ_Mannequin.fbx`; fonte e licença documentadas em `Docs/HUMANOID_ASSET_IMPORT.md`.
+- O menu de importação evita exigir que o usuário baixe manualmente arquivos no celular.
+- Limite: a conexão GitHub disponível nesta sessão não envia binários FBX ao repositório e não há Unity Editor remoto conectado. Portanto, o pacote ainda não foi materializado/importado no projeto nesta sessão. O mannequin não é fotorrealista; Avatar, clips e integração na cena precisam ser validados no Unity Editor.
+
+
+## 22/11/2026 — Integração do espaço central da favela
+
+- Revisada a composição dos três geradores existentes: `UrbanCommunityBlockout`, `CommunityArtDetails` e `FavelaStreetLifeDetails` continuam sendo usados, sem duplicar sistemas.
+- Reservado o bloco central do layout 5x5 como praça/quadra aberta. O gerador de casas não constrói fachadas nesse bloco; os geradores de escadarias, varais, mercadinhos e medidores também deixam essa área livre.
+- A quadra central passa a ocupar uma área sem casas nem objetos de rua atravessando o piso, reduzindo interseções visuais e obstáculos indevidos na principal área de combate.
+- Alterações gravadas na branch `feature/humanoid-character-integration`. Ainda precisam ser importadas e verificadas no Unity Editor: colisões, navegação a pé, alinhamento dos geradores e aparência em execução não foram testados nesta sessão.
+
+
+### 22/11/2026 — Continuidade das vielas e acesso às escadarias
+- Removidas as duas paredes transversais `AlleyCover` que ocupavam as extremidades de cada quarteirão e fechavam a passagem central.
+- As entradas e saídas das vielas ficam livres para conectar ruas entre quarteirões e permitir o acesso às escadarias existentes de `CommunityArtDetails`.
+- A alteração não cria um sistema novo de navegação nem substitui as escadas; corrige um bloqueio geométrico no gerador existente.
+- Verificação estática do trecho alterado concluída. Colisões, percurso contínuo e comportamento do jogador ainda precisam ser confirmados no Unity Editor; não houve compilação nem teste em runtime nesta sessão.
+
+
+### 22/11/2026 — Conexão das escadarias ao nível da rua
+- `CommunityArtDetails` agora cria uma rampa inclinada com `MeshCollider` no final de cada lance de escada gerado, conectando o patamar superior de volta ao nível da rua no quarteirão seguinte.
+- A rampa é dimensionada para avançar pela faixa da rua sem atravessar a largura inteira do quarteirão; sua malha é rastreada e liberada quando os detalhes são regenerados.
+- Verificação estática confirmou chamada do gerador, `MeshCollider`, limpeza da malha e chaves balanceadas. Ainda não há validação de colisão real, navegação do personagem ou compilação no Unity Editor.
