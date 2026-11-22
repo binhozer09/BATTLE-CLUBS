@@ -128,7 +128,7 @@ jobs:
               found = set()
               for member in archive.namelist():
                   base = os.path.basename(member)
-                  match = re.search(r"_(Color|NormalGL|Roughness)\\.(jpg|jpeg|png)$", base, re.I)
+                  match = re.search(r"_(Color|NormalGL|Roughness)\.(jpg|jpeg|png)$", base, re.I)
                   if not match:
                       continue
                   kind = match.group(1)
