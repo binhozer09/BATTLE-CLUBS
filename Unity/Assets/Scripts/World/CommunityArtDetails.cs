@@ -222,7 +222,8 @@ namespace BattleClubs.World
                 line.SetPosition(i, point);
             }
 
-            line.sharedMaterial = CommunityMaterialLibrary.Get(CableColor,\n                BattleClubs.Art.ProceduralSurfaceTextures.Get(BattleClubs.Art.ProceduralSurfaceTextures.Surface.PaintedMetal));
+            line.sharedMaterial = CommunityMaterialLibrary.Get(CableColor,
+                BattleClubs.Art.ProceduralSurfaceTextures.Get(BattleClubs.Art.ProceduralSurfaceTextures.Surface.PaintedMetal));
             generated.Add(cable);
         }
 
