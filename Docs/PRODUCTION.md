@@ -121,3 +121,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Conecta o Animator ao `HumanoidAnimationDriver` e ao `BatAttack`, adiciona `ClubKitApplier`, desativa Root Motion e remove somente os dois visuais provisórios conhecidos.
 - Criado `Docs/CHARACTER_INTEGRATION.md` com os requisitos de importação, integração e validação.
 - **Limite atual:** nenhum modelo FBX nem clipes foram adicionados. O assistente é a ponte de integração; não representa personagem final nem foi compilado/testado no Unity Editor.
+
+
+### 21/11/2026 — Otimização dos detalhes procedurais do cenário
+- Criada `CommunityMaterialLibrary.cs`, que reutiliza materiais por cor para objetos repetidos do cenário.
+- `CommunityArtDetails.cs` e `FavelaStreetLifeDetails.cs` passaram a compartilhar materiais em vez de instanciar um Material exclusivo para cada escada, peça de fiação, roupa no varal e detalhe de fachada.
+- A mudança reduz alocações duplicadas de materiais e prepara o cenário para uma etapa posterior de batching/otimização. Não significa que a geometria procedural já esteja combinada em poucos draw calls.
+- Ainda depende de abrir a cena no Unity 2022.3.62f1 e medir memória, draw calls e FPS em Android/PC; nenhum benchmark foi executado nesta sessão.
