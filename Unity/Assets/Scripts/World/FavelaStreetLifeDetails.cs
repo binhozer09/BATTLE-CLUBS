@@ -93,7 +93,7 @@ namespace BattleClubs.World
         private void BuildFacadeShopfront(Vector3 center, int side)
         {
             // A shutter, sign and simple awning mark selected ground-floor homes as local shops.
-            float faceZ = center.z - side * (alleyWidth * 0.5f + 0.12f);
+            float faceZ = GetAlleyFacingFacadeZ(center, side);
             Vector3 facade = new Vector3(center.x, 1.55f, faceZ);
 
             CreateCube("Local_Shop_Rolling_Shutter", facade,
@@ -140,7 +140,7 @@ namespace BattleClubs.World
         private void BuildFacadeUtility(Vector3 center, int side)
         {
             // Meter boxes and exposed conduit add believable street-level infrastructure.
-            float faceZ = center.z - side * (alleyWidth * 0.5f + 0.16f);
+            float faceZ = GetAlleyFacingFacadeZ(center, side);
             Vector3 meter = new Vector3(center.x + 4.2f, 1.9f, faceZ);
 
             CreateCube("Electric_Meter_Box", meter,
@@ -150,6 +150,20 @@ namespace BattleClubs.World
             CreateCube("Exposed_Conduit",
                 meter + new Vector3(-0.28f, -0.65f, 0f),
                 new Vector3(0.055f, 1.2f, 0.055f), new Color(0.22f, 0.23f, 0.21f));
+        }
+
+        private float GetAlleyFacingFacadeZ(Vector3 center, int side)
+        {
+            // Match the two house rows built by UrbanCommunityBlockout. Props were
+            // previously placed on the opposite side of the alley, detached from
+            // the actual facade. Use the average generated house depth so shopfronts,
+            // meters and conduits sit against the alley-facing wall.
+            float lane = Mathf.Clamp(alleyWidth, 2f, blockSize * 0.35f);
+            float buildingDepth = (blockSize - lane) * 0.5f;
+            float sideOffset = (lane + buildingDepth) * 0.5f;
+            float averageHouseDepth = buildingDepth * 0.84f;
+            float facadeZ = center.z + side * (sideOffset - averageHouseDepth * 0.5f - 0.055f);
+            return facadeZ - side * 0.075f;
         }
 
         private void CreateCylinderBetween(string objectName, Vector3 start, Vector3 end,
