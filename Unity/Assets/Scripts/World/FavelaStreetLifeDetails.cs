@@ -158,12 +158,7 @@ namespace BattleClubs.World
         {
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer == null) return;
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (shader == null) return;
-            Material material = new Material(shader);
-            material.color = color;
-            renderer.sharedMaterial = material;
+            renderer.sharedMaterial = CommunityMaterialLibrary.Get(color);
         }
 
         private void ClearGenerated()
