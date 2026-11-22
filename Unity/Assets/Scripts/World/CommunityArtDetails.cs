@@ -182,6 +182,21 @@ namespace BattleClubs.World
             CreateCube("Perimeter_Retaining_Wall_Back",
                 new Vector3(origin.x + width * 0.5f, 1.1f, origin.z + depth + 1.3f),
                 new Vector3(width + 5f, 2.2f, 0.55f), new Color(0.34f, 0.34f, 0.32f));
+
+            // Complete the two side boundaries without sealing the cross streets.
+            // Each wall segment spans one residential block; the road-width gaps
+            // remain open as entrances and keep the perimeter connected to the map.
+            for (int z = 0; z < blocksZ; z++)
+            {
+                float segmentCenterZ = origin.z + z * cell + blockSize * 0.5f;
+                Vector3 segmentSize = new Vector3(0.55f, 1.6f, blockSize);
+                CreateCube("Perimeter_Retaining_Wall_Left",
+                    new Vector3(origin.x - 1.3f, 0.8f, segmentCenterZ),
+                    segmentSize, new Color(0.34f, 0.34f, 0.32f));
+                CreateCube("Perimeter_Retaining_Wall_Right",
+                    new Vector3(origin.x + width + 1.3f, 0.8f, segmentCenterZ),
+                    segmentSize, new Color(0.34f, 0.34f, 0.32f));
+            }
         }
 
         private void CreateCable(string objectName, Vector3 start, Vector3 end, float thickness)
