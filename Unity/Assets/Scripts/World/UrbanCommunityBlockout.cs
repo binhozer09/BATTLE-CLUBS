@@ -547,6 +547,10 @@ namespace BattleClubs.World
             CreatePrimitive(PrimitiveType.Cube, "CentralCourt",
                 center, new Vector3(12f, 0.16f, 9f), new Color(0.18f, 0.34f, 0.24f));
 
+            // The court was only painted ground with no playable landmark at either
+            // end. Add two compact futsal goals, including a visible net grid.
+            BuildCourtGoals(center);
+
             if (!addCourtMarkings) return;
             Color line = new Color(0.88f, 0.86f, 0.74f);
             CreatePrimitive(PrimitiveType.Cube, "CourtLine_Long",
@@ -557,6 +561,61 @@ namespace BattleClubs.World
                 center + new Vector3(5.8f, 0.09f, 0f), new Vector3(0.07f, 0.025f, 8.5f), line);
             CreatePrimitive(PrimitiveType.Cylinder, "CourtCenterCircle",
                 center + Vector3.up * 0.11f, new Vector3(2.4f, 0.015f, 2.4f), line);
+        }
+
+        private void BuildCourtGoals(Vector3 center)
+        {
+            const float goalWidth = 3.0f;
+            const float goalHeight = 1.85f;
+            const float post = 0.12f;
+            const float goalDepth = 0.85f;
+            Color frame = new Color(0.88f, 0.86f, 0.78f);
+            Color net = new Color(0.12f, 0.17f, 0.15f);
+
+            for (int end = -1; end <= 1; end += 2)
+            {
+                float frontX = center.x + end * 5.72f;
+                float backX = frontX + end * goalDepth;
+                float postZ = goalWidth * 0.5f;
+
+                // Front frame and rear supports.
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Post",
+                        new Vector3(frontX, center.y + goalHeight * 0.5f, center.z + side * postZ),
+                        new Vector3(post, goalHeight, post), frame);
+                    CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Back_Support",
+                        new Vector3(backX, center.y + goalHeight * 0.5f, center.z + side * postZ),
+                        new Vector3(post, goalHeight, post), frame);
+                    CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Side_Rail",
+                        new Vector3((frontX + backX) * 0.5f, center.y + goalHeight, center.z + side * postZ),
+                        new Vector3(goalDepth, post, post), frame);
+                }
+
+                CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Crossbar",
+                    new Vector3(frontX, center.y + goalHeight, center.z),
+                    new Vector3(post, post, goalWidth + post), frame);
+                CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Back_Bar",
+                    new Vector3(backX, center.y + goalHeight, center.z),
+                    new Vector3(post, post, goalWidth + post), frame);
+
+                // A restrained square net pattern stays readable at gameplay distance.
+                float netX = backX - end * 0.06f;
+                for (int i = 0; i <= 4; i++)
+                {
+                    float z = center.z - postZ + i * (goalWidth / 4f);
+                    CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Net_Vertical",
+                        new Vector3(netX, center.y + goalHeight * 0.5f, z),
+                        new Vector3(0.035f, goalHeight, 0.035f), net);
+                }
+                for (int i = 0; i <= 4; i++)
+                {
+                    float y = center.y + 0.12f + i * ((goalHeight - 0.12f) / 4f);
+                    CreatePrimitive(PrimitiveType.Cube, "Court_Goal_Net_Horizontal",
+                        new Vector3(netX, y, center.z),
+                        new Vector3(0.035f, 0.035f, goalWidth), net);
+                }
+            }
         }
 
         private void CreateSpawns(Vector3 origin, float width, float depth)
