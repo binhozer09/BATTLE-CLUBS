@@ -70,6 +70,12 @@ namespace BattleClubs.World
             {
                 for (int z = 0; z < blocksZ; z++)
                 {
+                    // Reserve the central block as an open combat plaza. The court
+                    // occupies this space, so surrounding houses must not intersect it.
+                    if (blocksX >= 3 && blocksZ >= 3 &&
+                        x == blocksX / 2 && z == blocksZ / 2)
+                        continue;
+
                     Vector3 center = origin + new Vector3(x * cell + blockSize * 0.5f, 0f,
                         z * cell + blockSize * 0.5f);
                     BuildBlock(center, x, z);
@@ -313,6 +319,8 @@ namespace BattleClubs.World
 
         private void BuildCentralCourt(Vector3 origin, float width, float depth)
         {
+            // The central block is deliberately left clear by BuildBlock; this
+            // court becomes a real open landmark instead of clipping through houses.
             Vector3 center = origin + new Vector3(width * 0.5f, 0.08f, depth * 0.5f);
             CreatePrimitive(PrimitiveType.Cube, "CentralCourt",
                 center, new Vector3(12f, 0.16f, 9f), new Color(0.18f, 0.34f, 0.24f));
