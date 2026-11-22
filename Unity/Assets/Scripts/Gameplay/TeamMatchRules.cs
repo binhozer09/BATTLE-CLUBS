@@ -12,18 +12,34 @@ namespace BattleClubs.Gameplay
         public string clubId;
         public List<Combatant> players = new List<Combatant>();
 
+        public bool HasCompleteRoster
+        {
+            get
+            {
+                if (players == null || players.Count != 4 ||
+                    string.IsNullOrWhiteSpace(teamId)) return false;
+
+                HashSet<Combatant> uniquePlayers = new HashSet<Combatant>();
+                foreach (Combatant player in players)
+                {
+                    if (player == null || !uniquePlayers.Add(player) ||
+                        !string.Equals(player.TeamId, teamId, System.StringComparison.Ordinal))
+                        return false;
+                }
+
+                return true;
+            }
+        }
+
         public bool IsEliminated
         {
             get
             {
-                // A team is not eliminated until its complete four-player roster
-                // exists and every member has reached Eliminated.
-                if (players == null || players.Count != 4) return false;
+                // A team is not eliminated until its complete, consistently
+                // assigned four-player roster exists and every member is out.
+                if (!HasCompleteRoster) return false;
                 foreach (Combatant player in players)
-                {
-                    if (player == null || player.State != PlayerLifeState.Eliminated)
-                        return false;
-                }
+                    if (player.State != PlayerLifeState.Eliminated) return false;
                 return true;
             }
         }
@@ -81,6 +97,33 @@ namespace BattleClubs.Gameplay
         public int TeamCount => teams == null ? 0 : Mathf.Min(teams.Count, RequiredTeamCount);
         public int MaxPlayers => TeamCount * PlayersPerTeam;
 
+        /// <summary>
+        /// A match may start only when all five teams have four unique players
+        /// whose Combatant team assignment matches the roster they occupy.
+        /// </summary>
+        public bool IsReadyToStart
+        {
+            get
+            {
+                if (TeamCount != RequiredTeamCount) return false;
+                for (int i = 0; i < RequiredTeamCount; i++)
+                    if (teams[i] == null || !teams[i].HasCompleteRoster) return false;
+                return true;
+            }
+        }
+
+        public int RegisteredPlayerCount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < TeamCount; i++)
+                    if (teams[i] != null && teams[i].players != null)
+                        count += teams[i].players.Count;
+                return count;
+            }
+        }
+
         public bool TryAddPlayer(string teamId, Combatant player)
         {
             if (player == null || teams == null) return false;
@@ -121,9 +164,11 @@ namespace BattleClubs.Gameplay
 
         public int CountActiveTeams()
         {
+            if (!IsReadyToStart) return 0;
+
             int active = 0;
             for (int i = 0; i < TeamCount; i++)
-                if (teams[i] != null && !teams[i].IsEliminated) active++;
+                if (!teams[i].IsEliminated) active++;
             return active;
         }
 
@@ -159,6 +204,8 @@ namespace BattleClubs.Gameplay
 
         public MatchTeam GetSoleSurvivingTeam()
         {
+            if (!IsReadyToStart) return null;
+
             MatchTeam survivor = null;
             for (int i = 0; i < TeamCount; i++)
             {
