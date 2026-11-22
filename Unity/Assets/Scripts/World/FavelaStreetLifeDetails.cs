@@ -42,6 +42,11 @@ namespace BattleClubs.World
             for (int x = 0; x < blocksX; x++)
             for (int z = 0; z < blocksZ; z++)
             {
+                // The central block is the open court; do not place laundry or
+                // shopfront props through its playable floor area.
+                if (blocksX >= 3 && blocksZ >= 3 &&
+                    x == blocksX / 2 && z == blocksZ / 2) continue;
+
                 Vector3 center = origin + new Vector3(
                     x * cell + blockSize * 0.5f, 0f,
                     z * cell + blockSize * 0.5f);
