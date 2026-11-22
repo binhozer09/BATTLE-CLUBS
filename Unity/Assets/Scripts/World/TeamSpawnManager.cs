@@ -36,8 +36,14 @@ namespace BattleClubs.World
             bool wasEnabled = controller != null && controller.enabled;
 
             if (wasEnabled) controller.enabled = false;
-            player.SetPositionAndRotation(destination, GetSpawnRotation(anchor));
-            if (wasEnabled) controller.enabled = true;
+            try
+            {
+                player.SetPositionAndRotation(destination, GetSpawnRotation(anchor));
+            }
+            finally
+            {
+                if (wasEnabled && controller != null) controller.enabled = true;
+            }
 
             return true;
         }
