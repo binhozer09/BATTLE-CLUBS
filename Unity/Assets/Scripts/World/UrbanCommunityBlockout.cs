@@ -797,6 +797,10 @@ namespace BattleClubs.World
                 objectName == "LampHead" || objectName == "Rooftop_Hanging_Cloth" ||
                 objectName.StartsWith("Court_Goal_Net"))
                 return ProceduralSurfaceTextures.Surface.Plaster;
+            if (objectName == "ACDrainPipe")
+                return ProceduralSurfaceTextures.Surface.PVC;
+            if (objectName == "Rooftop_Laundry_Line" || objectName.Contains("Satellite_Dish"))
+                return ProceduralSurfaceTextures.Surface.PaintedMetal;
             if (objectName.Contains("WindowFrame") || objectName.Contains("WindowDivider") ||
                 objectName.Contains("WindowShutter") || objectName.Contains("BalconyRail") ||
                 objectName.Contains("BalconyBar") || objectName.Contains("AirConditioner") ||
