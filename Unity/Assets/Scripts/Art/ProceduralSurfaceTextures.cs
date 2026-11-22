@@ -9,9 +9,9 @@ namespace BattleClubs.Art
     /// </summary>
     public static class ProceduralSurfaceTextures
     {
-        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt, PaintedMetal, Plastic }
+        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt, PaintedMetal, Plastic, PVC }
 
-        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt, paintedMetal, plastic;
+        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt, paintedMetal, plastic, pvc;
 
         public static Texture2D Get(Surface surface)
         {
@@ -24,6 +24,7 @@ namespace BattleClubs.Art
                 case Surface.HillsideDirt: return hillsideDirt ?? (hillsideDirt = BuildHillsideDirt());
                 case Surface.PaintedMetal: return paintedMetal ?? (paintedMetal = BuildPaintedMetal());
                 case Surface.Plastic: return plastic ?? (plastic = BuildPlastic());
+                case Surface.PVC: return pvc ?? (pvc = BuildPVC());
                 case Surface.Concrete: return concrete ?? (concrete = BuildNoise("Concrete", 256, 256, 0.48f, 0.13f, 0.055f));
                 case Surface.Asphalt: return asphalt ?? (asphalt = BuildAsphalt());
                 case Surface.Court: return court ?? (court = BuildCourt());
@@ -278,6 +279,27 @@ namespace BattleClubs.Art
                 float grain = Mathf.PerlinNoise(x * 0.24f + 8f, y * 0.21f + 2f);
                 float shade = 0.78f + broad * 0.12f + grain * 0.035f;
                 Color c = new Color(0.075f, 0.16f, 0.19f) * shade;
+                pixels[y * size + x] = c;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            return texture;
+        }
+
+        // Aged off-white PVC used for exposed drain and service pipes.
+        private static Texture2D BuildPVC()
+        {
+            const int size = 256;
+            var texture = NewTexture("BC_Aged_PVC_Pipe", size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float dirt = Mathf.PerlinNoise(x * 0.035f + 8f, y * 0.04f + 2f);
+                float grain = Mathf.PerlinNoise(x * 0.22f + 3f, y * 0.19f + 11f);
+                float shade = 0.76f + dirt * 0.10f + grain * 0.035f;
+                Color c = new Color(shade, shade * 0.99f, shade * 0.92f);
+                if (y % 64 < 3) c *= 0.82f;
                 pixels[y * size + x] = c;
             }
             texture.SetPixels32(pixels);
