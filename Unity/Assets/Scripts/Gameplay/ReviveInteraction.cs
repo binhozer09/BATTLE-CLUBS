@@ -99,14 +99,16 @@ namespace BattleClubs.Gameplay
 
         private static bool AreEligibleTeammates(Combatant reviverCombatant, Combatant candidate)
         {
-            // Keep unassigned scene-training characters usable; once both players
-            // belong to a match, only members of the same team can revive each other.
-            if (reviverCombatant == null || !reviverCombatant.HasTeamAssignment)
-                return true;
+            // Training characters may interact when neither has a team.
+            // If either character is assigned, both must be assigned to the same team.
+            if (reviverCombatant == null || candidate == null) return false;
 
-            return candidate != null &&
-                   candidate.HasTeamAssignment &&
-                   candidate.TeamId == reviverCombatant.TeamId;
+            bool reviverAssigned = reviverCombatant.HasTeamAssignment;
+            bool candidateAssigned = candidate.HasTeamAssignment;
+            if (!reviverAssigned && !candidateAssigned) return true;
+            if (!reviverAssigned || !candidateAssigned) return false;
+
+            return candidate.TeamId == reviverCombatant.TeamId;
         }
 
         private void OnDrawGizmosSelected()
