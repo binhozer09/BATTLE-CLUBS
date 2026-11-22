@@ -9,9 +9,9 @@ namespace BattleClubs.Art
     /// </summary>
     public static class ProceduralSurfaceTextures
     {
-        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal }
+        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage }
 
-        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal;
+        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage;
 
         public static Texture2D Get(Surface surface)
         {
@@ -20,6 +20,7 @@ namespace BattleClubs.Art
                 case Surface.Brick: return brick ?? (brick = LoadBrickAsset() ?? BuildBrick());
                 case Surface.ConcreteBlock: return concreteBlock ?? (concreteBlock = BuildConcreteBlock());
                 case Surface.CorrugatedMetal: return corrugatedMetal ?? (corrugatedMetal = BuildCorrugatedMetal());
+                case Surface.Foliage: return foliage ?? (foliage = BuildFoliage());
                 case Surface.Concrete: return concrete ?? (concrete = BuildNoise("Concrete", 256, 256, 0.48f, 0.13f, 0.055f));
                 case Surface.Asphalt: return asphalt ?? (asphalt = BuildNoise("Asphalt", 256, 256, 0.22f, 0.075f, 0.09f));
                 case Surface.Court: return court ?? (court = BuildCourt());
@@ -164,6 +165,28 @@ namespace BattleClubs.Art
                 Color baseColor = new Color(0.34f, 0.20f, 0.11f);
                 Color color = (baseColor + Color.white * (grain + knots)) * seam;
                 pixels[y * width + x] = color;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            return texture;
+        }
+
+
+        // Varied leaf canopy texture with broad color variation and fine foliage grain.
+        private static Texture2D BuildFoliage()
+        {
+            const int size = 256;
+            var texture = NewTexture("BC_Natural_Foliage", size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float broad = Mathf.PerlinNoise(x * 0.018f + 3f, y * 0.018f + 9f);
+                float fine = Mathf.PerlinNoise(x * 0.13f + 17f, y * 0.16f + 2f);
+                float shade = Mathf.Clamp01(0.20f + broad * 0.30f + fine * 0.12f);
+                Color leaf = Color.Lerp(new Color(0.055f, 0.16f, 0.055f),
+                    new Color(0.30f, 0.43f, 0.13f), shade);
+                pixels[y * size + x] = leaf;
             }
             texture.SetPixels32(pixels);
             texture.Apply(true, true);
