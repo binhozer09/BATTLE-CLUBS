@@ -71,16 +71,14 @@ namespace BattleClubs.World
                 material.SetTexture("_BumpMap", normal);
                 material.EnableKeyword("_NORMALMAP");
             }
-            if (roughness is Texture2D roughnessMap && roughnessMap.isReadable)
+            if (roughness != null && material.HasProperty("_MetallicGlossMap"))
             {
-                Color32[] samples = roughnessMap.GetPixels32();
-                long total = 0;
-                for (int i = 0; i < samples.Length; i++)
-                    total += (samples[i].r + samples[i].g + samples[i].b) / 3;
-                float averageRoughness = samples.Length > 0 ? total / (765f * samples.Length) : 0.7f;
-                float smoothness = Mathf.Clamp01(1f - averageRoughness);
-                if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", smoothness);
-                if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", smoothness);
+                material.SetTexture("_MetallicGlossMap", roughness);
+                if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
+                if (material.HasProperty("_Glossiness")) material.SetFloat("_Glossiness", 1f);
+                if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 1f);
+                material.EnableKeyword("_METALLICGLOSSMAP");
+                material.EnableKeyword("_METALLICSPECGLOSSMAP");
             }
             Materials[key] = material;
             return material;
@@ -105,6 +103,7 @@ namespace BattleClubs.World
             PropertyBlock.SetVector("_BaseMap_ST", tiling);
             PropertyBlock.SetVector("_MainTex_ST", tiling);
             PropertyBlock.SetVector("_BumpMap_ST", tiling);
+            PropertyBlock.SetVector("_MetallicGlossMap_ST", tiling);
             renderer.SetPropertyBlock(PropertyBlock);
         }
     }
