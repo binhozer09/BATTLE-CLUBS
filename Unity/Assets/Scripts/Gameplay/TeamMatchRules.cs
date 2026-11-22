@@ -16,9 +16,14 @@ namespace BattleClubs.Gameplay
         {
             get
             {
-                if (players == null || players.Count == 0) return false;
+                // A team is not eliminated until its complete four-player roster
+                // exists and every member has reached Eliminated.
+                if (players == null || players.Count != 4) return false;
                 foreach (Combatant player in players)
-                    if (player != null && player.State != PlayerLifeState.Eliminated) return false;
+                {
+                    if (player == null || player.State != PlayerLifeState.Eliminated)
+                        return false;
+                }
                 return true;
             }
         }
@@ -121,12 +126,34 @@ namespace BattleClubs.Gameplay
             return active;
         }
 
+        /// <summary>
+        /// Awards points only for eliminated opposing teams. A team's own
+        /// elimination must never increase its score.
+        /// </summary>
+        public int GetPointsForTeam(MatchTeam team)
+        {
+            if (team == null || team.IsEliminated) return 0;
+
+            int eliminatedOpponents = 0;
+            for (int i = 0; i < TeamCount; i++)
+            {
+                MatchTeam candidate = teams[i];
+                if (candidate != null && candidate != team && candidate.IsEliminated)
+                    eliminatedOpponents++;
+            }
+
+            return eliminatedOpponents * pointsPerEliminatedTeam;
+        }
+
+        /// <summary>
+        /// Returns the sole surviving team's score, or zero while no unique
+        /// winner exists. The winning team receives three points per defeated
+        /// opposing team (four opponents in the canonical five-team match).
+        /// </summary>
         public int GetWinnerPoints()
         {
-            int eliminated = 0;
-            for (int i = 0; i < TeamCount; i++)
-                if (teams[i] != null && teams[i].IsEliminated) eliminated++;
-            return eliminated * pointsPerEliminatedTeam;
+            MatchTeam winner = GetSoleSurvivingTeam();
+            return winner == null ? 0 : GetPointsForTeam(winner);
         }
 
         public MatchTeam GetSoleSurvivingTeam()
