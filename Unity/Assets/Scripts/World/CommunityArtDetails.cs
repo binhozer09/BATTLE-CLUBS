@@ -48,7 +48,9 @@ namespace BattleClubs.World
             for (int x = 0; x < blocksX; x++)
             for (int z = 0; z < blocksZ; z++)
             {
-                if ((x + z) % 2 != 0) continue;
+                // Keep the reserved central plaza free of stair geometry.
+                if ((x + z) % 2 != 0 || (blocksX >= 3 && blocksZ >= 3 &&
+                    x == blocksX / 2 && z == blocksZ / 2)) continue;
                 float lane = Mathf.Min(alleyWidth * 0.72f, 3.4f);
                 float startX = origin.x + x * cell + 1.5f;
                 float centerZ = origin.z + z * cell + blockSize * 0.5f;
