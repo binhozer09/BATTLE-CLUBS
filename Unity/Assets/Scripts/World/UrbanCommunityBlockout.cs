@@ -463,11 +463,11 @@ namespace BattleClubs.World
             // The fifth anchor sits along the north edge to keep all starts separated.
             Vector3[] positions =
             {
-                origin + new Vector3(3f, 0.15f, 3f),
-                origin + new Vector3(width - 3f, 0.15f, 3f),
-                origin + new Vector3(3f, 0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, 0.15f, depth - 3f),
-                origin + new Vector3(width * 0.5f, 0.15f, depth - 3f)
+                origin + new Vector3(3f, -0.15f, 3f),
+                origin + new Vector3(width - 3f, -0.15f, 3f),
+                origin + new Vector3(3f, -0.15f, depth - 3f),
+                origin + new Vector3(width - 3f, -0.15f, depth - 3f),
+                origin + new Vector3(width * 0.5f, -0.15f, depth - 3f)
             };
 
             for (int i = 0; i < positions.Length; i++)
