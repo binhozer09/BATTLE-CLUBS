@@ -113,3 +113,11 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Ajustada a elegibilidade em `ReviveInteraction`: personagens sem equipe continuam podendo interagir em cenas de treino quando ambos estão sem atribuição.
 - Se um dos personagens estiver atribuído a uma equipe, o outro também precisa estar atribuído à mesma equipe. Isso fecha o caso em que um personagem sem equipe poderia reanimar um jogador de equipe diferente.
 - Alteração gravada na branch de produção. Ainda depende de compilação e teste de gameplay no Unity Editor.
+
+
+### 21/11/2026 — Pipeline de integração do personagem 3D
+- Criado `HumanoidCharacterIntegrationWizard.cs` na branch `feature/humanoid-character-integration`.
+- O assistente recebe o Player_Root existente e um modelo FBX/prefab Humanoid selecionado, valida o Avatar e instancia o modelo como visual filho.
+- Conecta o Animator ao `HumanoidAnimationDriver` e ao `BatAttack`, adiciona `ClubKitApplier`, desativa Root Motion e remove somente os dois visuais provisórios conhecidos.
+- Criado `Docs/CHARACTER_INTEGRATION.md` com os requisitos de importação, integração e validação.
+- **Limite atual:** nenhum modelo FBX nem clipes foram adicionados. O assistente é a ponte de integração; não representa personagem final nem foi compilado/testado no Unity Editor.
