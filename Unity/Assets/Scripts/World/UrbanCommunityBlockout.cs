@@ -62,9 +62,18 @@ namespace BattleClubs.World
             float totalZ = blocksZ * blockSize + (blocksZ - 1) * roadWidth;
             Vector3 origin = transform.position;
 
-            CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
+            GameObject ground = CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
                 origin + new Vector3(totalX * 0.5f, -0.65f, totalZ * 0.5f),
                 new Vector3(totalX + roadWidth, 1f, totalZ + roadWidth), Asphalt);
+            // Keep the playable floor's physics surface explicit and non-trigger.
+            // CreatePrimitive normally adds this BoxCollider, but enforce it here so
+            // later prefab or generator changes cannot leave a render-only floor.
+            BoxCollider groundCollider = ground.GetComponent<BoxCollider>();
+            if (groundCollider == null) groundCollider = ground.AddComponent<BoxCollider>();
+            groundCollider.center = Vector3.zero;
+            groundCollider.size = Vector3.one;
+            groundCollider.isTrigger = false;
+            groundCollider.enabled = true;
 
             // Narrow sidewalks and the two rows of houses form readable combat lanes.
             for (int x = 0; x < blocksX; x++)
@@ -176,6 +185,11 @@ namespace BattleClubs.World
             hill.transform.SetParent(transform, false);
             hill.transform.position = origin;
             hill.AddComponent<MeshFilter>().sharedMesh = mesh;
+            // The hillside is generated from a custom mesh, so unlike primitives
+            // it does not receive a collider automatically.
+            MeshCollider hillCollider = hill.AddComponent<MeshCollider>();
+            hillCollider.sharedMesh = mesh;
+            hillCollider.convex = false;
             MeshRenderer renderer = hill.AddComponent<MeshRenderer>();
             CommunityMaterialLibrary.ApplySurface(renderer,
                 new Color(0.24f, 0.27f, 0.22f),
@@ -463,11 +477,11 @@ namespace BattleClubs.World
             // The fifth anchor sits along the north edge to keep all starts separated.
             Vector3[] positions =
             {
-                origin + new Vector3(3f, -0.15f, 3f),
-                origin + new Vector3(width - 3f, -0.15f, 3f),
-                origin + new Vector3(3f, -0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, -0.15f, depth - 3f),
-                origin + new Vector3(width * 0.5f, -0.15f, depth - 3f)
+                origin + new Vector3(3f, 0.05f, 3f),
+                origin + new Vector3(width - 3f, 0.05f, 3f),
+                origin + new Vector3(3f, 0.05f, depth - 3f),
+                origin + new Vector3(width - 3f, 0.05f, depth - 3f),
+                origin + new Vector3(width * 0.5f, 0.05f, depth - 3f)
             };
 
             for (int i = 0; i < positions.Length; i++)
