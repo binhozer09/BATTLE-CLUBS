@@ -509,18 +509,18 @@ namespace BattleClubs.World
                 int stableHash = 17;
                 for (int i = 0; i < objectName.Length; i++)
                     stableHash = stableHash * 31 + objectName[i];
-                return (stableHash & 3) == 0
-                    ? ProceduralSurfaceTextures.Surface.Brick
-                    : ProceduralSurfaceTextures.Surface.Plaster;
+                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
             }
             if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
             if (objectName.StartsWith("Court"))
                 return ProceduralSurfaceTextures.Surface.Concrete;
             if (objectName == "Roof")
-                return ProceduralSurfaceTextures.Surface.Asphalt;
-            if (objectName == "RoofParapet" || objectName == "AlleyCover")
                 return ProceduralSurfaceTextures.Surface.Concrete;
+            if (objectName == "RoofParapet" || objectName == "AlleyCover")
+                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
+            if (objectName.Contains("Corrugated") || objectName.Contains("Canopy"))
+                return ProceduralSurfaceTextures.Surface.CorrugatedMetal;
             if (objectName == "FrontDoor")
                 return ProceduralSurfaceTextures.Surface.Wood;
             return ProceduralSurfaceTextures.Surface.Plaster;
