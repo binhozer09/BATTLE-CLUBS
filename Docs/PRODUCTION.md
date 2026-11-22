@@ -172,3 +172,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Reservado o bloco central do layout 5x5 como praça/quadra aberta. O gerador de casas não constrói fachadas nesse bloco; os geradores de escadarias, varais, mercadinhos e medidores também deixam essa área livre.
 - A quadra central passa a ocupar uma área sem casas nem objetos de rua atravessando o piso, reduzindo interseções visuais e obstáculos indevidos na principal área de combate.
 - Alterações gravadas na branch `feature/humanoid-character-integration`. Ainda precisam ser importadas e verificadas no Unity Editor: colisões, navegação a pé, alinhamento dos geradores e aparência em execução não foram testados nesta sessão.
+
+
+### 22/11/2026 — Continuidade das vielas e acesso às escadarias
+- Removidas as duas paredes transversais `AlleyCover` que ocupavam as extremidades de cada quarteirão e fechavam a passagem central.
+- As entradas e saídas das vielas ficam livres para conectar ruas entre quarteirões e permitir o acesso às escadarias existentes de `CommunityArtDetails`.
+- A alteração não cria um sistema novo de navegação nem substitui as escadas; corrige um bloqueio geométrico no gerador existente.
+- Verificação estática do trecho alterado concluída. Colisões, percurso contínuo e comportamento do jogador ainda precisam ser confirmados no Unity Editor; não houve compilação nem teste em runtime nesta sessão.
