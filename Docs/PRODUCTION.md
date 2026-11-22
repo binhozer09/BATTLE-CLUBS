@@ -93,3 +93,12 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `BatAttack` agora recusa ataques de um Combatant que não esteja Alive. Quando o atacante pertence a uma equipe, alvos sem equipe atribuída e companheiros são ignorados.
 - `ReviveInteraction` agora exige que o reviver esteja Alive e mantém a verificação de elegibilidade durante todo o progresso; se a condição de equipe/estado deixar de ser válida, a ação é cancelada.
 - As verificações continuam locais e não substituem validação autoritativa no servidor. Alterações relidas no GitHub; não houve execução no Unity Editor nesta sessão.
+
+
+### 21/11/2026 — Ciclo de vida local da partida
+- Adicionado `MatchPhase`: `WaitingForPlayers`, `InProgress` e `Finished`.
+- `TryStartMatch()` só inicia quando os cinco elencos estão completos e consistentes; após o início, `TryAddPlayer` bloqueia novas inscrições.
+- Durante a partida, o gerenciador observa a condição de equipe sobrevivente e encerra quando existe exatamente uma equipe não eliminada. A pontuação final só é exposta depois desse encerramento.
+- Se nenhuma equipe sobreviver, o estado permanece sem vencedor; regra de empate/derrota simultânea não foi inventada porque o documento de design ainda não a define.
+- Corrigida também a documentação de kits: cinco definições, índices de equipe 0–4.
+- Código e documentação gravados na branch de produção; ainda sem compilação ou teste no Unity Editor. Em multiplayer, o servidor autoritativo deverá controlar essas transições.
