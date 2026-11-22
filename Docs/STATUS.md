@@ -81,3 +81,11 @@ Foi criado `NetworkReviveAuthority.cs`. Em sessão NGO, a interação existente 
 ## Atualização — importador automático de humanoide 3D CC0
 
 Foi adicionado `HumanoidAssetBootstrap.cs` ao Editor. O menu `BATTLE CLUBS/Characters/Download CC0 Humanoid + Animations` baixa diretamente a release oficial KinemIQ, confere SHA-256 e extrai o FBX + clipes para `Assets/ThirdParty/KinemIQ`, sem exigir download manual pelo usuário. O pacote publicado declara 35 animações humanoides CC0 e inclui `KinemIQ_Mannequin.fbx`. O pacote ainda não foi efetivamente importado por uma instância do Unity Editor nesta sessão; o personagem é um mannequin 3D rigged, não um modelo fotorrealista final. Depois da importação, o Avatar precisa ser validado como Humanoid e integrado ao `Player_Root` pelo wizard existente. Nenhuma compilação/teste Unity foi executado.
+
+
+## 22/11/2026 — Integração do espaço central da favela
+
+- Revisada a composição dos três geradores existentes: `UrbanCommunityBlockout`, `CommunityArtDetails` e `FavelaStreetLifeDetails` continuam sendo usados, sem duplicar sistemas.
+- Reservado o bloco central do layout 5x5 como praça/quadra aberta. O gerador de casas não constrói fachadas nesse bloco; os geradores de escadarias, varais, mercadinhos e medidores também deixam essa área livre.
+- A quadra central passa a ocupar uma área sem casas nem objetos de rua atravessando o piso, reduzindo interseções visuais e obstáculos indevidos na principal área de combate.
+- Alterações gravadas na branch `feature/humanoid-character-integration`. Ainda precisam ser importadas e verificadas no Unity Editor: colisões, navegação a pé, alinhamento dos geradores e aparência em execução não foram testados nesta sessão.
