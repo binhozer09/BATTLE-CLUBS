@@ -386,13 +386,19 @@ namespace BattleClubs.World
             if (objectName == "Map_Ground" || objectName == "RoadDash")
                 return ProceduralSurfaceTextures.Surface.Asphalt;
             if (objectName.StartsWith("House_"))
-                return ProceduralSurfaceTextures.Surface.Brick;
+                return (objectName.GetHashCode() & 3) == 0
+                    ? ProceduralSurfaceTextures.Surface.Brick
+                    : ProceduralSurfaceTextures.Surface.Plaster;
             if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
             if (objectName.StartsWith("Court"))
                 return ProceduralSurfaceTextures.Surface.Concrete;
-            if (objectName == "Roof" || objectName == "RoofParapet" || objectName == "AlleyCover")
+            if (objectName == "Roof")
+                return ProceduralSurfaceTextures.Surface.Asphalt;
+            if (objectName == "RoofParapet" || objectName == "AlleyCover")
                 return ProceduralSurfaceTextures.Surface.Concrete;
+            if (objectName == "FrontDoor")
+                return ProceduralSurfaceTextures.Surface.Wood;
             return ProceduralSurfaceTextures.Surface.Plaster;
         }
 
