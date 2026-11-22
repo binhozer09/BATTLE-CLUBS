@@ -66,3 +66,8 @@ O gerador principal do mapa agora compartilha materiais por combinação de cor 
 Foi adicionada à branch `feature/humanoid-character-integration` a dependência Netcode for GameObjects 1.9.1 com Unity Transport 1.4.0, alinhada à versão Unity 2022.3. O novo `NetworkSessionBootstrap.cs` permite iniciar Host, servidor dedicado ou cliente por IPv4, limita conexões a 20 e valida a versão do protocolo na aprovação de entrada.
 
 **Limite desta etapa:** ainda não existe partida online pronta. O prefab de jogador precisa ser configurado com `NetworkObject` no NetworkManager; equipes, spawn, movimento, dano, reanimação e pontuação ainda não foram migrados para autoridade do servidor. A implementação precisa ser importada, compilada e testada no Unity Editor. Consulte `Docs/NETWORK_IMPLEMENTATION.md`.
+
+
+## Atualização — combate online autoritativo inicial
+
+Na branch `feature/humanoid-character-integration` foi criado `NetworkCombatantAuthority.cs`. Em jogadores com `NetworkObject` ativo, `BatAttack` agora envia a solicitação ao servidor em vez de aplicar dano local. O servidor aplica cooldown, procura alvos por colisão, rejeita aliados e aplica o acerto no `Combatant`; quantidade de acertos e estado de vida são replicados por `NetworkVariable`. A integração exige adicionar o componente ao prefab do jogador, configurar o ponto de impacto e um `NetworkTransform`, além de registrar o prefab no `NetworkManager`. Reanimação, movimento replicado, equipes autoritativas, matchmaking e pontuação online continuam pendentes. Código ainda não compilado/testado no Unity Editor.
