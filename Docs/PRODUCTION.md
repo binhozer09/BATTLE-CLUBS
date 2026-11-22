@@ -80,3 +80,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `BatAttack` ignora integrantes da mesma equipe quando o atacante está registrado em uma equipe, evitando fogo amigo no fluxo local.
 - `ReviveInteraction` restringe a reanimação aos integrantes da mesma equipe quando há atribuição de equipe. Personagens de cenas de treino sem equipe continuam usando o comportamento local sem cadastro.
 - Essas proteções são regras locais de gameplay; em partidas online, a mesma validação deverá ser repetida no servidor autoritativo. Alterações gravadas no GitHub, ainda sem compilação Unity ou teste multiplayer.
+
+
+### 21/11/2026 — Validação de elenco antes do início da partida
+- `MatchTeam.HasCompleteRoster` valida quatro jogadores não nulos e únicos, com `TeamId` correspondente ao time em que foram registrados.
+- `TeamMatchRules.IsReadyToStart` só libera a condição de partida pronta quando as cinco equipes estão completas (20 jogadores registrados corretamente).
+- `CountActiveTeams` e `GetSoleSurvivingTeam` não retornam resultados de partida antes da formação completa dos elencos, evitando declarar vencedor prematuramente durante o preenchimento das vagas.
+- Alteração conferida no GitHub; ainda depende de compilação e testes no Unity Editor.
