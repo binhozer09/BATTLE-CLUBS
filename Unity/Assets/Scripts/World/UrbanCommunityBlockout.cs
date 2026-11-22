@@ -784,7 +784,7 @@ namespace BattleClubs.World
             // receive metal sheets instead of the wall's concrete-block masonry.
             if (objectName == "Hillside_House_Roof")
                 return ProceduralSurfaceTextures.Surface.CorrugatedMetal;
-            if (objectName == "Map_Ground" || objectName == "RoadDash")
+            if (objectName == "Map_Ground")
                 return ProceduralSurfaceTextures.Surface.Asphalt;
             if (objectName == "WaterTank" || objectName == "WaterTankLid")
                 return ProceduralSurfaceTextures.Surface.Plastic;
@@ -807,7 +807,7 @@ namespace BattleClubs.World
                 return ProceduralSurfaceTextures.Surface.PaintedMetal;
             if (objectName.StartsWith("House_") || objectName.StartsWith("Hillside_House_"))
                 return ProceduralSurfaceTextures.Surface.ConcreteBlock;
-            if (objectName == "Road_Crosswalk_Stripe" || objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle")
+            if (objectName == "RoadDash" || objectName == "Road_Crosswalk_Stripe" || objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle")
                 return ProceduralSurfaceTextures.Surface.Concrete;
             if (objectName.StartsWith("Alley_Concrete") || objectName.StartsWith("Alley_Low_Curb") ||
                 objectName == "DoorStep" || objectName.StartsWith("FacadeCornice") ||
