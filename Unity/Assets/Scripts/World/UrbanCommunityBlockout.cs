@@ -126,6 +126,60 @@ namespace BattleClubs.World
             BuildHillsideStrip("Hillside_West", origin,
                 new Vector2(-setback, 0f), new Vector2(-setback, depth),
                 reach, true, -1f, 0.83f);
+
+            // Extend the visible neighborhood up the surrounding hills. These
+            // small settlements sit beyond the playable blocks, adding a real
+            // urban skyline instead of leaving the terrain as empty green slopes.
+            BuildDistantHillsideHomes(origin, width, depth, reach);
+        }
+
+        private void BuildDistantHillsideHomes(Vector3 origin, float width, float depth, float reach)
+        {
+            Random.State previous = Random.state;
+            Random.InitState(randomSeed + 731);
+
+            const int homesAlongEdge = 6;
+            float[] distances = { 12f, 27f, 40f };
+            for (int edge = 0; edge < 4; edge++)
+            for (int row = 0; row < distances.Length; row++)
+            for (int i = 0; i < homesAlongEdge; i++)
+            {
+                float t = (i + 0.5f) / homesAlongEdge + Random.Range(-0.025f, 0.025f);
+                float distance = distances[row] + Random.Range(-2.2f, 2.2f);
+                Vector2 edgePoint;
+                Vector2 outward;
+                if (edge == 0) { edgePoint = new Vector2(t * width, depth + 3f); outward = Vector2.up; }
+                else if (edge == 1) { edgePoint = new Vector2(t * width, -3f); outward = Vector2.down; }
+                else if (edge == 2) { edgePoint = new Vector2(width + 3f, t * depth); outward = Vector2.right; }
+                else { edgePoint = new Vector2(-3f, t * depth); outward = Vector2.left; }
+
+                Vector2 point = edgePoint + outward * distance;
+                float terrainT = edge < 2 ? t : t;
+                float ridge = Mathf.PerlinNoise(terrainT * 3.8f + edge * 0.21f,
+                    distance / reach * 2.6f + randomSeed * 0.001f);
+                float detail = Mathf.PerlinNoise(terrainT * 15f + 4f,
+                    distance / reach * 11f + edge * 0.17f);
+                float terrainY = Mathf.Floor((7f + ridge * 15f + detail * 2.5f) / 2.2f) * 2.2f
+                    - distance / reach * 1.8f;
+
+                float houseWidth = Random.Range(5.2f, 8.2f);
+                float houseDepth = Random.Range(4.2f, 6.5f);
+                float houseHeight = Random.Range(3.2f, 5.6f);
+                float yaw = edge < 2 ? 0f : 90f;
+                Vector3 position = origin + new Vector3(point.x, terrainY + houseHeight * 0.5f, point.y);
+                Vector3 size = edge < 2
+                    ? new Vector3(houseWidth, houseHeight, houseDepth)
+                    : new Vector3(houseDepth, houseHeight, houseWidth);
+
+                CreatePrimitive(PrimitiveType.Cube, "Hillside_House_" + edge + "_" + row + "_" + i,
+                    position, size, new Color(0.88f, 0.88f, 0.84f));
+                Vector3 roof = position + Vector3.up * (houseHeight * 0.5f + 0.12f);
+                CreatePrimitive(PrimitiveType.Cube, "Hillside_House_Roof",
+                    roof, new Vector3(size.x + 0.25f, 0.22f, size.z + 0.25f),
+                    new Color(0.25f, 0.26f, 0.25f));
+            }
+
+            Random.state = previous;
         }
 
         private void BuildHillsideStrip(string objectName, Vector3 origin,
