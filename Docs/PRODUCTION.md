@@ -179,3 +179,9 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - As entradas e saídas das vielas ficam livres para conectar ruas entre quarteirões e permitir o acesso às escadarias existentes de `CommunityArtDetails`.
 - A alteração não cria um sistema novo de navegação nem substitui as escadas; corrige um bloqueio geométrico no gerador existente.
 - Verificação estática do trecho alterado concluída. Colisões, percurso contínuo e comportamento do jogador ainda precisam ser confirmados no Unity Editor; não houve compilação nem teste em runtime nesta sessão.
+
+
+### 22/11/2026 — Conexão das escadarias ao nível da rua
+- `CommunityArtDetails` agora cria uma rampa inclinada com `MeshCollider` no final de cada lance de escada gerado, conectando o patamar superior de volta ao nível da rua no quarteirão seguinte.
+- A rampa é dimensionada para avançar pela faixa da rua sem atravessar a largura inteira do quarteirão; sua malha é rastreada e liberada quando os detalhes são regenerados.
+- Verificação estática confirmou chamada do gerador, `MeshCollider`, limpeza da malha e chaves balanceadas. Ainda não há validação de colisão real, navegação do personagem ou compilação no Unity Editor.
