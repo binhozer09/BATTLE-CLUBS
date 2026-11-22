@@ -206,6 +206,11 @@ namespace BattleClubs.World
             float buildingDepth = (blockSize - lane) * 0.5f;
             float sideOffset = (lane + buildingDepth) * 0.5f;
 
+            // Give every residential block a distinct, continuous concrete walkway
+            // through its central alley. The main cross streets remain asphalt,
+            // making the pedestrian route readable instead of one giant flat road.
+            BuildAlleyWalkway(center, lane, blockX, blockZ);
+
             for (int side = -1; side <= 1; side += 2)
             {
                 float height = Random.Range(minBuildingHeight, Mathf.Max(minBuildingHeight + 0.1f, maxBuildingHeight));
@@ -253,6 +258,35 @@ namespace BattleClubs.World
                 BuildStreetLight(center + new Vector3(-half + 0.7f, 0f, -half + 0.7f));
         }
 
+
+        private void BuildAlleyWalkway(Vector3 center, float lane, int blockX, int blockZ)
+        {
+            Color walkwayColor = new Color(0.68f, 0.67f, 0.63f);
+            CreatePrimitive(PrimitiveType.Cube, "Alley_Concrete_Walkway",
+                center + Vector3.up * 0.025f,
+                new Vector3(blockSize, 0.05f, Mathf.Max(1f, lane - 0.34f)),
+                walkwayColor);
+
+            // Low curbs frame the passage while leaving the stair flight's
+            // walking width clear. They also separate the alley from door fronts.
+            for (int side = -1; side <= 1; side += 2)
+            {
+                CreatePrimitive(PrimitiveType.Cube, "Alley_Low_Curb",
+                    center + new Vector3(0f, 0.065f, side * (lane * 0.5f - 0.11f)),
+                    new Vector3(blockSize, 0.13f, 0.18f),
+                    new Color(0.42f, 0.42f, 0.39f));
+            }
+
+            // Occasional worn repair patches keep the walkway from reading as
+            // a perfectly repeated strip of new concrete.
+            if ((blockX + blockZ) % 3 == 0)
+            {
+                CreatePrimitive(PrimitiveType.Cube, "Alley_Concrete_Repair",
+                    center + new Vector3(-blockSize * 0.22f, 0.052f, 0f),
+                    new Vector3(blockSize * 0.12f, 0.012f, lane * 0.42f),
+                    new Color(0.55f, 0.54f, 0.50f));
+            }
+        }
 
         private void BuildRooftopDetails(Vector3 roof, float width, float depth,
             int blockX, int blockZ, int side)
