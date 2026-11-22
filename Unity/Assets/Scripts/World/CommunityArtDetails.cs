@@ -176,14 +176,8 @@ namespace BattleClubs.World
             item.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             item.transform.localScale = scale;
             Renderer renderer = item.GetComponent<Renderer>();
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null) shader = Shader.Find("Standard");
-            if (renderer != null && shader != null)
-            {
-                Material material = new Material(shader);
-                material.color = color;
-                renderer.sharedMaterial = material;
-            }
+            if (renderer != null)
+                renderer.sharedMaterial = CommunityMaterialLibrary.Get(color);
             generated.Add(item);
         }
 
