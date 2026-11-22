@@ -58,6 +58,10 @@ namespace BattleClubs.Gameplay
                 if (found == null || found == GetComponent<Combatant>() || found.State != PlayerLifeState.Downed)
                     continue;
 
+                Combatant reviverCombatant = GetComponent<Combatant>();
+                if (reviverCombatant != null && reviverCombatant.HasTeamAssignment &&
+                    found.TeamId != reviverCombatant.TeamId) continue;
+
                 float distance = Vector3.Distance(reviver.position, found.transform.position);
                 if (distance < nearest)
                 {
