@@ -73,3 +73,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - Revisado `TeamMatchRules.cs`: uma equipe só é considerada eliminada quando possui exatamente quatro integrantes registrados e todos estão no estado `Eliminated`. Listas incompletas ou com referências nulas não podem encerrar uma equipe por engano.
 - Adicionado `GetPointsForTeam`, que soma três pontos apenas por equipes adversárias eliminadas. `GetWinnerPoints` agora retorna a pontuação da única equipe sobrevivente, evitando contar a própria equipe vencedora/derrotada no cálculo global.
 - Alteração gravada e relida no GitHub. Ainda não executada no Unity Editor nem coberta por testes automatizados nesta sessão.
+
+
+### 21/11/2026 — Identidade de equipe no combate local
+- `Combatant` agora mantém o identificador da equipe atribuída por `TeamMatchRules` ao registrar o jogador.
+- `BatAttack` ignora integrantes da mesma equipe quando o atacante está registrado em uma equipe, evitando fogo amigo no fluxo local.
+- `ReviveInteraction` restringe a reanimação aos integrantes da mesma equipe quando há atribuição de equipe. Personagens de cenas de treino sem equipe continuam usando o comportamento local sem cadastro.
+- Essas proteções são regras locais de gameplay; em partidas online, a mesma validação deverá ser repetida no servidor autoritativo. Alterações gravadas no GitHub, ainda sem compilação Unity ou teste multiplayer.
