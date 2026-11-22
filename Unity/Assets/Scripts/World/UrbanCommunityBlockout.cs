@@ -512,27 +512,27 @@ namespace BattleClubs.World
 
                     for (int side = -1; side <= 1; side += 2)
                     {
-                        float zPosition = roadZ + side * crossingOffset;
+                        float crossingZ = roadZ + side * crossingOffset;
                         for (int stripe = 0; stripe < crossingStripes; stripe++)
                         {
-                            float xPosition = roadX - (crossingStripes - 1) * (stripeWidth + stripeGap) * 0.5f
+                            float zPosition = crossingZ - (crossingStripes - 1) * (stripeWidth + stripeGap) * 0.5f
                                 + stripe * (stripeWidth + stripeGap);
                             CreatePrimitive(PrimitiveType.Cube, "Road_Crosswalk_Stripe",
-                                new Vector3(xPosition, -0.075f, zPosition),
-                                new Vector3(stripeWidth, 0.025f, roadWidth - 0.6f), crossingPaint);
+                                new Vector3(roadX, -0.075f, zPosition),
+                                new Vector3(roadWidth - 0.6f, 0.025f, stripeWidth), crossingPaint);
                         }
                     }
 
                     for (int side = -1; side <= 1; side += 2)
                     {
-                        float xPosition = roadX + side * crossingOffset;
+                        float crossingX = roadX + side * crossingOffset;
                         for (int stripe = 0; stripe < crossingStripes; stripe++)
                         {
-                            float zPosition = roadZ - (crossingStripes - 1) * (stripeWidth + stripeGap) * 0.5f
+                            float xPosition = crossingX - (crossingStripes - 1) * (stripeWidth + stripeGap) * 0.5f
                                 + stripe * (stripeWidth + stripeGap);
                             CreatePrimitive(PrimitiveType.Cube, "Road_Crosswalk_Stripe",
-                                new Vector3(xPosition, -0.075f, zPosition),
-                                new Vector3(roadWidth - 0.6f, 0.025f, stripeWidth), crossingPaint);
+                                new Vector3(xPosition, -0.075f, roadZ),
+                                new Vector3(stripeWidth, 0.025f, roadWidth - 0.6f), crossingPaint);
                         }
                     }
                 }
