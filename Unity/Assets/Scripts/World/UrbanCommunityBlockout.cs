@@ -239,43 +239,87 @@ namespace BattleClubs.World
         private void BuildFacade(Vector3 house, float width, float height, float depth,
             int side, int blockX, int blockZ)
         {
-            // The front of each row faces the playable alley.
+            // The front of each row faces the playable alley. Small architectural
+            // layers break up the old flat-box silhouette without adding asset dependencies.
             float frontZ = house.z - side * (depth * 0.5f + 0.055f);
             float windowY = Mathf.Min(height * 0.67f, height - 1.25f);
             float windowSpacing = width * 0.27f;
+            Color trim = new Color(0.84f, 0.79f, 0.67f);
+            Color shutter = new Color(0.22f, 0.25f, 0.24f);
+
+            // A continuous upper cornice gives each facade a readable roof edge.
+            CreatePrimitive(PrimitiveType.Cube, "FacadeCornice",
+                new Vector3(house.x, house.y + height * 0.5f - 0.12f, frontZ - side * 0.10f),
+                new Vector3(width + 0.22f, 0.20f, 0.24f), trim);
 
             for (int i = -1; i <= 1; i += 2)
             {
                 Vector3 window = new Vector3(house.x + i * windowSpacing, windowY, frontZ);
+                Vector3 faceOffset = new Vector3(0f, 0f, -side * 0.11f);
                 CreatePrimitive(PrimitiveType.Cube, "WindowFrame", window,
-                    new Vector3(1.12f, 1.05f, 0.12f), new Color(0.82f, 0.79f, 0.68f));
-                CreatePrimitive(PrimitiveType.Cube, "WindowGlass",
-                    window + new Vector3(0f, 0f, -side * 0.075f),
+                    new Vector3(1.12f, 1.05f, 0.12f), trim);
+                CreatePrimitive(PrimitiveType.Cube, "WindowGlass", window + faceOffset,
                     new Vector3(0.82f, 0.76f, 0.06f), Glass);
-                CreatePrimitive(PrimitiveType.Cube, "WindowDivider",
-                    window + new Vector3(0f, 0f, -side * 0.12f),
+                CreatePrimitive(PrimitiveType.Cube, "WindowDivider", window + faceOffset * 1.45f,
                     new Vector3(0.07f, 0.8f, 0.05f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Cube, "WindowSill",
+                    window + new Vector3(0f, -0.56f, -side * 0.14f),
+                    new Vector3(1.28f, 0.12f, 0.30f), Concrete);
+
+                // Occasional metal shutters make neighboring houses less repetitive.
+                if ((blockX + blockZ + i) % 3 == 0)
+                {
+                    CreatePrimitive(PrimitiveType.Cube, "WindowShutter",
+                        window + new Vector3(i * 0.57f, 0f, -side * 0.15f),
+                        new Vector3(0.12f, 1.02f, 0.16f), shutter);
+                }
             }
 
-            Vector3 door = new Vector3(house.x, 1.05f, frontZ);
-            CreatePrimitive(PrimitiveType.Cube, "FrontDoor", door,
+            Vector3 door = new Vector3(house.x, 1.05f, frontZ - side * 0.025f);
+            CreatePrimitive(PrimitiveType.Cube, "DoorFrame", door + Vector3.up * 0.04f,
+                new Vector3(1.24f, 2.22f, 0.18f), trim);
+            CreatePrimitive(PrimitiveType.Cube, "FrontDoor", door + new Vector3(0f, 0f, -side * 0.12f),
                 new Vector3(1.05f, 2.1f, 0.16f), new Color(0.27f, 0.19f, 0.14f));
             CreatePrimitive(PrimitiveType.Sphere, "DoorHandle",
-                door + new Vector3(0.34f, 0f, -side * 0.12f),
+                door + new Vector3(0.34f, 0f, -side * 0.24f),
                 new Vector3(0.09f, 0.09f, 0.09f), new Color(0.82f, 0.67f, 0.34f));
+            CreatePrimitive(PrimitiveType.Cube, "DoorStep",
+                door + new Vector3(0f, -0.98f, -side * 0.25f),
+                new Vector3(1.42f, 0.16f, 0.52f), Concrete);
 
-            // Simple projecting balcony/awning on some houses.
+            // A small awning over the entrance adds depth and a distinct street-level silhouette.
+            if ((blockX * 3 + blockZ) % 2 == 0)
+            {
+                CreatePrimitive(PrimitiveType.Cube, "DoorAwning",
+                    door + new Vector3(0f, 1.22f, -side * 0.48f),
+                    new Vector3(1.55f, 0.12f, 0.78f), shutter);
+                for (int post = -1; post <= 1; post += 2)
+                    CreatePrimitive(PrimitiveType.Cylinder, "AwningSupport",
+                        door + new Vector3(post * 0.64f, 0.63f, -side * 0.73f),
+                        new Vector3(0.035f, 0.62f, 0.035f), DarkMetal);
+            }
+
+            // Balcony railings use individual uprights instead of a single floating bar.
             if (Random.value > 0.42f && height > 5.2f)
             {
                 Vector3 balcony = new Vector3(house.x, windowY - 0.7f, frontZ - side * 0.45f);
+                float balconyWidth = width * 0.62f;
                 CreatePrimitive(PrimitiveType.Cube, "BalconySlab", balcony,
-                    new Vector3(width * 0.62f, 0.16f, 0.95f), Concrete);
-                CreatePrimitive(PrimitiveType.Cube, "BalconyRail",
-                    balcony + new Vector3(0f, 0.48f, -side * 0.42f),
-                    new Vector3(width * 0.6f, 0.08f, 0.08f), DarkMetal);
+                    new Vector3(balconyWidth + 0.18f, 0.16f, 0.95f), Concrete);
+                Vector3 railCenter = balcony + new Vector3(0f, 0.48f, -side * 0.42f);
+                CreatePrimitive(PrimitiveType.Cube, "BalconyRail", railCenter,
+                    new Vector3(balconyWidth, 0.08f, 0.08f), DarkMetal);
+                int bars = Mathf.Max(4, Mathf.RoundToInt(balconyWidth / 0.28f));
+                for (int bar = 0; bar <= bars; bar++)
+                {
+                    float x = -balconyWidth * 0.5f + balconyWidth * bar / bars;
+                    CreatePrimitive(PrimitiveType.Cube, "BalconyBar",
+                        railCenter + new Vector3(x, -0.23f, 0f),
+                        new Vector3(0.045f, 0.48f, 0.055f), DarkMetal);
+                }
             }
 
-            // Air-conditioning unit mounted beside a window.
+            // Air-conditioning unit with a drain pipe running down the wall.
             if (Random.value > 0.55f)
             {
                 Vector3 ac = new Vector3(house.x + width * 0.37f, windowY - 0.35f,
@@ -285,6 +329,9 @@ namespace BattleClubs.World
                 CreatePrimitive(PrimitiveType.Cube, "ACVent",
                     ac + new Vector3(0f, 0f, -side * 0.19f),
                     new Vector3(0.43f, 0.18f, 0.035f), DarkMetal);
+                CreatePrimitive(PrimitiveType.Cylinder, "ACDrainPipe",
+                    ac + new Vector3(0.34f, -0.58f, -side * 0.08f),
+                    new Vector3(0.035f, 0.68f, 0.035f), new Color(0.67f, 0.68f, 0.63f));
             }
         }
 
