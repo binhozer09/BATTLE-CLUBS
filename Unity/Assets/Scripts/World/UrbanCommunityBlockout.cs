@@ -458,9 +458,20 @@ namespace BattleClubs.World
             CreatePrimitive(PrimitiveType.Cube, "LampArm",
                 basePosition + new Vector3(0.35f, 4.65f, 0f),
                 new Vector3(0.75f, 0.08f, 0.08f), DarkMetal);
-            CreatePrimitive(PrimitiveType.Cube, "LampHead",
+            GameObject lampHead = CreatePrimitive(PrimitiveType.Cube, "LampHead",
                 basePosition + new Vector3(0.68f, 4.55f, 0f),
                 new Vector3(0.42f, 0.16f, 0.28f), new Color(0.92f, 0.78f, 0.48f));
+
+            // The old lamp was only a colored prop. Give it a modest warm point
+            // light so selected alleys and street corners are actually illuminated.
+            // Shadows stay disabled to keep the mobile scene affordable.
+            Light streetLight = lampHead.AddComponent<Light>();
+            streetLight.type = LightType.Point;
+            streetLight.color = new Color(1f, 0.78f, 0.52f);
+            streetLight.intensity = 0.85f;
+            streetLight.range = 9f;
+            streetLight.shadows = LightShadows.None;
+            streetLight.renderMode = LightRenderMode.ForceVertex;
         }
 
         private void BuildMainStreetDetails(Vector3 origin, float width, float depth)
