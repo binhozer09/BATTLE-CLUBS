@@ -47,6 +47,10 @@ namespace BattleClubs.Gameplay
         {
             if (holding) return target != null && IsValidTarget(target);
 
+            Combatant reviverCombatant = GetComponent<Combatant>();
+            if (reviverCombatant != null && reviverCombatant.State != PlayerLifeState.Alive)
+                return false;
+
             Collider[] hits = Physics.OverlapSphere(reviver.position, reviveRange, targetLayers,
                 QueryTriggerInteraction.Ignore);
 
@@ -58,9 +62,7 @@ namespace BattleClubs.Gameplay
                 if (found == null || found == GetComponent<Combatant>() || found.State != PlayerLifeState.Downed)
                     continue;
 
-                Combatant reviverCombatant = GetComponent<Combatant>();
-                if (reviverCombatant != null && reviverCombatant.HasTeamAssignment &&
-                    found.TeamId != reviverCombatant.TeamId) continue;
+                if (!AreEligibleTeammates(reviverCombatant, found)) continue;
 
                 float distance = Vector3.Distance(reviver.position, found.transform.position);
                 if (distance < nearest)
@@ -87,9 +89,24 @@ namespace BattleClubs.Gameplay
 
         private bool IsValidTarget(Combatant candidate)
         {
+            Combatant reviverCombatant = GetComponent<Combatant>();
             return candidate != null &&
                    candidate.State == PlayerLifeState.Downed &&
+                   (reviverCombatant == null || reviverCombatant.State == PlayerLifeState.Alive) &&
+                   AreEligibleTeammates(reviverCombatant, candidate) &&
                    Vector3.Distance(reviver.position, candidate.transform.position) <= reviveRange;
+        }
+
+        private static bool AreEligibleTeammates(Combatant reviverCombatant, Combatant candidate)
+        {
+            // Keep unassigned scene-training characters usable; once both players
+            // belong to a match, only members of the same team can revive each other.
+            if (reviverCombatant == null || !reviverCombatant.HasTeamAssignment)
+                return true;
+
+            return candidate != null &&
+                   candidate.HasTeamAssignment &&
+                   candidate.TeamId == reviverCombatant.TeamId;
         }
 
         private void OnDrawGizmosSelected()
