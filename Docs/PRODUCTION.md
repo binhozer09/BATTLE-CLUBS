@@ -136,3 +136,10 @@ Este painel acompanha a produção do jogo original. A compilação do antigo pr
 - `UrbanCommunityBlockout` passou a usar a biblioteca tanto nas construções/superfícies quanto no relevo de fundo. Os geradores de escadarias e detalhes de rua já utilizavam a mesma biblioteca.
 - A mudança reduz a quantidade de instâncias de Material; não comprova FPS nem reduz automaticamente a quantidade de draw calls. Medir no Unity Profiler e em dispositivos Android/PC continua obrigatório.
 - Nenhuma compilação ou execução Unity foi realizada nesta etapa.
+
+
+### 21/11/2026 — Primeira camada de sessão online
+- Adicionadas as dependências Unity Netcode for GameObjects 1.9.1 e Unity Transport 1.4.0 para o projeto Unity 2022.3.
+- Criado `NetworkSessionBootstrap.cs` com entrada Host, servidor dedicado e cliente IPv4; capacidade limitada a 20 jogadores; aprovação de conexão valida sala disponível e versão do protocolo.
+- Documentado o setup do NetworkManager e o escopo ainda pendente em `Docs/NETWORK_IMPLEMENTATION.md`.
+- Esta entrega é somente a fundação de sessão/transporte. Ainda não implementa matchmaking, distribuição 5x4, sincronização de gameplay ou autoridade de combate. Exige configuração do prefab de jogador e validação no Unity Editor; nenhuma conexão real foi testada nesta sessão.
