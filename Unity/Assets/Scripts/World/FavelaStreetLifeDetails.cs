@@ -176,7 +176,10 @@ namespace BattleClubs.World
             item.transform.position = (start + end) * 0.5f;
             item.transform.rotation = Quaternion.FromToRotation(Vector3.up, delta.normalized);
             item.transform.localScale = new Vector3(radius * 2f, delta.magnitude * 0.5f, radius * 2f);
-            SetColor(item, color);
+            Renderer renderer = item.GetComponent<Renderer>();
+            CommunityMaterialLibrary.ApplySurface(renderer, color,
+                BattleClubs.Art.ProceduralSurfaceTextures.Surface.PaintedMetal,
+                new Vector2(1f, Mathf.Max(1f, delta.magnitude * 0.5f)));
             generated.Add(item);
         }
 
