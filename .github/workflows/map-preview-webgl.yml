@@ -2,12 +2,6 @@ name: BATTLE CLUBS - Build 3D Map Preview (WebGL)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/humanoid-character-integration
-    paths:
-      - 'Unity/**'
-      - '.github/workflows/map-preview-webgl.yml'
 
 permissions:
   contents: read
@@ -73,7 +67,7 @@ jobs:
           unzip -q /tmp/KinemIQ_Free_Animations_CC0_FBX.zip -d Unity/Assets/ThirdParty/KinemIQ
           find Unity/Assets/ThirdParty/KinemIQ -iname '*Mannequin*.fbx' -o -iname '*.fbx' | head -40
           test -n "$(find Unity/Assets/ThirdParty/KinemIQ -iname 'KinemIQ_Mannequin.fbx' -print -quit)"
-          
+
       - name: Generate Unity scene and build WebGL preview
         shell: bash
         run: |
@@ -102,7 +96,7 @@ jobs:
           find Unity/Build/WebGL -type f -size +0c | grep -q .
           echo "WebGL preview output generated:"
           du -sh Unity/Build/WebGL
-          find Unity/Build/WebGL -maxdepth 2 -type f -printf '%P\n' | head -80
+          find Unity/Build/WebGL -maxdepth 2 -type f -printf '%P\\n' | head -80
 
       - name: Upload WebGL preview artifact
         uses: actions/upload-artifact@v4
