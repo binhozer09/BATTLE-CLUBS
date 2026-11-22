@@ -17,8 +17,25 @@ namespace BattleClubs.Gameplay
         private float progress;
         private bool holding;
 
-        public float Progress => reviveDuration <= 0f ? 0f : Mathf.Clamp01(progress / reviveDuration);
-        public bool IsReviving => holding && target != null;
+        public float Progress
+        {
+            get
+            {
+                NetworkReviveAuthority networkAuthority = GetComponent<NetworkReviveAuthority>();
+                if (networkAuthority != null && networkAuthority.IsSpawned) return networkAuthority.Progress;
+                return reviveDuration <= 0f ? 0f : Mathf.Clamp01(progress / reviveDuration);
+            }
+        }
+
+        public bool IsReviving
+        {
+            get
+            {
+                NetworkReviveAuthority networkAuthority = GetComponent<NetworkReviveAuthority>();
+                if (networkAuthority != null && networkAuthority.IsSpawned) return networkAuthority.IsReviving;
+                return holding && target != null;
+            }
+        }
 
         private void Awake()
         {
@@ -27,6 +44,8 @@ namespace BattleClubs.Gameplay
 
         private void Update()
         {
+            NetworkReviveAuthority networkAuthority = GetComponent<NetworkReviveAuthority>();
+            if (networkAuthority != null && networkAuthority.IsSpawned) return;
             if (!holding) return;
 
             if (!IsValidTarget(target))
@@ -45,6 +64,13 @@ namespace BattleClubs.Gameplay
 
         public bool BeginRevive()
         {
+            NetworkReviveAuthority networkAuthority = GetComponent<NetworkReviveAuthority>();
+            if (networkAuthority != null && networkAuthority.IsSpawned)
+            {
+                networkAuthority.BeginReviveServerRpc();
+                return true;
+            }
+
             if (holding) return target != null && IsValidTarget(target);
 
             Combatant reviverCombatant = GetComponent<Combatant>();
@@ -82,6 +108,13 @@ namespace BattleClubs.Gameplay
 
         public void CancelRevive()
         {
+            NetworkReviveAuthority networkAuthority = GetComponent<NetworkReviveAuthority>();
+            if (networkAuthority != null && networkAuthority.IsSpawned)
+            {
+                networkAuthority.CancelReviveServerRpc();
+                return;
+            }
+
             holding = false;
             progress = 0f;
             target = null;
