@@ -62,6 +62,18 @@ jobs:
           test -n "$EDITOR_PATH"
           echo "UNITY_EDITOR_PATH=$EDITOR_PATH" >> "$GITHUB_ENV"
 
+      - name: Download licensed CC0 humanoid model and animation pack
+        run: |
+          set -euo pipefail
+          mkdir -p Unity/Assets/ThirdParty/KinemIQ
+          curl -fL --retry 3 --retry-delay 2 \
+            https://huggingface.co/datasets/Kinemiq/free-game-animations/resolve/main/KinemIQ_Free_Animations_CC0_FBX.zip \
+            -o /tmp/KinemIQ_Free_Animations_CC0_FBX.zip
+          echo "4ecea37e2117a762c8d2be10c7e0f06d9c7c9005af0f9caa64c8ce5d424efb0e  /tmp/KinemIQ_Free_Animations_CC0_FBX.zip" | sha256sum -c -
+          unzip -q /tmp/KinemIQ_Free_Animations_CC0_FBX.zip -d Unity/Assets/ThirdParty/KinemIQ
+          find Unity/Assets/ThirdParty/KinemIQ -iname '*Mannequin*.fbx' -o -iname '*.fbx' | head -40
+          test -n "$(find Unity/Assets/ThirdParty/KinemIQ -iname 'KinemIQ_Mannequin.fbx' -print -quit)"
+          
       - name: Generate Unity scene and build WebGL preview
         shell: bash
         run: |
