@@ -44,7 +44,7 @@ namespace BattleClubs.Art
 
         public static Texture2D GetRoughness(Surface surface)
         {
-            return Resources.Load<Texture2D>("BC_PBR/" + surface + "_Roughness");
+            return Resources.Load<Texture2D>("BC_PBR/" + surface + "_MetallicSmoothness");
         }
 
         private static Texture2D LoadBrickAsset()
