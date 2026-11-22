@@ -131,6 +131,59 @@ namespace BattleClubs.World
             // small settlements sit beyond the playable blocks, adding a real
             // urban skyline instead of leaving the terrain as empty green slopes.
             BuildDistantHillsideHomes(origin, width, depth, reach);
+            BuildHillsideVegetation(origin, width, depth, reach);
+        }
+
+        private void BuildHillsideVegetation(Vector3 origin, float width, float depth, float reach)
+        {
+            Random.State previous = Random.state;
+            Random.InitState(randomSeed + 1943);
+            const int treesPerEdge = 9;
+            for (int edge = 0; edge < 4; edge++)
+            for (int i = 0; i < treesPerEdge; i++)
+            {
+                float t = (i + 0.5f) / treesPerEdge + Random.Range(-0.035f, 0.035f);
+                float distance = Random.Range(9f, reach - 3f);
+                Vector2 edgePoint, outward;
+                if (edge == 0) { edgePoint = new Vector2(t * width, depth + 3f); outward = Vector2.up; }
+                else if (edge == 1) { edgePoint = new Vector2(t * width, -3f); outward = Vector2.down; }
+                else if (edge == 2) { edgePoint = new Vector2(width + 3f, t * depth); outward = Vector2.right; }
+                else { edgePoint = new Vector2(-3f, t * depth); outward = Vector2.left; }
+
+                Vector2 point = edgePoint + outward * distance;
+                float ridge = Mathf.PerlinNoise(t * 3.8f + edge * 0.21f,
+                    distance / reach * 2.6f + randomSeed * 0.001f);
+                float detail = Mathf.PerlinNoise(t * 15f + 4f, distance / reach * 11f + edge * 0.17f);
+                float groundY = Mathf.Floor((7f + ridge * 15f + detail * 2.5f) / 2.2f) * 2.2f
+                    - distance / reach * 1.8f;
+                Vector3 basePos = origin + new Vector3(point.x, groundY + 0.1f, point.y);
+
+                if (Random.value < 0.68f)
+                {
+                    float trunkHeight = Random.Range(2.2f, 3.8f);
+                    float canopy = Random.Range(2.2f, 3.5f);
+                    CreatePrimitive(PrimitiveType.Cylinder, "Vegetation_Tree_Trunk",
+                        basePos + Vector3.up * (trunkHeight * 0.5f),
+                        new Vector3(Random.Range(0.22f, 0.38f), trunkHeight * 0.5f,
+                            Random.Range(0.22f, 0.38f)), new Color(0.25f, 0.16f, 0.09f));
+                    Vector3 crown = basePos + Vector3.up * (trunkHeight + canopy * 0.28f);
+                    CreatePrimitive(PrimitiveType.Sphere, "Vegetation_Tree_Canopy",
+                        crown, new Vector3(canopy * 1.5f, canopy, canopy * 1.4f),
+                        new Color(Random.Range(0.68f, 0.9f), Random.Range(0.78f, 0.95f), 0.62f));
+                    CreatePrimitive(PrimitiveType.Sphere, "Vegetation_Tree_Canopy",
+                        crown + new Vector3(canopy * 0.42f, canopy * 0.16f, canopy * 0.12f),
+                        new Vector3(canopy, canopy * 0.82f, canopy),
+                        new Color(0.72f, 0.88f, 0.58f));
+                }
+                else
+                {
+                    CreatePrimitive(PrimitiveType.Sphere, "Vegetation_Shrub",
+                        basePos + Vector3.up * 0.45f,
+                        new Vector3(Random.Range(1.0f, 1.8f), 0.8f, Random.Range(1.0f, 1.8f)),
+                        new Color(0.72f, 0.86f, 0.56f));
+                }
+            }
+            Random.state = previous;
         }
 
         private void BuildDistantHillsideHomes(Vector3 origin, float width, float depth, float reach)
@@ -727,6 +780,8 @@ namespace BattleClubs.World
                     stableHash = stableHash * 31 + objectName[i];
                 return ProceduralSurfaceTextures.Surface.ConcreteBlock;
             }
+            if (objectName.StartsWith("Vegetation_Tree_Canopy") || objectName.StartsWith("Vegetation_Shrub"))
+                return ProceduralSurfaceTextures.Surface.Foliage;
             if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
             if (objectName.StartsWith("Court"))
