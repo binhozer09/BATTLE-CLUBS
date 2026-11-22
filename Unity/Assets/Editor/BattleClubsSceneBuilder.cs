@@ -46,7 +46,7 @@ namespace BattleClubs.Editor
             map.AddComponent<TeamSpawnManager>();
             map.AddComponent<TeamMatchRules>();
 
-            GameObject player = CreatePlayer(new Vector3(4f, -0.15f, 4f));
+            GameObject player = CreatePlayer(new Vector3(4f, 0.05f, 4f));
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera camera = cameraObject.AddComponent<Camera>();
