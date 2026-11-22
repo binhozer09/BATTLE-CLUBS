@@ -110,6 +110,9 @@ namespace BattleClubs.Editor
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
             visual.transform.localScale = Vector3.one;
+            // Keep the imported mesh aligned with the controller every frame.
+            // FBX pivots and animation bounds can otherwise put the feet below the floor.
+            visual.AddComponent<HumanoidGroundAlignment>();
 
             // FBX pivots are not guaranteed to sit at the soles of the feet.
             // Align the visible humanoid's lowest rendered point with the
