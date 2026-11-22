@@ -199,7 +199,8 @@ namespace BattleClubs.World
                 float depth = buildingDepth * Random.Range(0.72f, 0.96f);
                 float xOffset = Random.Range(-half * 0.12f, half * 0.12f);
                 Vector3 position = center + new Vector3(xOffset, height * 0.5f, side * sideOffset);
-                Color wall = FacadePalette[Random.Range(0, FacadePalette.Length)];
+                // Exposed ordinary cement masonry blocks: keep the albedo neutral so the block texture is not tinted like clay brick or painted plaster.
+                Color wall = new Color(0.92f, 0.92f, 0.89f);
 
                 CreatePrimitive(PrimitiveType.Cube, "House_" + blockX + "_" + blockZ + "_" + side,
                     position, new Vector3(width, height, depth), wall);
