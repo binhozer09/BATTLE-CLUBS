@@ -61,6 +61,14 @@ namespace BattleClubs.Editor
                 return;
             }
 
+            if (playerRoot.transform.Find("Visual_Humanoid") != null)
+            {
+                EditorUtility.DisplayDialog("BATTLE CLUBS",
+                    "Este Player_Root já possui Visual_Humanoid. Remova ou substitua manualmente o visual atual antes de integrar outro modelo; o assistente não cria duplicatas.",
+                    "OK");
+                return;
+            }
+
             RuntimeAnimatorController controller =
                 AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
 
