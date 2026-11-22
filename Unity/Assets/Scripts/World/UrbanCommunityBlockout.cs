@@ -759,7 +759,10 @@ namespace BattleClubs.World
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer != null)
             {
-                Texture texture = ProceduralSurfaceTextures.Get(ResolveSurface(objectName));
+                bool flatColor = objectName == "WindowGlass" || objectName == "DoorHandle" ||
+                    objectName == "LampHead" || objectName == "Rooftop_Hanging_Cloth" ||
+                    objectName == "Court_Goal_Net_Vertical" || objectName == "Court_Goal_Net_Horizontal";
+                Texture texture = flatColor ? null : ProceduralSurfaceTextures.Get(ResolveSurface(objectName));
                 renderer.sharedMaterial = CommunityMaterialLibrary.Get(color, texture);
                 bool horizontalSurface = objectName == "Map_Ground" || objectName == "CentralCourt" ||
                     objectName == "Roof" || objectName == "RoofParapet" ||
@@ -767,7 +770,8 @@ namespace BattleClubs.World
                     objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle";
                 float textureU = Mathf.Max(1f, scale.x * 0.35f);
                 float textureV = Mathf.Max(1f, (horizontalSurface ? scale.z : scale.y) * 0.35f);
-                CommunityMaterialLibrary.SetTextureScale(renderer, new Vector2(textureU, textureV));
+                if (!flatColor)
+                    CommunityMaterialLibrary.SetTextureScale(renderer, new Vector2(textureU, textureV));
             }
 
             generated.Add(item);
@@ -776,35 +780,47 @@ namespace BattleClubs.World
 
         private static ProceduralSurfaceTextures.Surface ResolveSurface(string objectName)
         {
+            // Roof names must be resolved before Hillside_House_ so distant roofs
+            // receive metal sheets instead of the wall's concrete-block masonry.
+            if (objectName == "Hillside_House_Roof")
+                return ProceduralSurfaceTextures.Surface.CorrugatedMetal;
             if (objectName == "Map_Ground" || objectName == "RoadDash")
                 return ProceduralSurfaceTextures.Surface.Asphalt;
-            if (objectName.StartsWith("House_") || objectName.StartsWith("Hillside_House_"))
-            {
-                int stableHash = 17;
-                for (int i = 0; i < objectName.Length; i++)
-                    stableHash = stableHash * 31 + objectName[i];
-                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
-            }
+            if (objectName == "WaterTank" || objectName == "WaterTankLid")
+                return ProceduralSurfaceTextures.Surface.Plastic;
             if (objectName.StartsWith("Vegetation_Tree_Canopy") || objectName.StartsWith("Vegetation_Shrub"))
                 return ProceduralSurfaceTextures.Surface.Foliage;
-            if (objectName.StartsWith("Vegetation_Tree_Trunk") || objectName == "FrontDoor")
+            if (objectName.StartsWith("Vegetation_Tree_Trunk") || objectName == "FrontDoor" ||
+                objectName == "Rooftop_Room_Door")
                 return ProceduralSurfaceTextures.Surface.Wood;
+            if (objectName == "WindowGlass" || objectName == "DoorHandle" ||
+                objectName == "LampHead" || objectName == "Rooftop_Hanging_Cloth" ||
+                objectName.StartsWith("Court_Goal_Net"))
+                return ProceduralSurfaceTextures.Surface.Plaster;
+            if (objectName.Contains("WindowFrame") || objectName.Contains("WindowDivider") ||
+                objectName.Contains("WindowShutter") || objectName.Contains("BalconyRail") ||
+                objectName.Contains("BalconyBar") || objectName.Contains("AirConditioner") ||
+                objectName.Contains("ACVent") || objectName.Contains("Antenna") ||
+                objectName.Contains("Satellite") || objectName.Contains("LampPost") ||
+                objectName.Contains("LampArm") || objectName.Contains("DoorFrame") ||
+                objectName.Contains("DoorAwning") || objectName.Contains("AwningSupport"))
+                return ProceduralSurfaceTextures.Surface.PaintedMetal;
+            if (objectName.StartsWith("House_") || objectName.StartsWith("Hillside_House_"))
+                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
             if (objectName == "Road_Crosswalk_Stripe" || objectName.StartsWith("CourtLine") || objectName == "CourtCenterCircle")
                 return ProceduralSurfaceTextures.Surface.Concrete;
-            if (objectName.StartsWith("Alley_Concrete") || objectName.StartsWith("Alley_Low_Curb") || objectName == "DoorStep")
+            if (objectName.StartsWith("Alley_Concrete") || objectName.StartsWith("Alley_Low_Curb") ||
+                objectName == "DoorStep" || objectName.StartsWith("FacadeCornice") ||
+                objectName.StartsWith("WindowSill") || objectName == "BalconySlab")
                 return ProceduralSurfaceTextures.Surface.Concrete;
             if (objectName == "CentralCourt")
                 return ProceduralSurfaceTextures.Surface.Court;
             if (objectName.StartsWith("Court"))
+                return ProceduralSurfaceTextures.Surface.PaintedMetal;
+            if (objectName == "Roof" || objectName == "RoofParapet" || objectName == "AlleyCover")
                 return ProceduralSurfaceTextures.Surface.Concrete;
-            if (objectName == "Roof")
-                return ProceduralSurfaceTextures.Surface.Concrete;
-            if (objectName == "RoofParapet" || objectName == "AlleyCover")
-                return ProceduralSurfaceTextures.Surface.ConcreteBlock;
             if (objectName.Contains("Corrugated") || objectName.Contains("Canopy"))
                 return ProceduralSurfaceTextures.Surface.CorrugatedMetal;
-            if (objectName == "FrontDoor")
-                return ProceduralSurfaceTextures.Surface.Wood;
             return ProceduralSurfaceTextures.Surface.Plaster;
         }
 
