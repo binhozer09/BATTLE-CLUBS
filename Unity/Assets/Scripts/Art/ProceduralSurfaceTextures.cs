@@ -17,13 +17,23 @@ namespace BattleClubs.Art
         {
             switch (surface)
             {
-                case Surface.Brick: return brick ?? (brick = BuildBrick());
+                case Surface.Brick: return brick ?? (brick = LoadBrickAsset() ?? BuildBrick());
                 case Surface.Concrete: return concrete ?? (concrete = BuildNoise("Concrete", 256, 256, 0.48f, 0.13f, 0.055f));
                 case Surface.Asphalt: return asphalt ?? (asphalt = BuildNoise("Asphalt", 256, 256, 0.22f, 0.075f, 0.09f));
                 case Surface.Court: return court ?? (court = BuildCourt());
                 case Surface.Wood: return wood ?? (wood = BuildWood());
                 default: return plaster ?? (plaster = BuildNoise("Painted_Plaster", 256, 256, 0.72f, 0.09f, 0.035f));
             }
+        }
+
+        private static Texture2D LoadBrickAsset()
+        {
+            Texture2D imported = Resources.Load<Texture2D>("BC_Textures/BC_Brick_Albedo");
+            if (imported == null) return null;
+            imported.wrapMode = TextureWrapMode.Repeat;
+            imported.filterMode = FilterMode.Bilinear;
+            imported.anisoLevel = 4;
+            return imported;
         }
 
         private static Texture2D NewTexture(string textureName, int width, int height)
