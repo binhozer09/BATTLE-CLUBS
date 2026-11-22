@@ -49,3 +49,8 @@ O código e a ferramenta de criação de cena foram gravados no GitHub, mas a ce
 Foi adicionada na branch `feature/humanoid-character-integration` uma ferramenta de Editor para integrar um modelo Humanoid importado ao Player_Root existente. Ela conecta Animator, driver de movimento, ataque e aplicador de kits, removendo apenas os visuais provisórios gerados pelo construtor.
 
 O projeto ainda depende de um modelo humanoide licenciado e clipes de animação. A ferramenta foi gravada no GitHub, mas ainda não foi compilada nem executada no Unity Editor. Consulte `Docs/CHARACTER_INTEGRATION.md`.
+
+
+## Atualização — otimização de materiais do cenário
+
+Foi adicionada `CommunityMaterialLibrary.cs` para reutilizar materiais por cor nos detalhes de escadarias, fiação, varais, mercadinhos e infraestrutura das fachadas. Os geradores `CommunityArtDetails` e `FavelaStreetLifeDetails` agora compartilham essas instâncias, reduzindo a criação repetida de materiais. Isso ainda não substitui a otimização de malhas/draw calls nem uma medição real no Unity; validar memória e desempenho em Android e PC continua pendente.
