@@ -1,0 +1,101 @@
+name: BATTLE CLUBS - Build 3D Map Preview (WebGL)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/humanoid-character-integration
+    paths:
+      - 'Unity/**'
+      - '.github/workflows/map-preview-webgl.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-map-preview:
+    name: Generate and compile the real Unity favela scene for browser preview
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    env:
+      UNITY_NO_CLI_INVOKED_TELEMETRY: '1'
+      UNITY_NO_CRASH_REPORT: '1'
+      UNITY_NO_UPDATE_CHECK: '1'
+      UNITY_NO_CONSENT_PROMPT: '1'
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install Unity CLI dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1 libgconf-2-4 unzip
+
+      - name: Install Unity CLI
+        run: |
+          curl -fsSL https://unity.com/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Disable Unity analytics
+        run: |
+          unity analytics opt-out
+          unity analytics status
+
+      - name: Authenticate Unity Personal
+        run: |
+          echo "Approve the temporary Unity sign-in link shown in this step."
+          timeout 10m unity auth login
+          unity auth status
+
+      - name: Activate Unity Personal license
+        run: |
+          unity license activate --personal --accept-eula --non-interactive
+          unity license status
+          test -s "$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+
+      - name: Install Unity 2022.3.62f1 with WebGL module
+        run: |
+          unity install 2022.3.62f1 -m webgl --cm --accept-eula
+          unity editors --installed
+          EDITOR_PATH="$(find "$HOME" -type f -path '*/2022.3.62f1/Editor/Unity' -print -quit 2>/dev/null)"
+          test -n "$EDITOR_PATH"
+          echo "UNITY_EDITOR_PATH=$EDITOR_PATH" >> "$GITHUB_ENV"
+
+      - name: Generate Unity scene and build WebGL preview
+        shell: bash
+        run: |
+          set -o pipefail
+          "$UNITY_EDITOR_PATH" \
+            -batchmode \
+            -nographics \
+            -accept-apiupdate \
+            -projectPath "$GITHUB_WORKSPACE/Unity" \
+            -executeMethod BattleClubs.Editor.BattleClubsMapPreviewBuilder.BuildWebGLMapPreview \
+            -logFile "$GITHUB_WORKSPACE/map-preview-build.log" \
+            -quit
+
+      - name: Diagnose Unity build failure
+        if: failure()
+        run: |
+          if [ -f map-preview-build.log ]; then
+            grep -n -E -i "error|exception|failed|failure|BATTLE_CLUBS_MAP_PREVIEW" map-preview-build.log | tail -250 || true
+            tail -200 map-preview-build.log
+          fi
+
+      - name: Validate WebGL output
+        run: |
+          set -euo pipefail
+          test -s Unity/Build/WebGL/index.html
+          find Unity/Build/WebGL -type f -size +0c | grep -q .
+          echo "WebGL preview output generated:"
+          du -sh Unity/Build/WebGL
+          find Unity/Build/WebGL -maxdepth 2 -type f -printf '%P\n' | head -80
+
+      - name: Upload WebGL preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BATTLE-CLUBS-FAVELA-MAP-WEBGL
+          path: Unity/Build/WebGL/
+          if-no-files-found: error
+          retention-days: 14
