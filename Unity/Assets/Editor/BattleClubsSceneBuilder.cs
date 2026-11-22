@@ -93,10 +93,10 @@ namespace BattleClubs.Editor
         {
             GameObject root = new GameObject("Player_Local");
             root.transform.position = position;
-            CharacterController controller = root.AddComponent<CharacterController>();
-            controller.height = 2f;
-            controller.radius = 0.42f;
-            controller.center = new Vector3(0f, 1f, 0f);
+            CharacterController characterController = root.AddComponent<CharacterController>();
+            characterController.height = 2f;
+            characterController.radius = 0.42f;
+            characterController.center = new Vector3(0f, 1f, 0f);
             root.AddComponent<ThirdPersonMotor>();
             root.AddComponent<Combatant>();
             root.AddComponent<HumanoidAnimationDriver>();
