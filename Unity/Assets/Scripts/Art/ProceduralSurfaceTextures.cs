@@ -9,9 +9,9 @@ namespace BattleClubs.Art
     /// </summary>
     public static class ProceduralSurfaceTextures
     {
-        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage }
+        public enum Surface { Plaster, Brick, ConcreteBlock, Concrete, Asphalt, Court, Wood, CorrugatedMetal, Foliage, HillsideDirt }
 
-        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage;
+        private static Texture2D plaster, brick, concreteBlock, concrete, asphalt, court, wood, corrugatedMetal, foliage, hillsideDirt;
 
         public static Texture2D Get(Surface surface)
         {
@@ -21,8 +21,9 @@ namespace BattleClubs.Art
                 case Surface.ConcreteBlock: return concreteBlock ?? (concreteBlock = BuildConcreteBlock());
                 case Surface.CorrugatedMetal: return corrugatedMetal ?? (corrugatedMetal = BuildCorrugatedMetal());
                 case Surface.Foliage: return foliage ?? (foliage = BuildFoliage());
+                case Surface.HillsideDirt: return hillsideDirt ?? (hillsideDirt = BuildHillsideDirt());
                 case Surface.Concrete: return concrete ?? (concrete = BuildNoise("Concrete", 256, 256, 0.48f, 0.13f, 0.055f));
-                case Surface.Asphalt: return asphalt ?? (asphalt = BuildNoise("Asphalt", 256, 256, 0.22f, 0.075f, 0.09f));
+                case Surface.Asphalt: return asphalt ?? (asphalt = BuildAsphalt());
                 case Surface.Court: return court ?? (court = BuildCourt());
                 case Surface.Wood: return wood ?? (wood = BuildWood());
                 default: return plaster ?? (plaster = BuildNoise("Painted_Plaster", 256, 256, 0.72f, 0.09f, 0.035f));
@@ -171,6 +172,52 @@ namespace BattleClubs.Art
             return texture;
         }
 
+
+
+        private static Texture2D BuildAsphalt()
+        {
+            const int size = 512;
+            var texture = NewTexture("BC_Worn_Asphalt_Patches", size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float broad = Mathf.PerlinNoise(x * 0.012f + 4f, y * 0.012f + 8f);
+                float grain = Mathf.PerlinNoise(x * 0.24f + 3f, y * 0.27f + 11f);
+                float patch = Mathf.PerlinNoise(x * 0.027f + 18f, y * 0.025f + 2f);
+                float value = Mathf.Clamp(0.12f + broad * 0.075f + grain * 0.045f + (patch > 0.69f ? 0.035f : 0f), 0.06f, 0.34f);
+                bool crack = Mathf.Abs(Mathf.PerlinNoise(x * 0.035f + 2f, y * 0.035f + 7f) -
+                    Mathf.PerlinNoise(x * 0.035f + 2.025f, y * 0.035f + 7.025f)) < 0.0011f && grain < 0.57f;
+                Color c = new Color(value, value * 1.015f, value * 0.99f);
+                if (crack) c *= 0.42f;
+                pixels[y * size + x] = c;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            return texture;
+        }
+
+        private static Texture2D BuildHillsideDirt()
+        {
+            const int size = 256;
+            var texture = NewTexture("BC_Hillside_Earth_And_Grass", size, size);
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float soil = Mathf.PerlinNoise(x * 0.025f + 7f, y * 0.025f + 3f);
+                float grass = Mathf.PerlinNoise(x * 0.055f + 21f, y * 0.055f + 13f);
+                float grit = Mathf.PerlinNoise(x * 0.31f, y * 0.29f + 5f);
+                Color earth = Color.Lerp(new Color(0.25f, 0.19f, 0.12f), new Color(0.43f, 0.34f, 0.21f), soil);
+                Color vegetation = new Color(0.17f, 0.25f, 0.12f);
+                Color c = Color.Lerp(earth, vegetation, Mathf.Clamp01((grass - 0.57f) * 1.25f));
+                c *= 0.88f + grit * 0.20f;
+                pixels[y * size + x] = c;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(true, true);
+            return texture;
+        }
 
         // Varied leaf canopy texture with broad color variation and fine foliage grain.
         private static Texture2D BuildFoliage()
