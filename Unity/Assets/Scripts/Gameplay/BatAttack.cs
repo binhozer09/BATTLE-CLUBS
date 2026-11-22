@@ -98,6 +98,7 @@ namespace BattleClubs.Gameplay
         {
             if (hitOrigin == null) return null;
 
+            Combatant attacker = GetComponent<Combatant>();
             Collider[] hits = Physics.OverlapSphere(
                 hitOrigin.position, hitRadius, targetLayers, QueryTriggerInteraction.Ignore);
 
