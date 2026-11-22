@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using BattleClubs.Art;
 
 namespace BattleClubs.World
 {
@@ -62,6 +63,15 @@ namespace BattleClubs.World
             };
             Materials[key] = material;
             return material;
+        }
+
+        public static void ApplySurface(Renderer renderer, Color tint,
+            ProceduralSurfaceTextures.Surface surface, Vector2 tiling)
+        {
+            if (renderer == null) return;
+            Texture texture = ProceduralSurfaceTextures.Get(surface);
+            renderer.sharedMaterial = Get(tint, texture);
+            SetTextureScale(renderer, tiling);
         }
 
         public static void SetTextureScale(Renderer renderer, Vector2 scale)
