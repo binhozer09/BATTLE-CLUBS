@@ -42,3 +42,10 @@ O código e a ferramenta de criação de cena foram gravados no GitHub, mas a ce
 - O vencedor é registrado quando resta exatamente uma equipe não eliminada. Empate por eliminação simultânea continua sem regra definida.
 - Ataque e reanimação possuem verificações locais adicionais de estado e equipe.
 - Essas mudanças foram gravadas no GitHub, mas ainda não foram compiladas ou executadas no Unity Editor. O multiplayer online continua pendente.
+
+
+## Atualização — pipeline de personagem 3D
+
+Foi adicionada na branch `feature/humanoid-character-integration` uma ferramenta de Editor para integrar um modelo Humanoid importado ao Player_Root existente. Ela conecta Animator, driver de movimento, ataque e aplicador de kits, removendo apenas os visuais provisórios gerados pelo construtor.
+
+O projeto ainda depende de um modelo humanoide licenciado e clipes de animação. A ferramenta foi gravada no GitHub, mas ainda não foi compilada nem executada no Unity Editor. Consulte `Docs/CHARACTER_INTEGRATION.md`.
