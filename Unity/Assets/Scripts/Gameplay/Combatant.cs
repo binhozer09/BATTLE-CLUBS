@@ -46,5 +46,12 @@ namespace BattleClubs.Gameplay
         {
             state = PlayerLifeState.Eliminated;
         }
+
+        /// <summary>Applies state received from the authoritative network player object.</summary>
+        public void ApplyReplicatedState(int hitsReceived, PlayerLifeState replicatedState)
+        {
+            HitsReceived = Mathf.Max(0, hitsReceived);
+            state = replicatedState;
+        }
     }
 }
