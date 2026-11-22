@@ -81,6 +81,16 @@ namespace BattleClubs.World
                         new Vector3(steps * tread, 0.34f, 0.22f), StepColor, yaw);
                 }
 
+                // Flat concrete landings join the first and last risers to the
+                // alley floor and the street ramp. They prevent small gaps at the
+                // ends of the stair flight from catching the CharacterController.
+                CreateCube("Stair_Bottom_Landing",
+                    new Vector3(startX - 0.72f, 0.08f, centerZ),
+                    new Vector3(1.55f, 0.16f, lane), StepColor);
+                CreateCube("Stair_Top_Landing",
+                    new Vector3(endX - 0.62f, steps * rise + 0.08f, centerZ),
+                    new Vector3(1.55f, 0.16f, lane), StepColor);
+
                 // The stair flight rises above the flat alley. A collidable sloped
                 // transition returns it smoothly to street level in the next road.
                 // Without this connector, the last step ends as an abrupt drop.
