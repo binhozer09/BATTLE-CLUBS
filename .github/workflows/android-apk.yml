@@ -1,0 +1,99 @@
+name: BATTLE CLUBS - Build Android APK (test scene)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/humanoid-character-integration
+    paths:
+      - 'Unity/**'
+      - '.github/workflows/android-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Compile Android test APK with Unity
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      UNITY_NO_CLI_INVOKED_TELEMETRY: '1'
+      UNITY_NO_CRASH_REPORT: '1'
+      UNITY_NO_UPDATE_CHECK: '1'
+      UNITY_NO_CONSENT_PROMPT: '1'
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install Unity CLI dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1 libgconf-2-4 unzip
+
+      - name: Install Unity CLI
+        run: |
+          curl -fsSL https://unity.com/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Disable Unity analytics
+        run: |
+          unity analytics opt-out
+          unity analytics status
+
+      - name: Authenticate Unity Personal
+        run: |
+          echo "Approve the temporary Unity sign-in link shown in this step."
+          timeout 10m unity auth login
+          unity auth status
+
+      - name: Activate Unity Personal license
+        run: |
+          unity license activate --personal --accept-eula --non-interactive
+          unity license status
+          test -s "$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+
+      - name: Install Unity 2022.3.62f1 with Android module
+        run: |
+          unity install 2022.3.62f1 -m android --cm --accept-eula
+          unity editors --installed
+          EDITOR_PATH="$(find "$HOME" -type f -path '*/2022.3.62f1/Editor/Unity' -print -quit 2>/dev/null)"
+          test -n "$EDITOR_PATH"
+          echo "UNITY_EDITOR_PATH=$EDITOR_PATH" >> "$GITHUB_ENV"
+
+      - name: Generate test scene and build Android APK
+        shell: bash
+        run: |
+          set -o pipefail
+          "$UNITY_EDITOR_PATH" \
+            -batchmode \
+            -nographics \
+            -accept-apiupdate \
+            -projectPath "$GITHUB_WORKSPACE/Unity" \
+            -executeMethod BattleClubs.Editor.BattleClubsAndroidCI.BuildAndroid \
+            -logFile "$GITHUB_WORKSPACE/android-build.log" \
+            -quit
+
+      - name: Diagnose Android build failure
+        if: failure()
+        run: |
+          if [ -f android-build.log ]; then
+            grep -n -E -i "error|exception|failed|failure|BATTLE_CLUBS_BUILD" android-build.log | tail -250 || true
+            tail -200 android-build.log
+          fi
+
+      - name: Validate APK
+        run: |
+          set -euo pipefail
+          test -s Unity/Build/Android/BATTLE-CLUBS.apk
+          file Unity/Build/Android/BATTLE-CLUBS.apk
+          du -h Unity/Build/Android/BATTLE-CLUBS.apk
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BATTLE-CLUBS-ANDROID-TEST-APK
+          path: Unity/Build/Android/BATTLE-CLUBS.apk
+          if-no-files-found: error
+          retention-days: 14
