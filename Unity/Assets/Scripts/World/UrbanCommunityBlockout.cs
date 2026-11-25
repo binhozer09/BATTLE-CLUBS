@@ -397,16 +397,31 @@ namespace BattleClubs.World
                         // Dark, fine-grained urban asphalt: broad worn areas, compact aggregate
                         // and tiny embedded stones. Keep the value range restrained so the road
                         // reads as pavement rather than gravel when viewed from gameplay height.
-                        float broad = Mathf.PerlinNoise(x * 0.0125f + 17.3f, y * 0.0125f + 41.8f);
-                        float medium = Mathf.PerlinNoise(x * 0.052f + 8.1f, y * 0.052f + 23.4f);
-                        float fine = Mathf.PerlinNoise(x * 0.31f + 51.7f, y * 0.31f + 6.2f);
-                        float micro = Mathf.PerlinNoise(x * 0.87f + 14.2f, y * 0.87f + 72.6f);
-                        float wornPatch = Mathf.SmoothStep(0.58f, 0.78f, broad);
-                        float repairTone = Mathf.SmoothStep(0.67f, 0.84f, medium);
-                        float aggregate = (fine - 0.5f) * 0.105f + (micro - 0.5f) * 0.045f;
-                        float mottling = (broad - 0.5f) * 0.12f + (medium - 0.5f) * 0.07f;
-                        float value = Mathf.Clamp(0.70f + mottling + aggregate
-                            - wornPatch * 0.055f + repairTone * 0.018f, 0.56f, 0.86f);
+                        float broad = Mathf.PerlinNoise(x * 0.010f + 17.3f, y * 0.010f + 41.8f);
+                        float medium = Mathf.PerlinNoise(x * 0.043f + 8.1f, y * 0.043f + 23.4f);
+                        float fine = Mathf.PerlinNoise(x * 0.29f + 51.7f, y * 0.29f + 6.2f);
+                        float micro = Mathf.PerlinNoise(x * 0.91f + 14.2f, y * 0.91f + 72.6f);
+
+                        // Broad, irregular resurfacing zones with soft edges.
+                        float repairField = Mathf.PerlinNoise(x * 0.021f + 93.1f, y * 0.021f + 12.7f);
+                        float repair = Mathf.SmoothStep(0.60f, 0.77f, repairField);
+                        float worn = Mathf.SmoothStep(0.43f, 0.68f, broad);
+                        float aggregate = (fine - 0.5f) * 0.095f + (micro - 0.5f) * 0.035f;
+                        float mottling = (broad - 0.5f) * 0.105f + (medium - 0.5f) * 0.075f;
+
+                        // Faint paired tire-polish bands, blended into the pavement rather than painted on.
+                        float tireA = Mathf.PerlinNoise(x * 0.018f + 31.7f, y * 0.11f + 4.8f);
+                        float tireB = Mathf.PerlinNoise(x * 0.018f + 48.2f, y * 0.11f + 19.6f);
+                        float tireWear = Mathf.Max(0f, tireA - 0.58f) * 0.045f
+                            + Mathf.Max(0f, tireB - 0.60f) * 0.035f;
+
+                        // Hairline crack network: narrow ridges in low-frequency noise.
+                        float crackField = Mathf.Abs(Mathf.PerlinNoise(x * 0.052f + 71.2f,
+                            y * 0.052f + 37.9f) - 0.5f);
+                        float crack = 1f - Mathf.SmoothStep(0.012f, 0.035f, crackField);
+                        float value = Mathf.Clamp(0.675f + mottling + aggregate
+                            + repair * 0.025f - worn * 0.028f - tireWear
+                            - crack * 0.035f, 0.53f, 0.82f);
                         pixel = new Color(value * 0.985f, value, value * 1.015f);
                     }
                     else if (surface == "brick")
