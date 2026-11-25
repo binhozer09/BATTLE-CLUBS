@@ -170,7 +170,11 @@ namespace BattleClubs.Player
             string token = PlayerPrefs.GetString(TokenKey, "");
             if (string.IsNullOrEmpty(token)) yield break;
             busy = true;
-            string[] files = Directory.GetFiles(directory);
+            string[] files = null;
+            try { files = Directory.GetFiles(directory); }
+            catch (Exception e) { status = "Falha ao ler evidências: " + e.Message; }
+            if (files == null) { busy = false; yield break; }
+
             WWWForm form = new WWWForm();
             int count = 0;
             for (int i = 0; i < files.Length && count < 12; i++)
