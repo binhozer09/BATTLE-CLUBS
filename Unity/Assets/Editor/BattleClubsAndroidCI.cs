@@ -12,6 +12,11 @@ namespace BattleClubs.Editor
     {
         public static void BuildAndroid()
         {
+            // Generate the community test scene with the Patched Asphalt road texture.
+            BattleClubsSceneBuilder.CreateCommunityTestScene();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
             // Never generate or switch to the procedural community test scene here.
             // CI must build the project's actual scenes as configured in Build Settings.
             string[] scenes = EditorBuildSettings.scenes
