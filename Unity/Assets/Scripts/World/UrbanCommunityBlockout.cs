@@ -26,6 +26,7 @@ namespace BattleClubs.World
 
         [Header("Street details")]
         [SerializeField] private Texture2D asphaltDamageTexture;
+        [SerializeField] private Texture2D roadSurfaceTexture;
         [SerializeField] private bool addStreetLights = true;
         [SerializeField] private bool addRooftopTanks = true;
         [SerializeField] private bool addCourtMarkings = true;
@@ -62,9 +63,22 @@ namespace BattleClubs.World
             float totalZ = blocksZ * blockSize + (blocksZ - 1) * roadWidth;
             Vector3 origin = transform.position;
 
-            CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
+            GameObject roadGround = CreatePrimitive(PrimitiveType.Cube, "Map_Ground",
                 origin + new Vector3(totalX * 0.5f, -0.65f, totalZ * 0.5f),
                 new Vector3(totalX + roadWidth, 1f, totalZ + roadWidth), Asphalt);
+            if (roadSurfaceTexture != null)
+            {
+                Renderer roadRenderer = roadGround.GetComponent<Renderer>();
+                if (roadRenderer != null && roadRenderer.sharedMaterial != null)
+                {
+                    Material roadMaterial = roadRenderer.sharedMaterial;
+                    if (roadMaterial.HasProperty("_MainTex")) roadMaterial.SetTexture("_MainTex", roadSurfaceTexture);
+                    if (roadMaterial.HasProperty("_BaseMap")) roadMaterial.SetTexture("_BaseMap", roadSurfaceTexture);
+                    if (roadMaterial.HasProperty("_Color")) roadMaterial.SetColor("_Color", Color.white);
+                    if (roadMaterial.HasProperty("_BaseColor")) roadMaterial.SetColor("_BaseColor", Color.white);
+                    roadMaterial.mainTextureScale = new Vector2(Mathf.Max(1f, totalX / 8f), Mathf.Max(1f, totalZ / 8f));
+                }
+            }
 
             // Narrow sidewalks and the two rows of houses form readable combat lanes.
             for (int x = 0; x < blocksX; x++)
