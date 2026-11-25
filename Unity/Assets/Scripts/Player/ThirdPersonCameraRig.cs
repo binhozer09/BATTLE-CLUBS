@@ -38,6 +38,8 @@ namespace BattleClubs.Player
             transform.rotation = Quaternion.LookRotation(target.position + Vector3.up * lookHeight - transform.position, Vector3.up);
         }
 
+        public void ApplyRemoteSensitivity(float value) => sensitivity = Mathf.Clamp(value, 0.2f, 5f);
+
         public void SetTarget(Transform value)
         {
             target = value;
