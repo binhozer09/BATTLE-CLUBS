@@ -12,7 +12,12 @@ namespace BattleClubs.Editor
     {
         public static void BuildAndroid()
         {
-            // Generate the real main community scene, not the obsolete isolated test scene.
+            // Permanently exclude the obsolete test scene from the project and build.
+            const string obsoleteTestScene = "Assets/Scenes/BattleClubs_Community_Test.unity";
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(obsoleteTestScene) != null)
+                AssetDatabase.DeleteAsset(obsoleteTestScene);
+
+            // Generate the single main entry scene used by the Android build.
             BattleClubsFullSceneBuilder.CreateMainGameScene();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
