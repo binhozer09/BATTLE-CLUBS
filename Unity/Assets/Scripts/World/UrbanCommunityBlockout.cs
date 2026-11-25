@@ -353,7 +353,7 @@ namespace BattleClubs.World
                 : Vector2.one;
             material.mainTextureScale = textureTiling;
             if (material.HasProperty("_Smoothness"))
-                material.SetFloat("_Smoothness", surface == "metal" ? 0.48f : surface == "glass" ? 0.72f : 0.12f);
+                material.SetFloat("_Smoothness", surface == "metal" ? 0.48f : surface == "glass" ? 0.72f : surface == "asphalt" ? 0.035f : 0.12f);
             materialCache.Add(key, material);
             return material;
         }
@@ -364,7 +364,9 @@ namespace BattleClubs.World
             if (n.Contains("glass") || n.Contains("window")) return "glass";
             if (n.Contains("metal") || n.Contains("tank") || n.Contains("lamp") || n.Contains("rail") || n.Contains("handle") || n.Contains("vent")) return "metal";
             if (n.Contains("door")) return "wood";
-            if (n.Contains("ground") || n.Contains("dash") || n.Contains("court")) return "asphalt";
+            if (n.Contains("ground")) return "asphalt";
+            if (n.Contains("dash")) return "concrete";
+            if (n.Contains("court")) return "concrete";
             if (n.Contains("roof") || n.Contains("cover") || n.Contains("slab") || n.Contains("line") || n.Contains("sidewalk")) return "concrete";
             if (n.Contains("house")) return "brick";
             if (n.Contains("windowframe") || n.Contains("balcony") || n.Contains("airconditioner") || n.Contains("ac")) return "plaster";
@@ -374,7 +376,7 @@ namespace BattleClubs.World
         private Texture2D GetSurfaceTexture(string surface)
         {
             if (textureCache.TryGetValue(surface, out Texture2D cached)) return cached;
-            const int size = 256;
+            const int size = 512;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGB24, false);
             texture.name = "BC_Tile_" + surface;
             texture.wrapMode = TextureWrapMode.Repeat;
@@ -392,14 +394,20 @@ namespace BattleClubs.World
                     Color pixel;
                     if (surface == "asphalt")
                     {
-                        float grit = Mathf.PerlinNoise(x * 0.42f + 2f, y * 0.42f + 9f);
-                        float patchNoise = Mathf.PerlinNoise(x * 0.018f + 47f, y * 0.018f + 63f);
-                        float crackNoise = Mathf.Abs(Mathf.PerlinNoise(x * 0.038f + 81f, y * 0.038f + 27f) - 0.5f);
-                        float crack = 1f - Mathf.SmoothStep(0.006f, 0.027f, crackNoise);
-                        float patch = Mathf.SmoothStep(0.56f, 0.78f, patchNoise);
-                        float v = Mathf.Clamp01(0.40f + grain + (grit - 0.5f) * 0.30f
-                            - patch * 0.12f - crack * 0.24f);
-                        pixel = new Color(v, v * 1.01f, v * 0.98f);
+                        // Dark, fine-grained urban asphalt: broad worn areas, compact aggregate
+                        // and tiny embedded stones. Keep the value range restrained so the road
+                        // reads as pavement rather than gravel when viewed from gameplay height.
+                        float broad = Mathf.PerlinNoise(x * 0.0125f + 17.3f, y * 0.0125f + 41.8f);
+                        float medium = Mathf.PerlinNoise(x * 0.052f + 8.1f, y * 0.052f + 23.4f);
+                        float fine = Mathf.PerlinNoise(x * 0.31f + 51.7f, y * 0.31f + 6.2f);
+                        float micro = Mathf.PerlinNoise(x * 0.87f + 14.2f, y * 0.87f + 72.6f);
+                        float wornPatch = Mathf.SmoothStep(0.58f, 0.78f, broad);
+                        float repairTone = Mathf.SmoothStep(0.67f, 0.84f, medium);
+                        float aggregate = (fine - 0.5f) * 0.105f + (micro - 0.5f) * 0.045f;
+                        float mottling = (broad - 0.5f) * 0.12f + (medium - 0.5f) * 0.07f;
+                        float value = Mathf.Clamp(0.70f + mottling + aggregate
+                            - wornPatch * 0.055f + repairTone * 0.018f, 0.56f, 0.86f);
+                        pixel = new Color(value * 0.985f, value, value * 1.015f);
                     }
                     else if (surface == "brick")
                     {
