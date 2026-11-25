@@ -42,12 +42,15 @@ namespace BattleClubs.Editor
             GameObject map = new GameObject("BATTLE_CLUBS_Community_Map");
             UrbanCommunityBlockout mapGenerator = map.AddComponent<UrbanCommunityBlockout>();
             Texture2D damageTexture = BuildAsphaltDamageTexture();
+            Texture2D roadTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(PatchedAsphaltPath);
+            if (roadTexture == null)
+                throw new System.Exception("Textura Patched Asphalt não encontrada: " + PatchedAsphaltPath);
+
+            SerializedObject mapSettings = new SerializedObject(mapGenerator);
+            mapSettings.FindProperty("roadSurfaceTexture").objectReferenceValue = roadTexture;
             if (damageTexture != null)
-            {
-                SerializedObject mapSettings = new SerializedObject(mapGenerator);
                 mapSettings.FindProperty("asphaltDamageTexture").objectReferenceValue = damageTexture;
-                mapSettings.ApplyModifiedPropertiesWithoutUndo();
-            }
+            mapSettings.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject player = CreatePlayer(new Vector3(4f, 0.1f, 4f));
             GameObject cameraObject = new GameObject("Main Camera");
@@ -151,6 +154,7 @@ namespace BattleClubs.Editor
             renderer.sharedMaterial = material;
         }
 
+        private const string PatchedAsphaltPath = "Assets/Textures/AsphaltDamage001/patched-asphalt (1).jpg";
         private const string DamageColorPath = "Assets/Textures/AsphaltDamage001/AsphaltDamage001_2K-JPG_Color.jpg";
         private const string DamageOpacityPath = "Assets/Textures/AsphaltDamage001/AsphaltDamage001_2K-JPG_Opacity.jpg";
         private const string DamageCombinedPath = "Assets/Textures/AsphaltDamage001/AsphaltDamage001_RGBA.png";
