@@ -21,6 +21,12 @@ namespace BattleClubs.Player
         private float currentPlanarSpeed;
 
         public float CurrentPlanarSpeed => currentPlanarSpeed;
+
+        public void ApplyRemoteTuning(float normalSpeed, float runSpeed)
+        {
+            moveSpeed = Mathf.Clamp(normalSpeed, 1f, 12f);
+            sprintSpeed = Mathf.Clamp(runSpeed, 1f, 16f);
+        }
         public float VerticalSpeed => verticalVelocity;
         public bool IsGrounded => controller != null && controller.isGrounded;
 
