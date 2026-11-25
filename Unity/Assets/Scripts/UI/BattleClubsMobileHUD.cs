@@ -12,8 +12,8 @@ namespace BattleClubs.UI
         [SerializeField] private ThirdPersonMotor motor;
         [SerializeField] private BatAttack batAttack;
         [SerializeField] private ThirdPersonCameraRig cameraRig;
-        [SerializeField] private Vector2 joystickSize = new Vector2(190f, 190f);
-        [SerializeField] private float joystickRange = 62f;
+        [SerializeField] private Vector2 joystickSize = new Vector2(220f, 220f);
+        [SerializeField] private float joystickRange = 76f;
 
         private void Awake()
         {
@@ -48,14 +48,14 @@ namespace BattleClubs.UI
                 new GameObject("BattleClubs_EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
             RectTransform joystick = CreatePanel(canvas.transform, "VirtualJoystick",
-                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0.12f, 0.16f),
-                joystickSize, new Color(0.08f, 0.08f, 0.08f, 0.48f));
+                new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0.14f, 0.18f),
+                joystickSize, new Color(0.08f, 0.08f, 0.08f, 0.38f));
             Image joystickImage = joystick.GetComponent<Image>();
             joystickImage.raycastTarget = true;
 
             RectTransform handle = CreatePanel(joystick, "JoystickHandle",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                new Vector2(76f, 76f), new Color(0.9f, 0.9f, 0.9f, 0.8f));
+                new Vector2(88f, 88f), new Color(0.92f, 0.92f, 0.92f, 0.86f));
             handle.anchoredPosition = Vector2.zero;
             VirtualJoystick stick = joystick.gameObject.AddComponent<VirtualJoystick>();
             stick.Initialize(motor, handle, joystickRange);
@@ -68,12 +68,12 @@ namespace BattleClubs.UI
             lookPad.Initialize(cameraRig);
 
             CreateActionButton(canvas.transform, "CORRER", new Vector2(1f, 0f),
-                new Vector2(-300f, 120f), new Vector2(142f, 82f), () => { }, true);
+                new Vector2(-330f, 118f), new Vector2(112f, 112f), () => { }, true);
             CreateActionButton(canvas.transform, "PULAR", new Vector2(1f, 0f),
-                new Vector2(-145f, 250f), new Vector2(126f, 82f),
+                new Vector2(-150f, 265f), new Vector2(104f, 104f),
                 () => { if (motor != null) motor.QueueJump(); }, false);
             CreateActionButton(canvas.transform, "ATACAR", new Vector2(1f, 0f),
-                new Vector2(-145f, 110f), new Vector2(142f, 92f),
+                new Vector2(-150f, 125f), new Vector2(138f, 138f),
                 () => { if (batAttack != null) batAttack.Attack(); }, false);
         }
 
