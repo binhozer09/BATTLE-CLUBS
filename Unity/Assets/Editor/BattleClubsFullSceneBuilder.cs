@@ -8,6 +8,7 @@ using BattleClubs.Player;
 using BattleClubs.UI;
 using BattleClubs.Gameplay;
 using BattleClubs.World;
+using BattleClubs.Characters;
 
 namespace BattleClubs.Editor
 {
@@ -27,6 +28,7 @@ namespace BattleClubs.Editor
         public static void CreateMainGameScene()
         {
             EnsureFolder("Assets", "Scenes");
+            string humanoidModelPath = HumanoidAssetBootstrap.EnsureHumanoidModelImported();
             ConfigureLighting();
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -44,7 +46,7 @@ namespace BattleClubs.Editor
                 mapData.FindProperty("asphaltDamageTexture").objectReferenceValue = combined;
             mapData.ApplyModifiedPropertiesWithoutUndo();
 
-            GameObject localPlayer = CreatePlayer(new Vector3(4f, 0.15f, 4f));
+            GameObject localPlayer = CreatePlayer(new Vector3(4f, 0.35f, 4f), humanoidModelPath);
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -93,39 +95,68 @@ namespace BattleClubs.Editor
             RenderSettings.sun = light;
         }
 
-        private static GameObject CreatePlayer(Vector3 position)
+        private static GameObject CreatePlayer(Vector3 position, string humanoidModelPath)
         {
             GameObject root = new GameObject("Player_Local");
             root.transform.position = position;
             CharacterController controller = root.AddComponent<CharacterController>();
-            controller.height = 2f;
-            controller.radius = 0.42f;
-            controller.center = new Vector3(0f, 1f, 0f);
-            root.AddComponent<ThirdPersonMotor>();
-            root.AddComponent<Combatant>();
+            controller.height = 1.9f;
+            controller.radius = 0.34f;
+            controller.center = new Vector3(0f, 0.95f, 0f);
+            controller.minMoveDistance = 0f;
 
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Player_Body_Blockout";
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 1f, 0f);
-            body.transform.localScale = new Vector3(0.78f, 0.92f, 0.78f);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            SetColor(body, new Color(0.13f, 0.29f, 0.52f));
+            ThirdPersonMotor motor = root.AddComponent<ThirdPersonMotor>();
+            Combatant combatant = root.AddComponent<Combatant>();
 
-            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.name = "Player_Head_Blockout";
-            head.transform.SetParent(root.transform, false);
-            head.transform.localPosition = new Vector3(0f, 2.03f, 0f);
-            head.transform.localScale = new Vector3(0.48f, 0.48f, 0.48f);
-            Object.DestroyImmediate(head.GetComponent<Collider>());
-            SetColor(head, new Color(0.57f, 0.39f, 0.28f));
+            GameObject modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(humanoidModelPath);
+            if (modelAsset == null)
+                throw new System.Exception("Modelo humanoide não pôde ser carregado: " + humanoidModelPath);
+
+            GameObject visual = PrefabUtility.InstantiatePrefab(modelAsset) as GameObject;
+            if (visual == null) visual = Object.Instantiate(modelAsset);
+            visual.name = "Visual_Humanoid";
+            visual.transform.SetParent(root.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+            visual.transform.localScale = Vector3.one;
+
+            Animator animator = visual.GetComponentInChildren<Animator>(true);
+            if (animator == null || animator.avatar == null || !animator.avatar.isValid || !animator.isHuman)
+                throw new System.Exception("O personagem KinemIQ não possui Avatar Humanoid válido.");
+
+            Renderer[] renderers = visual.GetComponentsInChildren<Renderer>(true);
+            bool hasBounds = false;
+            Bounds modelBounds = default;
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null) continue;
+                if (!hasBounds) { modelBounds = renderer.bounds; hasBounds = true; }
+                else modelBounds.Encapsulate(renderer.bounds);
+            }
+            if (hasBounds && modelBounds.size.y > 0.01f)
+                visual.transform.localScale = Vector3.one * (1.8f / modelBounds.size.y);
+
+            animator.applyRootMotion = false;
+            HumanoidGroundAlignment alignment = visual.AddComponent<HumanoidGroundAlignment>();
+            SerializedObject alignmentData = new SerializedObject(alignment);
+            alignmentData.FindProperty("owner").objectReferenceValue = controller;
+            alignmentData.ApplyModifiedPropertiesWithoutUndo();
+
+            HumanoidAnimationDriver animationDriver = root.AddComponent<HumanoidAnimationDriver>();
+            SerializedObject driverData = new SerializedObject(animationDriver);
+            driverData.FindProperty("animator").objectReferenceValue = animator;
+            driverData.FindProperty("motor").objectReferenceValue = motor;
+            driverData.FindProperty("combatant").objectReferenceValue = combatant;
+            driverData.ApplyModifiedPropertiesWithoutUndo();
+
+            visual.AddComponent<ClubKitApplier>();
 
             GameObject bat = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             bat.name = "Bat_Visual";
             bat.transform.SetParent(root.transform, false);
-            bat.transform.localPosition = new Vector3(0.55f, 1.05f, 0.35f);
+            bat.transform.localPosition = new Vector3(0.42f, 1.0f, 0.32f);
             bat.transform.localRotation = Quaternion.Euler(0f, 0f, 68f);
-            bat.transform.localScale = new Vector3(0.09f, 0.58f, 0.09f);
+            bat.transform.localScale = new Vector3(0.07f, 0.52f, 0.07f);
             Object.DestroyImmediate(bat.GetComponent<Collider>());
             SetColor(bat, new Color(0.36f, 0.22f, 0.12f));
             return root;
