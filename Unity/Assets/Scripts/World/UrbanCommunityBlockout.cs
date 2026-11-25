@@ -25,11 +25,13 @@ namespace BattleClubs.World
         [SerializeField] private int randomSeed = 2026;
 
         [Header("Street details")]
+        [SerializeField] private Texture2D asphaltDamageTexture;
         [SerializeField] private bool addStreetLights = true;
         [SerializeField] private bool addRooftopTanks = true;
         [SerializeField] private bool addCourtMarkings = true;
 
         private readonly List<GameObject> generated = new List<GameObject>();
+        private Material generatedDamageMaterial;
 
         private static readonly Color Asphalt = new Color(0.19f, 0.205f, 0.20f);
         private static readonly Color Concrete = new Color(0.43f, 0.43f, 0.40f);
@@ -77,6 +79,7 @@ namespace BattleClubs.World
 
             BuildMainStreetDetails(origin, totalX, totalZ);
             BuildCentralCourt(origin, totalX, totalZ);
+            BuildStreetDamage(origin, totalX, totalZ);
 
             if (createSpawnMarkers)
                 CreateSpawns(origin, totalX, totalZ);
@@ -224,6 +227,96 @@ namespace BattleClubs.World
             }
         }
 
+        private void BuildStreetDamage(Vector3 origin, float width, float depth)
+        {
+            if (asphaltDamageTexture == null) return;
+
+            Shader shader = Shader.Find("Standard");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) return;
+
+            generatedDamageMaterial = new Material(shader);
+            if (generatedDamageMaterial.HasProperty("_MainTex"))
+                generatedDamageMaterial.SetTexture("_MainTex", asphaltDamageTexture);
+            if (generatedDamageMaterial.HasProperty("_BaseMap"))
+                generatedDamageMaterial.SetTexture("_BaseMap", asphaltDamageTexture);
+            if (generatedDamageMaterial.HasProperty("_Color"))
+                generatedDamageMaterial.SetColor("_Color", Color.white);
+            if (generatedDamageMaterial.HasProperty("_BaseColor"))
+                generatedDamageMaterial.SetColor("_BaseColor", Color.white);
+
+            // Standard transparent surface; the PNG alpha is built from ambientCG's opacity map.
+            if (shader.name == "Standard")
+            {
+                generatedDamageMaterial.SetFloat("_Mode", 3f);
+                generatedDamageMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                generatedDamageMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                generatedDamageMaterial.SetInt("_ZWrite", 0);
+                generatedDamageMaterial.DisableKeyword("_ALPHATEST_ON");
+                generatedDamageMaterial.EnableKeyword("_ALPHABLEND_ON");
+                generatedDamageMaterial.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+                generatedDamageMaterial.renderQueue = 3000;
+            }
+
+            float groundTop = -0.135f;
+            float patchSize = 1.2f;
+            float spacing = 4.8f;
+            float cell = blockSize + roadWidth;
+
+            // Main north-south streets between every block column.
+            for (int x = 0; x < blocksX - 1; x++)
+            {
+                float roadX = origin.x + (x + 1) * blockSize + x * roadWidth + roadWidth * 0.5f;
+                for (float z = origin.z + 2f; z < origin.z + depth - 1f; z += spacing)
+                    AddStreetDamagePatch(new Vector3(roadX + Random.Range(-1.5f, 1.5f), groundTop, z), patchSize);
+            }
+
+            // Main east-west streets between every block row.
+            for (int z = 0; z < blocksZ - 1; z++)
+            {
+                float roadZ = origin.z + (z + 1) * blockSize + z * roadWidth + roadWidth * 0.5f;
+                for (float x = origin.x + 2f; x < origin.x + width - 1f; x += spacing)
+                    AddStreetDamagePatch(new Vector3(x, groundTop, roadZ + Random.Range(-1.5f, 1.5f)), patchSize);
+            }
+
+            // Narrow alleys running between the two house rows inside each block.
+            for (int x = 0; x < blocksX; x++)
+            {
+                for (int z = 0; z < blocksZ; z++)
+                {
+                    float alleyZ = origin.z + z * cell + blockSize * 0.5f;
+                    for (float along = 2f; along < blockSize - 1f; along += spacing)
+                    {
+                        float alleyX = origin.x + x * cell + along;
+                        AddStreetDamagePatch(new Vector3(alleyX, groundTop, alleyZ), patchSize);
+                    }
+                }
+            }
+        }
+
+        private void AddStreetDamagePatch(Vector3 position, float size)
+        {
+            GameObject patch = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            patch.name = "AsphaltDamage001_Decal";
+            patch.transform.SetParent(transform, true);
+            patch.transform.position = position;
+            patch.transform.rotation = Quaternion.Euler(-90f, Random.Range(0f, 360f), 0f);
+            patch.transform.localScale = new Vector3(size, size, 1f);
+
+            Collider patchCollider = patch.GetComponent<Collider>();
+            if (patchCollider != null)
+            {
+                if (Application.isPlaying) Destroy(patchCollider);
+                else DestroyImmediate(patchCollider);
+            }
+
+            Renderer patchRenderer = patch.GetComponent<Renderer>();
+            patchRenderer.sharedMaterial = generatedDamageMaterial;
+            patchRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            patchRenderer.receiveShadows = false;
+            generated.Add(patch);
+        }
+
         private void BuildCentralCourt(Vector3 origin, float width, float depth)
         {
             Vector3 center = origin + new Vector3(width * 0.5f, 0.08f, depth * 0.5f);
@@ -290,6 +383,12 @@ namespace BattleClubs.World
 
         private void ClearGenerated()
         {
+            if (generatedDamageMaterial != null)
+            {
+                if (Application.isPlaying) Destroy(generatedDamageMaterial);
+                else DestroyImmediate(generatedDamageMaterial);
+                generatedDamageMaterial = null;
+            }
             for (int i = generated.Count - 1; i >= 0; i--)
             {
                 if (generated[i] == null) continue;
