@@ -121,6 +121,7 @@ namespace BattleClubs.Player
             WriteSessionSummary();
             capturingIncident = false;
             TryUploadEvidence();
+            BattleClubsRemoteAgent.UploadEvidence(evidenceDirectory);
         }
 
         private void WriteSessionSummary()
