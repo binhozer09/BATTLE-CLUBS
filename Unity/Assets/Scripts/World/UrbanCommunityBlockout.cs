@@ -312,7 +312,8 @@ namespace BattleClubs.World
             if (n.Contains("door")) return "wood";
             if (n.Contains("ground") || n.Contains("dash") || n.Contains("court")) return "asphalt";
             if (n.Contains("roof") || n.Contains("cover") || n.Contains("slab") || n.Contains("line") || n.Contains("sidewalk")) return "concrete";
-            if (n.Contains("house") || n.Contains("windowframe") || n.Contains("balcony") || n.Contains("airconditioner") || n.Contains("ac")) return "plaster";
+            if (n.Contains("house")) return "brick";
+            if (n.Contains("windowframe") || n.Contains("balcony") || n.Contains("airconditioner") || n.Contains("ac")) return "plaster";
             return "concrete";
         }
 
@@ -340,10 +341,21 @@ namespace BattleClubs.World
                         float v = Mathf.Clamp01(0.43f + grain + (grit - 0.5f) * 0.28f);
                         pixel = new Color(v, v, v * 0.96f);
                     }
+                    else if (surface == "brick")
+                    {
+                        // Repeating staggered masonry with recessed mortar and subtle weathering.
+                        float row = y % 24;
+                        int rowOffset = (y / 24) % 2 == 0 ? 0 : 16;
+                        float col = (x + rowOffset) % 32;
+                        bool mortar = row < 2 || col < 2;
+                        float wear = Mathf.PerlinNoise(x * 0.075f + 5f, y * 0.075f + 19f);
+                        float v = Mathf.Clamp01(0.72f + grain - (1f - wear) * 0.24f);
+                        pixel = mortar ? new Color(0.34f, 0.32f, 0.29f) : new Color(v, v * 0.53f, v * 0.39f);
+                    }
                     else if (surface == "concrete" || surface == "plaster")
                     {
                         float stain = Mathf.PerlinNoise(x * 0.055f + 7f, y * 0.055f + 17f);
-                        float v = Mathf.Clamp01((surface == "plaster" ? 0.68f : 0.57f) + grain - (1f - stain) * (surface == "plaster" ? 0.19f : 0.13f));
+                        float v = Mathf.Clamp01((surface == "plaster" ? 0.68f : 0.57f) + grain - (1f - stain) * (surface == "plaster" ? 0.24f : 0.17f));
                         pixel = new Color(v, v * 0.99f, v * 0.94f);
                     }
                     else if (surface == "metal")
