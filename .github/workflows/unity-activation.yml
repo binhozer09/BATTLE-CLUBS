@@ -2,6 +2,12 @@ name: BATTLE CLUBS - Build Android manual (pausado durante produção)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Unity/**'
+      - '.github/workflows/unity-activation.yml'
 
 permissions:
   contents: read
