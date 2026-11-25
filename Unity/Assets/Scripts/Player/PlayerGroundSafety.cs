@@ -41,6 +41,8 @@ namespace BattleClubs.Player
                 // Only correct penetration. Do not pull a jumping/falling player down.
                 if (penetration > 0.02f && penetration < 8f)
                 {
+                    BattleAIDiagnostic.Report("PLAYER_GROUND_PENETRATION",
+                        "Cápsula do jogador estava abaixo da superfície detectada.", transform.position);
                     controller.enabled = false;
                     transform.position += Vector3.up * penetration;
                     controller.enabled = true;
@@ -54,7 +56,11 @@ namespace BattleClubs.Player
             }
 
             if (transform.position.y < -recoveryDepth)
+            {
+                BattleAIDiagnostic.Report("PLAYER_FELL_BELOW_MAP",
+                    "Player caiu abaixo do limite de recuperação.", transform.position);
                 RecoverPlayer();
+            }
         }
 
         private bool TryFindSurface(out float surfaceY)
