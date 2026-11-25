@@ -1,0 +1,44 @@
+name: Download Asphalt Damage 001
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  download-texture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download original ambientCG 2K package
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/asphalt-damage
+          curl -fL --retry 3 \
+            "https://ambientcg.com/get?file=AsphaltDamage001_2K-JPG.zip" \
+            -o /tmp/AsphaltDamage001_2K-JPG.zip
+          unzip -q /tmp/AsphaltDamage001_2K-JPG.zip -d /tmp/asphalt-damage
+          test -n "$(find /tmp/asphalt-damage -type f | head -n 1)"
+
+      - name: Add original PBR maps to Unity project
+        run: |
+          set -euo pipefail
+          mkdir -p Unity/Assets/Textures/AsphaltDamage001
+          cp -R /tmp/asphalt-damage/. Unity/Assets/Textures/AsphaltDamage001/
+          find Unity/Assets/Textures/AsphaltDamage001 -type f -printf '%P\n' | sort
+
+      - name: Commit downloaded texture files
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Unity/Assets/Textures/AsphaltDamage001
+          if git diff --cached --quiet; then
+            echo "Texture files already present; nothing to commit."
+          else
+            git commit -m "Add CC0 Asphalt Damage 001 PBR textures"
+            git push
+          fi
