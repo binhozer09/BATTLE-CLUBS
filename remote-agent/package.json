@@ -1,0 +1,8 @@
+{
+  "name": "battle-clubs-remote-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Secure remote control and diagnostics relay for BATTLE CLUBS",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=20" }
+}
