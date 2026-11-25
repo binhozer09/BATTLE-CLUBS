@@ -81,7 +81,10 @@ const server=http.createServer(async(req,res)=>{
     return send(res,200,html.toString(),'text/html; charset=utf-8');
   }
   if (req.method==='POST' && url.pathname==='/v1/device/pair') {
-    if (!ADMIN_KEY || !safeEqual(req.headers['x-pairing-code'],ADMIN_KEY)) return send(res,401,{error:'Código de pareamento inválido'});
+    const pairState=readState();
+    const supplied=String(req.headers['x-pairing-code']||'');
+    if (!pairState.pairCode || pairState.pairCode.expiresAt < Date.now() || !safeEqual(supplied,pairState.pairCode.code)) return send(res,401,{error:'Código de pareamento inválido ou expirado'});
+    pairState.pairCode=null; writeState(pairState);
     let data; try { data=JSON.parse((await body(req,4096)).toString()); } catch { return send(res,400,{error:'JSON inválido'}); }
     const id=crypto.randomUUID(), token=crypto.randomBytes(32).toString('hex');
     const state=readState(); state.devices[id]={token,name:String(data.deviceName||'Android').slice(0,80),createdAt:new Date().toISOString(),lastSeen:null}; writeState(state);
@@ -147,6 +150,14 @@ const server=http.createServer(async(req,res)=>{
     }
     writeState(state);
     return send(res,200,{ok:true,queued,config});
+  }
+  if (req.method==='POST' && url.pathname==='/v1/admin/pair-code') {
+    if (!safeEqual(bearer(req),ADMIN_KEY)) return send(res,401,{error:'Não autorizado'});
+    const state=readState();
+    const code=String(crypto.randomInt(100000,1000000));
+    const expiresAt=Date.now()+10*60*1000;
+    state.pairCode={code,expiresAt}; writeState(state);
+    return send(res,200,{code,expiresAt,expiresInSeconds:600});
   }
   if (req.method==='POST' && url.pathname==='/v1/admin/pair-code-check') {
     if (!safeEqual(bearer(req),ADMIN_KEY)) return send(res,401,{error:'Código inválido'});
