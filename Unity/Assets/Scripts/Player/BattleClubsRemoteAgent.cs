@@ -160,10 +160,21 @@ namespace BattleClubs.Player
 
         private IEnumerator UploadFiles(string directory)
         {
+            // Polling and evidence uploads share one UnityWebRequest slot. Queue the
+            // evidence instead of silently dropping it when a poll is in progress.
+            float waitDeadline = Time.realtimeSinceStartup + 25f;
+            while (busy && Time.realtimeSinceStartup < waitDeadline)
+                yield return new WaitForSecondsRealtime(0.25f);
             if (busy || !Directory.Exists(directory)) yield break;
-            busy = true;
+
             string token = PlayerPrefs.GetString(TokenKey, "");
-            string[] files = Directory.GetFiles(directory);
+            if (string.IsNullOrEmpty(token)) yield break;
+            busy = true;
+            string[] files = null;
+            try { files = Directory.GetFiles(directory); }
+            catch (Exception e) { status = "Falha ao ler evidências: " + e.Message; }
+            if (files == null) { busy = false; yield break; }
+
             WWWForm form = new WWWForm();
             int count = 0;
             for (int i = 0; i < files.Length && count < 12; i++)

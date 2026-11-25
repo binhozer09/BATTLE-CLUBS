@@ -79,11 +79,22 @@ namespace BattleClubs.Player
                 Transform hitTransform = hit.transform;
                 if (hitTransform == transform || hitTransform.IsChildOf(transform)) continue;
 
+                // Ignore walls, ceilings and steep props: only a walkable
+                // surface close to the capsule feet can correct the player root.
+                Vector3 normal = hits[i].normal;
+                float minUp = Mathf.Cos(Mathf.Clamp(controller.slopeLimit + 2f, 0f, 89f) * Mathf.Deg2Rad);
+                if (normal.y < minUp) continue;
+
+                float capsuleBottom = transform.position.y + controller.center.y - controller.height * 0.5f;
+                float hitY = hits[i].point.y;
+                if (hitY > capsuleBottom + 0.35f) continue;
+                if (capsuleBottom - hitY > 8f) continue;
+
                 float distance = hits[i].distance;
                 if (distance < nearest)
                 {
                     nearest = distance;
-                    surfaceY = hits[i].point.y;
+                    surfaceY = hitY;
                     found = true;
                 }
             }

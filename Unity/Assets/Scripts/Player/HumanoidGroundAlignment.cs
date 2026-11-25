@@ -68,11 +68,17 @@ namespace BattleClubs.Player
                 if (hitTransform == owner.transform || hitTransform.IsChildOf(owner.transform))
                     continue;
 
+                // Reject walls/ceilings and surfaces above the humanoid's feet.
+                float minUp = Mathf.Cos(Mathf.Clamp(owner.slopeLimit + 5f, 0f, 89f) * Mathf.Deg2Rad);
+                if (groundHits[i].normal.y < minUp) continue;
+                float hitY = groundHits[i].point.y;
+                if (hitY > owner.bounds.min.y + 1.25f) continue;
+
                 float distance = groundHits[i].distance;
                 if (distance < nearestDistance)
                 {
                     nearestDistance = distance;
-                    groundY = groundHits[i].point.y;
+                    groundY = hitY;
                     found = true;
                 }
             }

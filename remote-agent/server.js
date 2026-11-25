@@ -36,6 +36,23 @@ function safeEqual(a,b) {
   return aa.length===bb.length && aa.length>0 && crypto.timingSafeEqual(aa,bb);
 }
 function bearer(req) { return (req.headers.authorization || '').replace(/^Bearer\s+/i,''); }
+// Validate and clamp the only runtime settings the Android client is allowed to change.
+function validConfig(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const ranges = {
+    cameraFov: [40, 90], targetFrameRate: [30, 90], moveSpeed: [1, 12],
+    sprintSpeed: [1, 16], cameraSensitivity: [0.2, 5],
+    shadowDistance: [0, 150], masterVolume: [0, 1]
+  };
+  const result = {};
+  for (const [key, range] of Object.entries(ranges)) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
+    const value = Number(input[key]);
+    if (!Number.isFinite(value)) continue;
+    result[key] = Math.min(range[1], Math.max(range[0], value));
+  }
+  return Object.keys(result).length ? result : null;
+}
 function deviceFor(req, state) {
   const token=bearer(req);
   return Object.entries(state.devices).find(([,d])=>safeEqual(d.token,token));
@@ -49,26 +66,29 @@ function parseMultipart(raw, contentType, deviceId) {
   const fields = {};
   const files = [];
   for (const chunk of chunks) {
-    const part = chunk.replace(/^\\r\\n/, '').replace(/\\r\\n--?$/, '');
+    const part = chunk.replace(/^\r\n/, '').replace(/\r\n--?$/, '');
     if (!part || part === '--') continue;
-    const split = part.indexOf('\\r\\n\\r\\n');
+    const split = part.indexOf('\r\n\r\n');
     if (split < 0) continue;
     const headers = part.slice(0, split);
     let payload = part.slice(split + 4);
-    payload = payload.replace(/\\r\\n$/, '');
-    const disposition = /content-disposition:\\s*form-data;([^\\r\\n]+)/i.exec(headers);
+    payload = payload.replace(/\r\n$/, '');
+    const disposition = /content-disposition:\s*form-data;([^\r\n]+)/i.exec(headers);
     if (!disposition) continue;
     const name = /name="([^"]*)"/i.exec(disposition[1]);
     const filename = /filename="([^"]*)"/i.exec(disposition[1]);
     if (!name) continue;
-    if (!filename) { fields[name[1]] = Buffer.from(payload, 'latin1').toString('utf8'); continue; }
+    if (!filename) {
+      fields[name[1]] = Buffer.from(payload, 'latin1').toString('utf8');
+      continue;
+    }
     const original = path.basename(filename[1]).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0,100) || 'evidence.bin';
     const ext = path.extname(original).toLowerCase();
-    const safeExt = /^\\.(png|jpg|jpeg|log|txt|jsonl)$/.test(ext) ? ext : '.bin';
+    const safeExt = /^\.(png|jpg|jpeg|log|txt|jsonl)$/.test(ext) ? ext : '.bin';
     const storedName = Date.now() + '_' + crypto.randomBytes(6).toString('hex') + safeExt;
     const bytes = Buffer.from(payload, 'latin1');
     fs.writeFileSync(path.join(UPLOAD_DIR, storedName), bytes);
-    const mimeHeader = /content-type:\\s*([^\\r\\n]+)/i.exec(headers);
+    const mimeHeader = /content-type:\s*([^\r\n]+)/i.exec(headers);
     files.push({ name: original, storedName, mime: mimeHeader ? mimeHeader[1].trim() : 'application/octet-stream', bytes: bytes.length });
   }
   return { fields, files };
@@ -94,9 +114,10 @@ const server=http.createServer(async(req,res)=>{
     const state=readState(), found=deviceFor(req,state);
     if (!found) return send(res,401,{error:'Dispositivo não pareado'});
     const [id,device]=found;
-    let raw; try { raw=await body(req); } catch(e) { return send(res,413,{error:'Evidência excede o limite de upload'}); }
+    let raw; try { raw=await body(req, 40*1024*1024); } catch(e) { return send(res,413,{error:'Evidência excede o limite de upload'}); }
     let parsed; try { parsed=parseMultipart(raw,req.headers['content-type'],id); }
     catch(e) { console.error('Falha ao interpretar multipart:',e.message); return send(res,400,{error:'Formato de evidência inválido'}); }
+    if (parsed.files.length === 0) return send(res,400,{error:'Nenhum arquivo de evidência foi recebido'});
     const diagnostic={deviceId:id,deviceName:device.name,receivedAt:new Date().toISOString(),bytes:raw.length,fields:parsed.fields,files:parsed.files};
     state.diagnostics.unshift(diagnostic);
     state.diagnostics=state.diagnostics.slice(0,200);
