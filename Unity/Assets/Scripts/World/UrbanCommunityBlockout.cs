@@ -138,6 +138,9 @@ namespace BattleClubs.World
             // A small streetlight at alternating corners adds depth without cluttering every lane.
             if (addStreetLights && (blockX + blockZ) % 2 == 0)
                 BuildStreetLight(center + new Vector3(-half + 0.7f, 0f, -half + 0.7f));
+
+            BuildAlleyWires(center, lane, blockX, blockZ);
+            BuildStreetClutter(center, lane, blockX, blockZ);
         }
 
         private void BuildFacade(Vector3 house, float width, float height, float depth,
@@ -189,6 +192,49 @@ namespace BattleClubs.World
                 CreatePrimitive(PrimitiveType.Cube, "ACVent",
                     ac + new Vector3(0f, 0f, -side * 0.19f),
                     new Vector3(0.43f, 0.18f, 0.035f), DarkMetal);
+            }
+        }
+
+        private void BuildAlleyWires(Vector3 center, float lane, int blockX, int blockZ)
+        {
+            // Thin overhead utility cables give the alleys a dense community skyline.
+            float cableHeight = Random.Range(5.2f, 6.4f);
+            for (int i = -1; i <= 1; i++)
+            {
+                float along = i * blockSize * 0.28f;
+                Vector3 left = center + new Vector3(along, cableHeight, -lane * 0.48f);
+                Vector3 right = center + new Vector3(along + Random.Range(-0.35f, 0.35f),
+                    cableHeight - Random.Range(0.15f, 0.55f), lane * 0.48f);
+                BuildCable(left, right, 0.025f, DarkMetal, "UtilityWire");
+            }
+        }
+
+        private void BuildCable(Vector3 start, Vector3 end, float thickness, Color color, string objectName)
+        {
+            Vector3 delta = end - start;
+            GameObject cable = CreatePrimitive(PrimitiveType.Cylinder, objectName,
+                (start + end) * 0.5f, new Vector3(thickness, delta.magnitude * 0.5f, thickness), color);
+            cable.transform.rotation = Quaternion.FromToRotation(Vector3.up, delta.normalized);
+        }
+
+        private void BuildStreetClutter(Vector3 center, float lane, int blockX, int blockZ)
+        {
+            // Keep props against the alley edges so they do not obstruct player movement.
+            if ((blockX + blockZ) % 2 == 0)
+            {
+                Vector3 bin = center + new Vector3(-blockSize * 0.34f, 0.62f, -lane * 0.36f);
+                CreatePrimitive(PrimitiveType.Cube, "StreetTrashBin", bin,
+                    new Vector3(0.72f, 1.18f, 0.72f), new Color(0.16f, 0.22f, 0.18f));
+                CreatePrimitive(PrimitiveType.Cube, "TrashBinLid",
+                    bin + Vector3.up * 0.62f, new Vector3(0.78f, 0.1f, 0.78f), DarkMetal);
+            }
+
+            if ((blockX * 3 + blockZ) % 3 == 0)
+            {
+                Vector3 sack = center + new Vector3(blockSize * 0.34f, 0.28f, lane * 0.34f);
+                GameObject bag = CreatePrimitive(PrimitiveType.Sphere, "TiedTrashSack", sack,
+                    new Vector3(0.62f, 0.52f, 0.58f), new Color(0.075f, 0.085f, 0.08f));
+                bag.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), Random.Range(-12f, 12f));
             }
         }
 
