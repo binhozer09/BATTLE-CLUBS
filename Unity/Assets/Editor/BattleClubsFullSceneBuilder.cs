@@ -46,7 +46,7 @@ namespace BattleClubs.Editor
                 mapData.FindProperty("asphaltDamageTexture").objectReferenceValue = combined;
             mapData.ApplyModifiedPropertiesWithoutUndo();
 
-            GameObject localPlayer = CreatePlayer(new Vector3(4f, 0.35f, 4f), humanoidModelPath);
+            GameObject localPlayer = CreatePlayer(new Vector3(4f, 1.0f, 4f), humanoidModelPath);
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -104,6 +104,11 @@ namespace BattleClubs.Editor
             controller.radius = 0.34f;
             controller.center = new Vector3(0f, 0.95f, 0f);
             controller.minMoveDistance = 0f;
+            controller.skinWidth = 0.04f;
+            controller.stepOffset = 0.25f;
+            controller.slopeLimit = 50f;
+            controller.detectCollisions = true;
+            root.AddComponent<PlayerGroundSafety>();
 
             ThirdPersonMotor motor = root.AddComponent<ThirdPersonMotor>();
             Combatant combatant = root.AddComponent<Combatant>();
