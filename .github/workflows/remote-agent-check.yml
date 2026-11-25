@@ -52,6 +52,11 @@ jobs:
             -F "evidence=@$TMP_DIR/evidence.log;type=text/plain")"
           echo "$RESULT" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.receivedFiles!==1)process.exit(1);console.log("Multipart upload received",r.receivedFiles,"file(s)")})'
 
+          STORED="$(find "$TMP_DIR/data/uploads" -maxdepth 1 -type f -name '*.log' -printf '%f' | head -1)"
+          test -n "$STORED"
+          FETCHED="$(curl -fsS http://127.0.0.1:18080/v1/admin/evidence/$STORED -H 'Authorization: Bearer ci-test-admin')"
+          test "$FETCHED" = "BATTLE CLUBS multipart evidence test"
+
           CONFIG="$(curl -fsS -X POST http://127.0.0.1:18080/v1/admin/config \
             -H 'Authorization: Bearer ci-test-admin' -H 'Content-Type: application/json' \
             -d '{"config":{"cameraFov":120,"targetFrameRate":60}}')"
