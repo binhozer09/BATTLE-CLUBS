@@ -55,6 +55,7 @@ namespace BattleClubs.Editor
             camera.farClipPlane = 500f;
             cameraObject.AddComponent<AudioListener>();
             cameraObject.AddComponent<BattleAIDiagnostic>();
+            cameraObject.AddComponent<BattleClubsRemoteAgent>();
             ThirdPersonCameraRig rig = cameraObject.AddComponent<ThirdPersonCameraRig>();
             SetObjectReference(rig, "target", localPlayer.transform);
             SetObjectReference(localPlayer.GetComponent<ThirdPersonMotor>(), "cameraTransform", cameraObject.transform);
