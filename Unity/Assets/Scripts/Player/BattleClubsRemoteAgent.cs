@@ -176,6 +176,7 @@ namespace BattleClubs.Player
             if (files == null) { busy = false; yield break; }
 
             WWWForm form = new WWWForm();
+            string[] includedFiles = new string[12];
             int count = 0;
             for (int i = 0; i < files.Length && count < 12; i++)
             {
@@ -186,6 +187,7 @@ namespace BattleClubs.Player
                 if (bytes.Length > 3 * 1024 * 1024) continue;
                 form.AddBinaryData("evidence", bytes, Path.GetFileName(files[i]),
                     ext == ".png" ? "image/png" : "text/plain");
+                includedFiles[count] = files[i];
                 count++;
             }
             if (count > 0)
@@ -195,8 +197,33 @@ namespace BattleClubs.Player
                     req.SetRequestHeader("Authorization", "Bearer " + token);
                     req.timeout = 45;
                     yield return req.SendWebRequest();
-                    status = req.result == UnityWebRequest.Result.Success
-                        ? "Diagnóstico enviado ao agente" : "Falha ao enviar diagnóstico: " + req.error;
+                    if (req.result == UnityWebRequest.Result.Success)
+                    {
+                        status = "Diagnóstico enviado ao agente (" + count + " arquivo(s))";
+                        // Move confirmed uploads out of the watched top-level folder.
+                        // This preserves local evidence while preventing every later
+                        // incident from uploading the same files again and again.
+                        try
+                        {
+                            string archiveDirectory = Path.Combine(directory, "uploaded");
+                            Directory.CreateDirectory(archiveDirectory);
+                            for (int i = 0; i < count; i++)
+                            {
+                                string source = includedFiles[i];
+                                if (string.IsNullOrEmpty(source) || !File.Exists(source)) continue;
+                                string destination = Path.Combine(archiveDirectory, Path.GetFileName(source));
+                                if (File.Exists(destination))
+                                    destination = Path.Combine(archiveDirectory,
+                                        Path.GetFileNameWithoutExtension(source) + "_" + DateTime.UtcNow.Ticks + Path.GetExtension(source));
+                                File.Move(source, destination);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogWarning("[BATTLE_CLUBS_REMOTE] Upload concluído, mas não foi possível arquivar evidências: " + e.Message);
+                        }
+                    }
+                    else status = "Falha ao enviar diagnóstico: " + req.error;
                 }
             }
             busy = false;
