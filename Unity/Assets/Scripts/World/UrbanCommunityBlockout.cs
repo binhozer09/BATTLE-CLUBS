@@ -8,6 +8,7 @@ namespace BattleClubs.World
     /// visual pass. All geometry is procedural placeholder art and can be replaced
     /// by optimized, licensed models without changing gameplay scripts.
     /// </summary>
+    [DefaultExecutionOrder(-1000)]
     public sealed class UrbanCommunityBlockout : MonoBehaviour
     {
         [Header("Layout")]
