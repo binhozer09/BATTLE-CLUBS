@@ -29,9 +29,12 @@ namespace BattleClubs.Editor
         {
             EnsureFolder("Assets", "Scenes");
             string humanoidModelPath = HumanoidAssetBootstrap.EnsureHumanoidModelImported();
-            ConfigureLighting();
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            // Apply lighting only after creating the new scene; NewScene(Single)
+            // destroys the previous scene and its RenderSettings/light objects.
+            ConfigureLighting();
+
             GameObject world = new GameObject("BATTLE_CLUBS_WORLD");
             UrbanCommunityBlockout map = world.AddComponent<UrbanCommunityBlockout>();
 
