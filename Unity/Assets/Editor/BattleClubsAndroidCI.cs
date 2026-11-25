@@ -1,26 +1,34 @@
 #if UNITY_EDITOR
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
 namespace BattleClubs.Editor
 {
-    /// <summary>Creates the first playable scene and builds an Android APK in CI.</summary>
+    /// <summary>Builds the scenes explicitly configured for the Android player.</summary>
     public static class BattleClubsAndroidCI
     {
         public static void BuildAndroid()
         {
-            BattleClubsSceneBuilder.CreateCommunityTestScene();
+            // Never generate or switch to the procedural community test scene here.
+            // CI must build the project's actual scenes as configured in Build Settings.
+            string[] scenes = EditorBuildSettings.scenes
+                .Where(scene => scene.enabled)
+                .Select(scene => scene.path)
+                .ToArray();
 
-            const string scenePath = "Assets/Scenes/BattleClubs_Community_Test.unity";
-            if (!System.IO.File.Exists(scenePath))
-                throw new Exception("A cena de teste não foi criada: " + scenePath);
+            if (scenes.Length == 0)
+                throw new Exception(
+                    "Nenhuma cena de jogo está habilitada em File > Build Settings. " +
+                    "Adicione a cena principal do BATTLE CLUBS antes de gerar o APK.");
 
-            EditorBuildSettings.scenes = new[]
+            foreach (string scene in scenes)
             {
-                new EditorBuildSettingsScene(scenePath, true)
-            };
+                if (!System.IO.File.Exists(scene))
+                    throw new Exception("Cena configurada não encontrada: " + scene);
+            }
 
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
                 throw new Exception("O módulo Android não está instalado no Unity Editor.");
@@ -38,7 +46,7 @@ namespace BattleClubs.Editor
 
             var options = new BuildPlayerOptions
             {
-                scenes = new[] { scenePath },
+                scenes = scenes,
                 locationPathName = outputPath,
                 target = BuildTarget.Android,
                 options = BuildOptions.None
