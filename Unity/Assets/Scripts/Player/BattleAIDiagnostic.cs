@@ -35,6 +35,7 @@ namespace BattleClubs.Player
         private string evidenceDirectory;
         private bool capturingIncident;
         private bool uploading;
+        private float nextErrorUploadTime;
         private float lastFrameTime;
         private float incidentEndTime;
         private int incidentFrameCount;
@@ -73,6 +74,14 @@ namespace BattleClubs.Player
             if (runtimeLog.Length > 48000) runtimeLog.Remove(0, runtimeLog.Length - 36000);
             try { File.AppendAllText(Path.Combine(evidenceDirectory, "unity-errors.log"), entry + Environment.NewLine); }
             catch { }
+
+            // Forward ordinary Unity exceptions/errors too; throttle bursts so a
+            // crash loop cannot flood the paired device's evidence endpoint.
+            if (Time.unscaledTime >= nextErrorUploadTime)
+            {
+                nextErrorUploadTime = Time.unscaledTime + 15f;
+                BattleClubsRemoteAgent.UploadEvidence(evidenceDirectory);
+            }
         }
 
         private void RecordIssue(string code, string message, Vector3 position)
