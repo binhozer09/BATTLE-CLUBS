@@ -30,6 +30,8 @@ namespace BattleClubs.World
         [SerializeField] private bool addCourtMarkings = true;
 
         private readonly List<GameObject> generated = new List<GameObject>();
+        private readonly Dictionary<string, Material> materialCache = new Dictionary<string, Material>();
+        private readonly Dictionary<string, Texture2D> textureCache = new Dictionary<string, Texture2D>();
 
         private static readonly Color Asphalt = new Color(0.19f, 0.205f, 0.20f);
         private static readonly Color Concrete = new Color(0.43f, 0.43f, 0.40f);
@@ -275,19 +277,100 @@ namespace BattleClubs.World
 
             Renderer renderer = item.GetComponent<Renderer>();
             if (renderer != null)
-            {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null) shader = Shader.Find("Standard");
-                if (shader != null)
-                {
-                    Material material = new Material(shader);
-                    material.color = color;
-                    renderer.sharedMaterial = material;
-                }
-            }
+                renderer.sharedMaterial = GetSurfaceMaterial(objectName, color);
 
             generated.Add(item);
             return item;
+        }
+
+
+        private Material GetSurfaceMaterial(string objectName, Color tint)
+        {
+            string surface = GetSurfaceType(objectName);
+            string key = surface + "_" + ColorUtility.ToHtmlStringRGBA(tint);
+            if (materialCache.TryGetValue(key, out Material cached)) return cached;
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) shader = Shader.Find("Standard");
+            if (shader == null) return null;
+
+            Material material = new Material(shader);
+            material.name = "BC_" + key;
+            material.color = tint;
+            material.mainTexture = GetSurfaceTexture(surface);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", surface == "metal" ? 0.48f : surface == "glass" ? 0.72f : 0.12f);
+            materialCache.Add(key, material);
+            return material;
+        }
+
+        private string GetSurfaceType(string objectName)
+        {
+            string n = objectName.ToLowerInvariant();
+            if (n.Contains("glass") || n.Contains("window")) return "glass";
+            if (n.Contains("metal") || n.Contains("tank") || n.Contains("lamp") || n.Contains("rail") || n.Contains("handle") || n.Contains("vent")) return "metal";
+            if (n.Contains("door")) return "wood";
+            if (n.Contains("ground") || n.Contains("dash") || n.Contains("court")) return "asphalt";
+            if (n.Contains("roof") || n.Contains("cover") || n.Contains("slab") || n.Contains("line") || n.Contains("sidewalk")) return "concrete";
+            if (n.Contains("house") || n.Contains("windowframe") || n.Contains("balcony") || n.Contains("airconditioner") || n.Contains("ac")) return "plaster";
+            return "concrete";
+        }
+
+        private Texture2D GetSurfaceTexture(string surface)
+        {
+            if (textureCache.TryGetValue(surface, out Texture2D cached)) return cached;
+            const int size = 128;
+            Texture2D texture = new Texture2D(size, size, TextureFormat.RGB24, false);
+            texture.name = "BC_Tile_" + surface;
+            texture.wrapMode = TextureWrapMode.Repeat;
+            texture.filterMode = FilterMode.Bilinear;
+            Color[] pixels = new Color[size * size];
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float n1 = Mathf.PerlinNoise(x * 0.105f + 13.7f, y * 0.105f + 4.2f);
+                    float n2 = Mathf.PerlinNoise(x * 0.027f + 31.1f, y * 0.027f + 8.9f);
+                    float grain = (n1 - 0.5f) * 0.22f + (n2 - 0.5f) * 0.25f;
+                    Color pixel;
+                    if (surface == "asphalt")
+                    {
+                        float grit = Mathf.PerlinNoise(x * 0.42f + 2f, y * 0.42f + 9f);
+                        float v = Mathf.Clamp01(0.43f + grain + (grit - 0.5f) * 0.28f);
+                        pixel = new Color(v, v, v * 0.96f);
+                    }
+                    else if (surface == "concrete" || surface == "plaster")
+                    {
+                        float stain = Mathf.PerlinNoise(x * 0.055f + 7f, y * 0.055f + 17f);
+                        float v = Mathf.Clamp01((surface == "plaster" ? 0.68f : 0.57f) + grain - (1f - stain) * (surface == "plaster" ? 0.19f : 0.13f));
+                        pixel = new Color(v, v * 0.99f, v * 0.94f);
+                    }
+                    else if (surface == "metal")
+                    {
+                        float streak = Mathf.PerlinNoise(x * 0.035f, y * 0.24f);
+                        float v = Mathf.Clamp01(0.48f + grain + (streak - 0.5f) * 0.18f);
+                        pixel = new Color(v, v, v * 0.97f);
+                    }
+                    else if (surface == "wood")
+                    {
+                        float lines = Mathf.PerlinNoise(x * 0.045f, y * 0.22f);
+                        float v = Mathf.Clamp01(0.52f + grain + (lines - 0.5f) * 0.3f);
+                        pixel = new Color(v, v * 0.76f, v * 0.58f);
+                    }
+                    else
+                    {
+                        float reflection = Mathf.PerlinNoise(x * 0.025f, y * 0.12f);
+                        float v = Mathf.Clamp01(0.25f + reflection * 0.22f);
+                        pixel = new Color(v * 0.62f, v * 0.86f, v);
+                    }
+                    pixels[y * size + x] = pixel;
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply(false, true);
+            textureCache.Add(surface, texture);
+            return texture;
         }
 
         private void ClearGenerated()
