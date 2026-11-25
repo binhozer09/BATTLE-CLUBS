@@ -36,6 +36,23 @@ function safeEqual(a,b) {
   return aa.length===bb.length && aa.length>0 && crypto.timingSafeEqual(aa,bb);
 }
 function bearer(req) { return (req.headers.authorization || '').replace(/^Bearer\s+/i,''); }
+// Validate and clamp the only runtime settings the Android client is allowed to change.
+function validConfig(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const ranges = {
+    cameraFov: [40, 90], targetFrameRate: [30, 90], moveSpeed: [1, 12],
+    sprintSpeed: [1, 16], cameraSensitivity: [0.2, 5],
+    shadowDistance: [0, 150], masterVolume: [0, 1]
+  };
+  const result = {};
+  for (const [key, range] of Object.entries(ranges)) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
+    const value = Number(input[key]);
+    if (!Number.isFinite(value)) continue;
+    result[key] = Math.min(range[1], Math.max(range[0], value));
+  }
+  return Object.keys(result).length ? result : null;
+}
 function deviceFor(req, state) {
   const token=bearer(req);
   return Object.entries(state.devices).find(([,d])=>safeEqual(d.token,token));
