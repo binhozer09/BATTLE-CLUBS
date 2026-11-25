@@ -1,0 +1,58 @@
+name: Validate BATTLE CLUBS remote agent
+
+on:
+  pull_request:
+    paths:
+      - "remote-agent/**"
+      - ".github/workflows/remote-agent-check.yml"
+  push:
+    branches:
+      - main
+      - "fix/**"
+    paths:
+      - "remote-agent/**"
+      - ".github/workflows/remote-agent-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  remote-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: node --check remote-agent/server.js
+      - name: Test pairing, multipart evidence upload and remote config
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_DIR="$(mktemp -d)"
+          PORT=18080 DATA_DIR="$TMP_DIR/data" BATTLE_AGENT_ADMIN_KEY="ci-test-admin" node remote-agent/server.js >"$TMP_DIR/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true; rm -rf "$TMP_DIR"' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:18080/health >/dev/null
+
+          CODE="$(curl -fsS -X POST http://127.0.0.1:18080/v1/admin/pair-code \
+            -H 'Authorization: Bearer ci-test-admin' | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).code')"
+          TOKEN="$(curl -fsS -X POST http://127.0.0.1:18080/v1/device/pair \
+            -H "X-Pairing-Code: $CODE" -H 'Content-Type: application/json' \
+            -d '{"deviceName":"CI"}' | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).deviceToken')"
+
+          printf 'BATTLE CLUBS multipart evidence test\n' > "$TMP_DIR/evidence.log"
+          RESULT="$(curl -fsS -X POST http://127.0.0.1:18080/v1/diagnostics \
+            -H "Authorization: Bearer $TOKEN" \
+            -F "evidence=@$TMP_DIR/evidence.log;type=text/plain")"
+          echo "$RESULT" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(r.receivedFiles!==1)process.exit(1);console.log("Multipart upload received",r.receivedFiles,"file(s)")})'
+
+          CONFIG="$(curl -fsS -X POST http://127.0.0.1:18080/v1/admin/config \
+            -H 'Authorization: Bearer ci-test-admin' -H 'Content-Type: application/json' \
+            -d '{"config":{"cameraFov":120,"targetFrameRate":60},"deviceId":"ci-device"}')"
+          echo "$CONFIG" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const r=JSON.parse(s);if(!r.ok||r.config.cameraFov!==90)process.exit(1);console.log("Remote config validation passed")})'
