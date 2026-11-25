@@ -41,7 +41,9 @@ namespace BattleClubs.Editor
             GameObject map = new GameObject("BATTLE_CLUBS_Community_Map");
             map.AddComponent<UrbanCommunityBlockout>();
 
-            GameObject player = CreatePlayer(new Vector3(4f, 0.1f, 4f));
+            // The first block's central alley is clear of the surrounding house colliders.
+            // The map ground top is -0.15, so the CharacterController starts exactly on the floor.
+            GameObject player = CreatePlayer(new Vector3(9f, -0.15f, 9f));
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
             Camera camera = cameraObject.AddComponent<Camera>();
