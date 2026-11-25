@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -39,7 +40,14 @@ namespace BattleClubs.Editor
             RenderSettings.sun = sunlight;
 
             GameObject map = new GameObject("BATTLE_CLUBS_Community_Map");
-            map.AddComponent<UrbanCommunityBlockout>();
+            UrbanCommunityBlockout mapGenerator = map.AddComponent<UrbanCommunityBlockout>();
+            Texture2D damageTexture = BuildAsphaltDamageTexture();
+            if (damageTexture != null)
+            {
+                SerializedObject mapSettings = new SerializedObject(mapGenerator);
+                mapSettings.FindProperty("asphaltDamageTexture").objectReferenceValue = damageTexture;
+                mapSettings.ApplyModifiedPropertiesWithoutUndo();
+            }
 
             GameObject player = CreatePlayer(new Vector3(4f, 0.1f, 4f));
             GameObject cameraObject = new GameObject("Main Camera");
@@ -141,6 +149,78 @@ namespace BattleClubs.Editor
             Material material = new Material(shader);
             material.color = color;
             renderer.sharedMaterial = material;
+        }
+
+        private const string DamageColorPath = "Assets/Textures/AsphaltDamage001/AsphaltDamage001_2K-JPG_Color.jpg";
+        private const string DamageOpacityPath = "Assets/Textures/AsphaltDamage001/AsphaltDamage001_2K-JPG_Opacity.jpg";
+        private const string DamageCombinedPath = "Assets/Textures/AsphaltDamage001/AsphaltDamage001_RGBA.png";
+
+        private static Texture2D BuildAsphaltDamageTexture()
+        {
+            if (!File.Exists(DamageColorPath) || !File.Exists(DamageOpacityPath))
+            {
+                Debug.LogError("Asphalt Damage 001 maps are missing. Expected Color and Opacity JPG files in " +
+                    "Assets/Textures/AsphaltDamage001.");
+                return null;
+            }
+
+            MakeTextureReadable(DamageColorPath);
+            MakeTextureReadable(DamageOpacityPath);
+            Texture2D colorMap = AssetDatabase.LoadAssetAtPath<Texture2D>(DamageColorPath);
+            Texture2D opacityMap = AssetDatabase.LoadAssetAtPath<Texture2D>(DamageOpacityPath);
+            if (colorMap == null || opacityMap == null ||
+                colorMap.width != opacityMap.width || colorMap.height != opacityMap.height)
+            {
+                Debug.LogError("Asphalt Damage 001 Color/Opacity maps could not be loaded or have different sizes.");
+                return null;
+            }
+
+            Color[] colors = colorMap.GetPixels();
+            Color[] opacity = opacityMap.GetPixels();
+            for (int i = 0; i < colors.Length; i++)
+                colors[i].a = opacity[i].grayscale;
+
+            Texture2D combined = new Texture2D(colorMap.width, colorMap.height, TextureFormat.RGBA32, false, true);
+            combined.SetPixels(colors);
+            combined.Apply(false, false);
+            File.WriteAllBytes(DamageCombinedPath, combined.EncodeToPNG());
+            Object.DestroyImmediate(combined);
+            AssetDatabase.ImportAsset(DamageCombinedPath, ImportAssetOptions.ForceUpdate);
+
+            TextureImporter outputImporter = AssetImporter.GetAtPath(DamageCombinedPath) as TextureImporter;
+            if (outputImporter != null)
+            {
+                outputImporter.textureType = TextureImporterType.Default;
+                outputImporter.alphaIsTransparency = true;
+                outputImporter.wrapMode = TextureWrapMode.Clamp;
+                outputImporter.mipmapEnabled = true;
+                outputImporter.SaveAndReimport();
+            }
+
+            MakeTextureNotReadable(DamageColorPath);
+            MakeTextureNotReadable(DamageOpacityPath);
+            AssetDatabase.SaveAssets();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(DamageCombinedPath);
+        }
+
+        private static void MakeTextureReadable(string path)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null && !importer.isReadable)
+            {
+                importer.isReadable = true;
+                importer.SaveAndReimport();
+            }
+        }
+
+        private static void MakeTextureNotReadable(string path)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null && importer.isReadable)
+            {
+                importer.isReadable = false;
+                importer.SaveAndReimport();
+            }
         }
 
         private static void EnsureFolder(string parent, string folder)
