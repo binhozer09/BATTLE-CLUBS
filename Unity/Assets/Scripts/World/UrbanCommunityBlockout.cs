@@ -244,20 +244,22 @@ namespace BattleClubs.World
 
         private void CreateSpawns(Vector3 origin, float width, float depth)
         {
-            Vector3[] positions =
-            {
-                origin + new Vector3(3f, 0.15f, 3f),
-                origin + new Vector3(width - 3f, 0.15f, 3f),
-                origin + new Vector3(3f, 0.15f, depth - 3f),
-                origin + new Vector3(width - 3f, 0.15f, depth - 3f),
-                origin + new Vector3(width * 0.5f, 0.15f, depth - 3f)
-            };
+            // Spawn in the open central alley of each selected block, not at the map
+            // corners where the procedural houses occupy the ground.
+            int lastX = Mathf.Max(0, blocksX - 1);
+            int lastZ = Mathf.Max(0, blocksZ - 1);
+            int middleX = blocksX / 2;
+            int middleZ = blocksZ / 2;
+            int[] blockXs = { 0, lastX, 0, lastX, middleX };
+            int[] blockZs = { 0, 0, lastZ, lastZ, middleZ };
 
-            for (int i = 0; i < positions.Length; i++)
+            for (int i = 0; i < 5; i++)
             {
+                float x = origin.x + blockXs[i] * (blockSize + roadWidth) + blockSize * 0.5f;
+                float z = origin.z + blockZs[i] * (blockSize + roadWidth) + blockSize * 0.5f;
                 GameObject marker = new GameObject("TeamSpawn_" + (i + 1));
                 marker.transform.SetParent(transform, false);
-                marker.transform.position = positions[i];
+                marker.transform.position = new Vector3(x, origin.y - 0.15f, z);
                 generated.Add(marker);
             }
         }
