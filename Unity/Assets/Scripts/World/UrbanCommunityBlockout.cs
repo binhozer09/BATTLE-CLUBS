@@ -231,8 +231,8 @@ namespace BattleClubs.World
         {
             if (asphaltDamageTexture == null) return;
 
-            Shader shader = Shader.Find("Standard");
-            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) shader = Shader.Find("Standard");
             if (shader == null) return;
 
             generatedDamageMaterial = new Material(shader);
@@ -245,8 +245,16 @@ namespace BattleClubs.World
             if (generatedDamageMaterial.HasProperty("_BaseColor"))
                 generatedDamageMaterial.SetColor("_BaseColor", Color.white);
 
-            // Standard transparent surface; the PNG alpha is built from ambientCG's opacity map.
-            if (shader.name == "Standard")
+            // Transparent surface; PNG alpha is built from ambientCG's opacity map.
+            if (shader.name == "Universal Render Pipeline/Unlit")
+            {
+                generatedDamageMaterial.SetFloat("_Surface", 1f);
+                generatedDamageMaterial.SetFloat("_Blend", 0f);
+                generatedDamageMaterial.SetFloat("_ZWrite", 0f);
+                generatedDamageMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                generatedDamageMaterial.renderQueue = 3000;
+            }
+            else if (shader.name == "Standard")
             {
                 generatedDamageMaterial.SetFloat("_Mode", 3f);
                 generatedDamageMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
