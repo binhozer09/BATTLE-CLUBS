@@ -128,7 +128,7 @@ const server=http.createServer(async(req,res)=>{
   if (req.method==='GET' && url.pathname.startsWith('/v1/admin/evidence/')) {
     if (!safeEqual(bearer(req),ADMIN_KEY)) return send(res,401,{error:'Não autorizado'});
     const name=path.basename(decodeURIComponent(url.pathname.slice('/v1/admin/evidence/'.length)));
-    if (!/^[0-9]+_[a-f0-9]+\\.(png|jpg|jpeg|log|txt|jsonl|bin)$/.test(name)) return send(res,400,{error:'Arquivo inválido'});
+    if (!/^[0-9]+_[a-f0-9]+\.(png|jpg|jpeg|log|txt|jsonl|bin)$/.test(name)) return send(res,400,{error:'Arquivo inválido'});
     const file=path.join(UPLOAD_DIR,name);
     if (!fs.existsSync(file)) return send(res,404,{error:'Arquivo não encontrado'});
     const ext=path.extname(name).toLowerCase();
