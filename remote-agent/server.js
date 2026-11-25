@@ -111,7 +111,7 @@ const server=http.createServer(async(req,res)=>{
     const state=readState(), found=deviceFor(req,state);
     if (!found) return send(res,401,{error:'Dispositivo não pareado'});
     const [id,device]=found;
-    let raw; try { raw=await body(req); } catch(e) { return send(res,413,{error:'Evidência excede o limite de upload'}); }
+    let raw; try { raw=await body(req, 40*1024*1024); } catch(e) { return send(res,413,{error:'Evidência excede o limite de upload'}); }
     let parsed; try { parsed=parseMultipart(raw,req.headers['content-type'],id); }
     catch(e) { console.error('Falha ao interpretar multipart:',e.message); return send(res,400,{error:'Formato de evidência inválido'}); }
     const diagnostic={deviceId:id,deviceName:device.name,receivedAt:new Date().toISOString(),bytes:raw.length,fields:parsed.fields,files:parsed.files};
