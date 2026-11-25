@@ -344,6 +344,14 @@ namespace BattleClubs.World
             material.name = "BC_" + key;
             material.color = tint;
             material.mainTexture = GetSurfaceTexture(surface);
+            // Tile the road and masonry textures across large surfaces instead of
+            // stretching one small bitmap over the entire map.
+            Vector2 textureTiling = surface == "asphalt" ? new Vector2(14f, 14f)
+                : surface == "brick" ? new Vector2(2.4f, 2.4f)
+                : surface == "plaster" || surface == "concrete" ? new Vector2(2f, 2f)
+                : surface == "metal" || surface == "wood" ? new Vector2(1f, 2f)
+                : Vector2.one;
+            material.mainTextureScale = textureTiling;
             if (material.HasProperty("_Smoothness"))
                 material.SetFloat("_Smoothness", surface == "metal" ? 0.48f : surface == "glass" ? 0.72f : 0.12f);
             materialCache.Add(key, material);
@@ -366,11 +374,12 @@ namespace BattleClubs.World
         private Texture2D GetSurfaceTexture(string surface)
         {
             if (textureCache.TryGetValue(surface, out Texture2D cached)) return cached;
-            const int size = 128;
+            const int size = 256;
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGB24, false);
             texture.name = "BC_Tile_" + surface;
             texture.wrapMode = TextureWrapMode.Repeat;
-            texture.filterMode = FilterMode.Bilinear;
+            texture.filterMode = FilterMode.Trilinear;
+            texture.anisoLevel = 4;
             Color[] pixels = new Color[size * size];
 
             for (int y = 0; y < size; y++)
@@ -384,8 +393,13 @@ namespace BattleClubs.World
                     if (surface == "asphalt")
                     {
                         float grit = Mathf.PerlinNoise(x * 0.42f + 2f, y * 0.42f + 9f);
-                        float v = Mathf.Clamp01(0.43f + grain + (grit - 0.5f) * 0.28f);
-                        pixel = new Color(v, v, v * 0.96f);
+                        float patchNoise = Mathf.PerlinNoise(x * 0.018f + 47f, y * 0.018f + 63f);
+                        float crackNoise = Mathf.Abs(Mathf.PerlinNoise(x * 0.038f + 81f, y * 0.038f + 27f) - 0.5f);
+                        float crack = 1f - Mathf.SmoothStep(0.006f, 0.027f, crackNoise);
+                        float patch = Mathf.SmoothStep(0.56f, 0.78f, patchNoise);
+                        float v = Mathf.Clamp01(0.40f + grain + (grit - 0.5f) * 0.30f
+                            - patch * 0.12f - crack * 0.24f);
+                        pixel = new Color(v, v * 1.01f, v * 0.98f);
                     }
                     else if (surface == "brick")
                     {
