@@ -9,6 +9,7 @@ namespace BattleClubs.UI
     /// <summary>Runtime Android HUD: virtual joystick, sprint, jump and bat attack.</summary>
     public sealed class BattleClubsMobileHUD : MonoBehaviour
     {
+        private static Sprite circleSprite;
         [SerializeField] private ThirdPersonMotor motor;
         [SerializeField] private BatAttack batAttack;
         [SerializeField] private ThirdPersonCameraRig cameraRig;
@@ -51,12 +52,16 @@ namespace BattleClubs.UI
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0.14f, 0.18f),
                 joystickSize, new Color(0.08f, 0.08f, 0.08f, 0.38f));
             Image joystickImage = joystick.GetComponent<Image>();
+            joystickImage.sprite = GetCircleSprite();
+            joystickImage.type = Image.Type.Simple;
             joystickImage.raycastTarget = true;
 
             RectTransform handle = CreatePanel(joystick, "JoystickHandle",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(88f, 88f), new Color(0.92f, 0.92f, 0.92f, 0.86f));
             handle.anchoredPosition = Vector2.zero;
+            Image handleImage = handle.GetComponent<Image>();
+            handleImage.sprite = GetCircleSprite();
             VirtualJoystick stick = joystick.gameObject.AddComponent<VirtualJoystick>();
             stick.Initialize(motor, handle, joystickRange);
 
@@ -75,6 +80,28 @@ namespace BattleClubs.UI
             CreateActionButton(canvas.transform, "ATACAR", new Vector2(1f, 0f),
                 new Vector2(-150f, 125f), new Vector2(138f, 138f),
                 () => { if (batAttack != null) batAttack.Attack(); }, false);
+        }
+
+        private static Sprite GetCircleSprite()
+        {
+            if (circleSprite != null) return circleSprite;
+            const int size = 96;
+            Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[size * size];
+            Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+            float radius = size * 0.48f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float distance = Vector2.Distance(new Vector2(x, y), center);
+                    float alpha = Mathf.Clamp01(radius + 1f - distance);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            texture.SetPixels(pixels);
+            texture.Apply(false, true);
+            circleSprite = Sprite.Create(texture, new Rect(0, 0, size, size),
+                new Vector2(0.5f, 0.5f), size);
+            return circleSprite;
         }
 
         private static RectTransform CreatePanel(Transform parent, string objectName,
@@ -98,6 +125,9 @@ namespace BattleClubs.UI
             RectTransform rect = CreatePanel(parent, caption + "_Button", anchor, anchor,
                 new Vector2(0.5f, 0.5f), size, new Color(0.12f, 0.12f, 0.12f, 0.72f));
             rect.anchoredPosition = position;
+            Image buttonImage = rect.GetComponent<Image>();
+            buttonImage.sprite = GetCircleSprite();
+            buttonImage.type = Image.Type.Simple;
             Button button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = rect.GetComponent<Image>();
             if (!hold) button.onClick.AddListener(action);
