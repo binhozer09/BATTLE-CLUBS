@@ -51,12 +51,16 @@ namespace BattleClubs.UI
                 new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0.12f, 0.16f),
                 joystickSize, new Color(0.08f, 0.08f, 0.08f, 0.48f));
             Image joystickImage = joystick.GetComponent<Image>();
+            joystickImage.sprite = CreateCircleSprite(128, 0.92f);
+            joystickImage.type = Image.Type.Simple;
             joystickImage.raycastTarget = true;
 
             RectTransform handle = CreatePanel(joystick, "JoystickHandle",
                 new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(76f, 76f), new Color(0.9f, 0.9f, 0.9f, 0.8f));
             handle.anchoredPosition = Vector2.zero;
+            Image handleImage = handle.GetComponent<Image>();
+            handleImage.sprite = CreateCircleSprite(128, 0.92f);
             VirtualJoystick stick = joystick.gameObject.AddComponent<VirtualJoystick>();
             stick.Initialize(motor, handle, joystickRange);
 
@@ -75,6 +79,28 @@ namespace BattleClubs.UI
             CreateActionButton(canvas.transform, "ATACAR", new Vector2(1f, 0f),
                 new Vector2(-145f, 110f), new Vector2(142f, 92f),
                 () => { if (batAttack != null) batAttack.Attack(); }, false);
+        }
+
+        private static Sprite CreateCircleSprite(int size, float edgeAlpha)
+        {
+            Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            texture.name = "BC_UI_Circle";
+            texture.wrapMode = TextureWrapMode.Clamp;
+            Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+            float radius = size * 0.48f;
+            Color[] pixels = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float distance = Vector2.Distance(new Vector2(x, y), center);
+                    float alpha = Mathf.Clamp01((radius - distance) * 0.5f + 0.5f);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha * edgeAlpha);
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply(false, true);
+            return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
         }
 
         private static RectTransform CreatePanel(Transform parent, string objectName,
@@ -98,8 +124,23 @@ namespace BattleClubs.UI
             RectTransform rect = CreatePanel(parent, caption + "_Button", anchor, anchor,
                 new Vector2(0.5f, 0.5f), size, new Color(0.12f, 0.12f, 0.12f, 0.72f));
             rect.anchoredPosition = position;
+            Image buttonImage = rect.GetComponent<Image>();
+            buttonImage.sprite = CreateCircleSprite(128, 0.92f);
+            buttonImage.type = Image.Type.Sliced;
             Button button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = rect.GetComponent<Image>();
+            button.targetGraphic = buttonImage;
+            ColorBlock colors = button.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0.92f);
+            colors.highlightedColor = new Color(1f, 0.86f, 0.62f, 1f);
+            colors.pressedColor = new Color(0.72f, 0.72f, 0.72f, 1f);
+            colors.fadeDuration = 0.08f;
+            button.colors = colors;
+            Outline outline = rect.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(1f, 1f, 1f, 0.32f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            Shadow shadow = rect.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.48f);
+            shadow.effectDistance = new Vector2(0f, -5f);
             if (!hold) button.onClick.AddListener(action);
 
             GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(Text));
