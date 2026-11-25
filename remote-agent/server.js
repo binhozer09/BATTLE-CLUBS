@@ -35,7 +35,7 @@ function safeEqual(a,b) {
   const aa=Buffer.from(String(a||'')), bb=Buffer.from(String(b||''));
   return aa.length===bb.length && aa.length>0 && crypto.timingSafeEqual(aa,bb);
 }
-function bearer(req) { return (req.headers.authorization || '').replace(/^Bearer\\s+/i,''); }
+function bearer(req) { return (req.headers.authorization || '').replace(/^Bearer\s+/i,''); }
 function deviceFor(req, state) {
   const token=bearer(req);
   return Object.entries(state.devices).find(([,d])=>safeEqual(d.token,token));
