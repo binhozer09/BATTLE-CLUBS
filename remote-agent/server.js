@@ -35,21 +35,43 @@ function safeEqual(a,b) {
   const aa=Buffer.from(String(a||'')), bb=Buffer.from(String(b||''));
   return aa.length===bb.length && aa.length>0 && crypto.timingSafeEqual(aa,bb);
 }
-function bearer(req) { return (req.headers.authorization || '').replace(/^Bearer\s+/i,''); }
+function bearer(req) { return (req.headers.authorization || '').replace(/^Bearer\\s+/i,''); }
 function deviceFor(req, state) {
   const token=bearer(req);
   return Object.entries(state.devices).find(([,d])=>safeEqual(d.token,token));
 }
-const allowed = new Set(['cameraFov','targetFrameRate','moveSpeed','sprintSpeed','cameraSensitivity','shadowDistance','masterVolume']);
-function validConfig(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
-  const out={};
-  for (const [k,v] of Object.entries(input)) {
-    if (!allowed.has(k) || typeof v !== 'number' || !Number.isFinite(v)) continue;
-    const ranges={cameraFov:[40,90],targetFrameRate:[30,90],moveSpeed:[1,12],sprintSpeed:[1,16],cameraSensitivity:[0.2,5],shadowDistance:[0,150],masterVolume:[0,1]};
-    const [min,max]=ranges[k]; out[k]=Math.min(max,Math.max(min,v));
+function parseMultipart(raw, contentType, deviceId) {
+  const match = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(contentType || '');
+  if (!match) throw new Error('multipart boundary ausente');
+  const boundary = '--' + (match[1] || match[2]).trim();
+  const source = raw.toString('latin1');
+  const chunks = source.split(boundary);
+  const fields = {};
+  const files = [];
+  for (const chunk of chunks) {
+    const part = chunk.replace(/^\\r\\n/, '').replace(/\\r\\n--?$/, '');
+    if (!part || part === '--') continue;
+    const split = part.indexOf('\\r\\n\\r\\n');
+    if (split < 0) continue;
+    const headers = part.slice(0, split);
+    let payload = part.slice(split + 4);
+    payload = payload.replace(/\\r\\n$/, '');
+    const disposition = /content-disposition:\\s*form-data;([^\\r\\n]+)/i.exec(headers);
+    if (!disposition) continue;
+    const name = /name="([^"]*)"/i.exec(disposition[1]);
+    const filename = /filename="([^"]*)"/i.exec(disposition[1]);
+    if (!name) continue;
+    if (!filename) { fields[name[1]] = Buffer.from(payload, 'latin1').toString('utf8'); continue; }
+    const original = path.basename(filename[1]).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0,100) || 'evidence.bin';
+    const ext = path.extname(original).toLowerCase();
+    const safeExt = /^\\.(png|jpg|jpeg|log|txt|jsonl)$/.test(ext) ? ext : '.bin';
+    const storedName = Date.now() + '_' + crypto.randomBytes(6).toString('hex') + safeExt;
+    const bytes = Buffer.from(payload, 'latin1');
+    fs.writeFileSync(path.join(UPLOAD_DIR, storedName), bytes);
+    const mimeHeader = /content-type:\\s*([^\\r\\n]+)/i.exec(headers);
+    files.push({ name: original, storedName, mime: mimeHeader ? mimeHeader[1].trim() : 'application/octet-stream', bytes: bytes.length });
   }
-  return Object.keys(out).length ? out : null;
+  return { fields, files };
 }
 const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,'http://localhost');
@@ -68,12 +90,27 @@ const server=http.createServer(async(req,res)=>{
   if (req.method==='POST' && url.pathname==='/v1/diagnostics') {
     const state=readState(), found=deviceFor(req,state);
     if (!found) return send(res,401,{error:'Dispositivo não pareado'});
-    const [id,device]=found, raw=await body(req);
-    const file=path.join(UPLOAD_DIR,Date.now()+'_'+id+'.multipart');
-    fs.writeFileSync(file,raw);
-    state.diagnostics.unshift({deviceId:id,deviceName:device.name,receivedAt:new Date().toISOString(),bytes:raw.length,file:path.basename(file),contentType:req.headers['content-type']||''});
-    state.diagnostics=state.diagnostics.slice(0,200); device.lastSeen=new Date().toISOString(); writeState(state);
-    return send(res,200,{ok:true,receivedBytes:raw.length});
+    const [id,device]=found;
+    let raw; try { raw=await body(req); } catch(e) { return send(res,413,{error:'Evidência excede o limite de upload'}); }
+    let parsed; try { parsed=parseMultipart(raw,req.headers['content-type'],id); }
+    catch(e) { console.error('Falha ao interpretar multipart:',e.message); return send(res,400,{error:'Formato de evidência inválido'}); }
+    const diagnostic={deviceId:id,deviceName:device.name,receivedAt:new Date().toISOString(),bytes:raw.length,fields:parsed.fields,files:parsed.files};
+    state.diagnostics.unshift(diagnostic);
+    state.diagnostics=state.diagnostics.slice(0,200);
+    device.lastSeen=new Date().toISOString(); writeState(state);
+    console.log('DIAGNOSTICS_RECEIVED',JSON.stringify({deviceId:id,fileCount:parsed.files.length,files:parsed.files.map(f=>f.name),fields:Object.keys(parsed.fields)}));
+    return send(res,200,{ok:true,receivedBytes:raw.length,receivedFiles:parsed.files.length});
+  }
+  if (req.method==='GET' && url.pathname.startsWith('/v1/admin/evidence/')) {
+    if (!safeEqual(bearer(req),ADMIN_KEY)) return send(res,401,{error:'Não autorizado'});
+    const name=path.basename(decodeURIComponent(url.pathname.slice('/v1/admin/evidence/'.length)));
+    if (!/^[0-9]+_[a-f0-9]+\\.(png|jpg|jpeg|log|txt|jsonl|bin)$/.test(name)) return send(res,400,{error:'Arquivo inválido'});
+    const file=path.join(UPLOAD_DIR,name);
+    if (!fs.existsSync(file)) return send(res,404,{error:'Arquivo não encontrado'});
+    const ext=path.extname(name).toLowerCase();
+    const types={'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.log':'text/plain; charset=utf-8','.txt':'text/plain; charset=utf-8','.jsonl':'text/plain; charset=utf-8','.bin':'application/octet-stream'};
+    res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    return fs.createReadStream(file).pipe(res);
   }
   if (req.method==='GET' && url.pathname==='/v1/device/poll') {
     const state=readState(), found=deviceFor(req,state);
