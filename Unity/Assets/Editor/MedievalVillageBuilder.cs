@@ -165,28 +165,29 @@ namespace BattleClubs.Editor
 
         private static void CreateSpawnMarkers()
         {
+            // Marcadores de spawn são transforms vazios: não devem aparecer como
+            // cilindros coloridos no cenário nem ficar fora dos limites do terreno.
             GameObject root = new GameObject("TEAM_SPAWN_POINTS_5x4");
-            Color[] colors = {
-                new Color(0.12f, 0.35f, 0.85f), new Color(0.8f, 0.16f, 0.14f),
-                new Color(0.15f, 0.62f, 0.25f), new Color(0.9f, 0.68f, 0.12f),
-                new Color(0.48f, 0.2f, 0.72f)
+            Vector3[] teamCenters =
+            {
+                new Vector3(-44f, 0.1f, -30f),
+                new Vector3(-44f, 0.1f, 30f),
+                new Vector3(44f, 0.1f, -30f),
+                new Vector3(44f, 0.1f, 30f),
+                new Vector3(0f, 0.1f, -48f)
             };
-            for (int team = 0; team < 5; team++)
+
+            for (int team = 0; team < teamCenters.Length; team++)
             {
                 GameObject teamRoot = new GameObject("Team_" + (team + 1) + "_Spawns");
                 teamRoot.transform.SetParent(root.transform, false);
                 for (int member = 0; member < 4; member++)
                 {
-                    GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    marker.name = "Spawn_" + (member + 1);
+                    GameObject marker = new GameObject("Spawn_" + (member + 1));
                     marker.transform.SetParent(teamRoot.transform, false);
-                    float angle = (team * 72f + member * 12f) * Mathf.Deg2Rad;
-                    marker.transform.position = new Vector3(38f + Mathf.Cos(angle) * (14f + team * 3f), 0.08f,
-                        38f + Mathf.Sin(angle) * (14f + team * 3f));
-                    marker.transform.localScale = new Vector3(0.7f, 0.08f, 0.7f);
-                    SetColor(marker, colors[team]);
-                    Collider collider = marker.GetComponent<Collider>();
-                    if (collider != null) UnityEngine.Object.DestroyImmediate(collider);
+                    Vector3 offset = new Vector3((member % 2 == 0 ? -1.5f : 1.5f), 0f,
+                        (member < 2 ? -1.5f : 1.5f));
+                    marker.transform.position = teamCenters[team] + offset;
                 }
             }
         }
