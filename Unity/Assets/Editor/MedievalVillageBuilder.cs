@@ -57,6 +57,11 @@ namespace BattleClubs.Editor
             CreateCentralPlaza();
             CreateVillageDetails();
             EditorSceneManager.SaveScene(target, OutputScene);
+            // Make the medieval village the only enabled startup scene for builds.
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(OutputScene, true)
+            };
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("MEDIEVAL_VILLAGE_SCENE_CREATED=" + OutputScene +
