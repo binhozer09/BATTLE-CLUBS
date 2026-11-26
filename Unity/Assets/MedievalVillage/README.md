@@ -21,6 +21,6 @@ Com os 176 FBX e as texturas disponíveis no projeto Unity, abra o menu. Se `Bat
 
 `BATTLE CLUBS → World → Build Medieval Village Scene`
 
-O editor cria `Assets/Scenes/BattleClubs_MedievalVillage.unity` separada da cena principal, reutilizando os objetos de jogador/câmera/HUD da cena principal e substituindo apenas o cenário. A cena principal e os mapas antigos não são apagados nem sobrescritos.
+O editor cria `Assets/Scenes/BattleClubs_MedievalVillage.unity` como a nova cena de jogo. Da cena antiga, reaproveita somente `Player_Local` (humanoide, controlador e componentes anexados ao jogador); cria uma câmera third-person nova para a vila. Nenhum objeto do mapa antigo, câmera antiga ou cenário anterior é levado para a nova cena. Os arquivos-fonte antigos permanecem no repositório/backup para evitar perda irreversível.
 
 Os materiais gerados usam mapas Base Color e, quando disponíveis, mapas Normal (incluindo os arquivos da subpasta `Normals Godot-Unity`). Os objetos de cada casa ficam agrupados e recebem MeshColliders para permitir colisão. A cena ainda precisa ser executada e aberta no Unity Editor para validar escala, encaixe dos módulos, colisões, materiais e iluminação antes de qualquer APK.
