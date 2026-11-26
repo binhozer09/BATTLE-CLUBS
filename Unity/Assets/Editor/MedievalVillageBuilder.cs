@@ -6,13 +6,14 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using BattleClubs.Player;
 
 namespace BattleClubs.Editor
 {
     /// <summary>
-    /// Builds a separate medieval village scene from the modular FBX kit.
-    /// Keeps the existing player, camera, HUD and match setup by copying those
-    /// scene roots from BattleClubs_Main; the old map is not modified.
+    /// Builds the medieval village as the new game environment.
+    /// Reuses only the configured humanoid player from the previous gameplay
+    /// scene; the previous map and unrelated scene roots are not carried over.
     /// </summary>
     public static class MedievalVillageBuilder
     {
@@ -47,7 +48,8 @@ namespace BattleClubs.Editor
 
             EnsureGeneratedMaterialFolder();
             Scene target = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            CopyPlayableRootsFromMainScene(target);
+            CopyHumanoidPlayerFromMainScene(target);
+            CreateVillageCamera();
             SceneManager.SetActiveScene(target);
             ConfigureLighting();
             CreateGroundAndRoads();
@@ -61,24 +63,47 @@ namespace BattleClubs.Editor
                 " | modelos colocados=" + placedModels + " | modelos ausentes=" + missingModels);
         }
 
-        private static void CopyPlayableRootsFromMainScene(Scene target)
+        private static void CopyHumanoidPlayerFromMainScene(Scene target)
         {
-            if (!System.IO.File.Exists(MainScene))
-                throw new Exception("Cena principal não encontrada: " + MainScene);
+            if (!File.Exists(MainScene))
+                throw new Exception("Cena de origem do humanoide não encontrada: " + MainScene);
 
             Scene source = EditorSceneManager.OpenScene(MainScene, OpenSceneMode.Additive);
-            GameObject[] roots = source.GetRootGameObjects();
-            int moved = 0;
-            foreach (GameObject root in roots)
+            GameObject player = null;
+            foreach (GameObject root in source.GetRootGameObjects())
             {
-                if (root == null || root.name == "BATTLE_CLUBS_WORLD")
-                    continue;
-                SceneManager.MoveGameObjectToScene(root, target);
-                moved++;
+                if (root != null && root.name == "Player_Local")
+                {
+                    player = root;
+                    break;
+                }
             }
+
+            if (player == null)
+            {
+                EditorSceneManager.CloseScene(source, true);
+                throw new Exception("Não encontrei Player_Local na cena principal para reaproveitar o humanoide.");
+            }
+
+            SceneManager.MoveGameObjectToScene(player, target);
+            player.transform.position = new Vector3(0f, 0.2f, -12f);
             EditorSceneManager.CloseScene(source, true);
-            if (moved == 0)
-                throw new Exception("Não encontrei Player/Camera na cena principal para preservar.");
+        }
+
+        private static void CreateVillageCamera()
+        {
+            GameObject cameraRoot = new GameObject("Village_Player_Camera");
+            Camera camera = cameraRoot.AddComponent<Camera>();
+            camera.tag = "MainCamera";
+            camera.fieldOfView = 60f;
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 500f;
+            cameraRoot.AddComponent<AudioListener>();
+            ThirdPersonCameraRig rig = cameraRoot.AddComponent<ThirdPersonCameraRig>();
+            GameObject player = GameObject.Find("Player_Local");
+            if (player == null)
+                throw new Exception("Player_Local não foi transferido para a cena medieval.");
+            rig.SetTarget(player.transform);
         }
 
         private static void LoadModels()
