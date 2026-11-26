@@ -2,43 +2,38 @@
 using System;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BattleClubs.Editor
 {
-    /// <summary>Builds the main Battle Clubs game scene for Android.</summary>
+    /// <summary>Builds the Android exploration game from the modular MedievalVillage assets.</summary>
     public static class BattleClubsAndroidCI
     {
         public static void BuildAndroid()
         {
-            // Permanently exclude the obsolete test scene from the project and build.
-            const string obsoleteTestScene = "Assets/Scenes/BattleClubs_Community_Test.unity";
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(obsoleteTestScene) != null)
-                AssetDatabase.DeleteAsset(obsoleteTestScene);
+            const string mainScene = "Assets/Scenes/BATTLE_CLUBS_Medieval_Exploration.unity";
+            if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
+                AssetDatabase.CreateFolder("Assets", "Scenes");
 
-            // Generate the single main entry scene used by the Android build.
-            BattleClubsFullSceneBuilder.CreateMainGameScene();
+            global::MedievalGameBuilder.BuildWorld();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            string mainScene = BattleClubsFullSceneBuilder.ScenePath;
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(mainScene) == null ||
+                !System.IO.File.Exists(mainScene))
+                throw new Exception("A cena de exploração medieval não foi criada: " + mainScene);
+
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(mainScene, true) };
-            string[] scenes = EditorBuildSettings.scenes
-                .Where(scene => scene.enabled)
-                .Select(scene => scene.path)
-                .ToArray();
-
-            if (scenes.Length == 0 || !System.IO.File.Exists(mainScene))
-                throw new Exception("A cena principal do BATTLE CLUBS não foi criada: " + mainScene);
-
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
                 throw new Exception("O módulo Android não está instalado no Unity Editor.");
 
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.binhozer09.battleclubs");
-            PlayerSettings.bundleVersion = "0.2.0";
-            PlayerSettings.Android.bundleVersionCode = 2;
+            PlayerSettings.bundleVersion = "0.3.0";
+            PlayerSettings.Android.bundleVersionCode = 3;
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARMv7 | AndroidArchitecture.ARM64;
             PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
@@ -47,13 +42,14 @@ namespace BattleClubs.Editor
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outputPath));
             var options = new BuildPlayerOptions
             {
-                scenes = scenes,
+                scenes = new[] { mainScene },
                 locationPathName = outputPath,
                 target = BuildTarget.Android,
                 options = BuildOptions.None
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(options);
+            Debug.Log("BATTLE_CLUBS_BUILD_SCENE=" + mainScene);
             Debug.Log("BATTLE_CLUBS_BUILD_RESULT=" + report.summary.result);
             Debug.Log("BATTLE_CLUBS_BUILD_OUTPUT=" + outputPath);
             Debug.Log("BATTLE_CLUBS_BUILD_ERRORS=" + report.summary.totalErrors);

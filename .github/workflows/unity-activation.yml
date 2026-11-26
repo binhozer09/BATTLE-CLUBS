@@ -72,7 +72,7 @@ jobs:
           test -s "$LICENSE_FILE"
           echo "Licença Unity Personal localizada no runner."
 
-      - name: Gerar somente a cena principal BattleClubs_Main e compilar APK
+      - name: Gerar a cena do vilarejo medieval e compilar APK Android
         shell: bash
         run: |
           set -o pipefail
