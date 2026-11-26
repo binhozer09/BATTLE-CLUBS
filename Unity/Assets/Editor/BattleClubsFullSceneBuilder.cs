@@ -111,6 +111,7 @@ namespace BattleClubs.Editor
             controller.slopeLimit = 50f;
             controller.detectCollisions = true;
             root.AddComponent<PlayerGroundSafety>();
+            root.AddComponent<PlayerGroundDiagnostics>();
 
             ThirdPersonMotor motor = root.AddComponent<ThirdPersonMotor>();
             Combatant combatant = root.AddComponent<Combatant>();
