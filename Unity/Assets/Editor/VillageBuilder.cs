@@ -21,59 +21,77 @@
 // uma cópia pixel a pixel — ajuste fino de posição costuma ser necessário
 // depois de rodar, olhando a Scene view.
 // ------------------------------------------------------------------
+
 using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 public class VillageBuilder : EditorWindow
 {
     // ---- Pastas onde você importou o asset pack ----
     private const string MODEL_FOLDER = "Assets";   // busca em todo Assets/ por padrão
     private const string TEXTURE_FOLDER = "Assets"; // idem
+
     // ---- Calibração do grid (ajuste se as peças ficarem desalinhadas) ----
     private const float GRID_UNIT = 2f;
     private const float FLOOR_HEIGHT = 2.6f;
+
     private static Dictionary<string, GameObject> modelCache = new Dictionary<string, GameObject>(StringComparer.OrdinalIgnoreCase);
     private static Dictionary<string, Material> materialCache = new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
     private static System.Random rng = new System.Random(2026);
+
     [MenuItem("Vilarejo/Construir Vilarejo")]
     public static void BuildVillage()
     {
         modelCache.Clear();
         materialCache.Clear();
+
         GameObject old = GameObject.Find("Vilarejo_Gerado");
-        if (old != null) Object.DestroyImmediate(old);
+        if (old != null) UnityEngine.Object.DestroyImmediate(old);
+
         GameObject root = new GameObject("Vilarejo_Gerado");
+
         SetupLighting(root);
         BuildGroundAndPath(root);
+
         // Composição inspirada na foto de referência:
         // Esquerda (perto da câmera): casa grande de madeira+pedra, 3 andares,
         //   sacada, escada de pedra na frente, trepadeiras
         BuildHouse(root, "Casa_Esquerda_Grande", new Vector3(-9.5f, 0f, 4f), -5f,
                    widthModules: 3, floors: 3, groundMaterial: "brick", hasBalcony: true, hasStairs: true);
+
         // Esquerda (meio-fundo): casa estreita e alta, com pequena varanda no topo
         BuildHouse(root, "Casa_Esquerda_Estreita", new Vector3(-4.5f, 0f, -3f), -12f,
                    widthModules: 2, floors: 3, groundMaterial: "stone", hasBalcony: true, hasStairs: false);
+
         // Centro-fundo: casinha clara, mais baixa
         BuildHouse(root, "Casa_Centro_Pequena", new Vector3(-0.5f, 0f, -7.5f), 8f,
                    widthModules: 2, floors: 2, groundMaterial: "plaster", hasBalcony: false, hasStairs: false);
+
         // Torre redonda, fundo centro-direita
         BuildTower(root, "Torre_Central", new Vector3(3.8f, 0f, -9.5f));
+
         // Casa pequena atrás da torre
         BuildHouse(root, "Casa_Atras_Torre", new Vector3(6.5f, 0f, -8f), -8f,
                    widthModules: 2, floors: 2, groundMaterial: "brick", hasBalcony: false, hasStairs: false);
+
         // Direita (perto da câmera): casa grande espelhada, com sacadas salientes
         BuildHouse(root, "Casa_Direita_Grande", new Vector3(10f, 0f, 2f), 170f,
                    widthModules: 3, floors: 3, groundMaterial: "stone", hasBalcony: true, hasStairs: false);
+
         BuildLowWall(root);
         BuildProps(root);
         SpawnPlayer(root);
+
         Selection.activeGameObject = root;
         SceneView.lastActiveSceneView?.FrameSelected();
+
         Debug.Log("Vilarejo gerado. Confira o Console acima por avisos de peças/texturas não encontradas.");
     }
+
     [MenuItem("Vilarejo/Ferramentas/Medir Tamanho do Objeto Selecionado")]
     public static void MeasureSelected()
     {
@@ -82,6 +100,7 @@ public class VillageBuilder : EditorWindow
         if (r == null) { Debug.LogWarning("Sem Renderer no objeto selecionado."); return; }
         Debug.Log($"Tamanho de '{Selection.activeGameObject.name}': {r.bounds.size}");
     }
+
     // ------------------------------------------------------------
     private static void SetupLighting(GameObject root)
     {
@@ -92,10 +111,12 @@ public class VillageBuilder : EditorWindow
         light.intensity = 1.15f;
         light.color = new Color(1f, 0.95f, 0.85f);
         lightGO.transform.rotation = Quaternion.Euler(42f, -35f, 0f);
+
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
         RenderSettings.ambientSkyColor = new Color(0.60f, 0.78f, 0.92f);
         RenderSettings.ambientGroundColor = new Color(0.28f, 0.30f, 0.22f);
     }
+
     private static void BuildGroundAndPath(GameObject root)
     {
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
@@ -103,6 +124,7 @@ public class VillageBuilder : EditorWindow
         ground.transform.SetParent(root.transform);
         ground.transform.localScale = new Vector3(6f, 1f, 6f);
         ApplyFlatColor(ground, new Color(0.32f, 0.47f, 0.22f));
+
         GameObject path = GameObject.CreatePrimitive(PrimitiveType.Cube);
         path.name = "Caminho_Pedra";
         path.transform.SetParent(root.transform);
@@ -110,6 +132,7 @@ public class VillageBuilder : EditorWindow
         path.transform.localScale = new Vector3(3.4f, 0.04f, 32f);
         ApplyFlatColor(path, new Color(0.52f, 0.50f, 0.48f));
     }
+
     private static void BuildLowWall(GameObject root)
     {
         GameObject wall = new GameObject("Muro_Baixo_Direita");
@@ -120,6 +143,7 @@ public class VillageBuilder : EditorWindow
             Place("Prop_ExteriorBorder_Straight1", wall, new Vector3(2.2f, 0f, z), Quaternion.identity);
         }
     }
+
     /// Monta uma casa modular: paredes por andar, piso, sacada opcional,
     /// escada de pedra opcional, telhado e crista decorativa no topo.
     private static void BuildHouse(GameObject root, string name, Vector3 origin, float rotationY,
@@ -129,48 +153,61 @@ public class VillageBuilder : EditorWindow
         house.transform.SetParent(root.transform);
         house.transform.position = origin;
         house.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
+
         float width = widthModules * GRID_UNIT;
+
         for (int floor = 0; floor < floors; floor++)
         {
             float y = floor * FLOOR_HEIGHT;
             bool isGround = floor == 0;
             string wallMat = isGround ? groundMaterial : "plaster";
-            string wallSet = isGround
-                ? (groundMaterial == "stone" ? "UnevenBrick" : "UnevenBrick")
-                : "Plaster";
+            string wallSet = "UnevenBrick";
+            if (!isGround) wallSet = "Plaster";
+
             PlaceFloorSlab(house, y, width, wallMat);
+
             for (int i = 0; i < widthModules; i++)
             {
                 float localX = (i - (widthModules - 1) / 2f) * GRID_UNIT;
                 bool isCenter = (i == widthModules / 2);
+
                 string frontPiece = (isGround && isCenter)
                     ? $"Wall_{wallSet}_Door_Flat"
                     : $"Wall_{wallSet}_Window_Wide_Flat";
+
                 PlaceTextured(frontPiece, house, new Vector3(localX, y, width / 2f), Quaternion.identity, wallMat);
                 PlaceTextured($"Wall_{wallSet}_Straight", house, new Vector3(localX, y, -width / 2f), Quaternion.Euler(0, 180, 0), wallMat);
             }
+
             string cornerPiece = $"Corner_Exterior_{(isGround ? "Brick" : "Wood")}";
             PlaceTextured(cornerPiece, house, new Vector3(width / 2f, y, 0f), Quaternion.identity, wallMat);
             PlaceTextured(cornerPiece, house, new Vector3(-width / 2f, y, 0f), Quaternion.Euler(0, 180, 0), wallMat);
+
             if (hasBalcony && floor == floors - 2 && floors >= 2)
             {
                 PlaceTextured("Balcony_Simple_Straight", house, new Vector3(0f, y + FLOOR_HEIGHT * 0.5f, width / 2f + 0.3f), Quaternion.identity, "wood");
                 PlaceTextured("Overhang_Plaster_Long", house, new Vector3(0f, y, width / 2f + 0.15f), Quaternion.identity, "plaster");
             }
         }
+
         float topY = floors * FLOOR_HEIGHT;
         string roofPiece = PickClosestRoof(widthModules);
         PlaceTextured(roofPiece, house, new Vector3(0f, topY, 0f), Quaternion.identity, "roof");
+
         // Crista de metal ornamentada na cumeeira (como na foto de referência)
         PlaceTextured("Prop_MetalFence_Ornament", house, new Vector3(0f, topY + 1.4f, 0f), Quaternion.identity, "wood");
+
         PlaceTextured("Prop_Chimney", house, new Vector3(width / 2f - 0.3f, topY + 0.4f, -width / 2f + 0.3f), Quaternion.identity, "brick");
+
         if (rng.NextDouble() > 0.3)
             PlaceTextured("Prop_Vine1", house, new Vector3(width / 2f - 0.2f, FLOOR_HEIGHT, width / 2f), Quaternion.identity, "wood");
+
         if (hasStairs)
         {
             PlaceTextured("Stairs_Exterior_Straight", house, new Vector3(0f, 0f, width / 2f + 1.6f), Quaternion.identity, "stone");
         }
     }
+
     private static void PlaceFloorSlab(GameObject house, float y, float width, string mat)
     {
         GameObject found = PlaceTextured("Floor_WoodDark", house, new Vector3(0f, y, 0f), Quaternion.identity, "wood", logIfMissing: false);
@@ -188,20 +225,24 @@ public class VillageBuilder : EditorWindow
             found.transform.localScale = new Vector3(width / GRID_UNIT, 1f, width / GRID_UNIT);
         }
     }
+
     private static string PickClosestRoof(int widthModules)
     {
         if (widthModules <= 2) return "Roof_RoundTiles_4x4";
         if (widthModules == 3) return "Roof_RoundTiles_6x6";
         return "Roof_RoundTiles_8x8";
     }
+
     private static void BuildTower(GameObject root, string name, Vector3 origin)
     {
         GameObject tower = new GameObject(name);
         tower.transform.SetParent(root.transform);
         tower.transform.position = origin;
+
         int sides = 8;
         float radius = GRID_UNIT * 0.9f;
         int floors = 4;
+
         for (int floor = 0; floor < floors; floor++)
         {
             float y = floor * FLOOR_HEIGHT;
@@ -213,15 +254,19 @@ public class VillageBuilder : EditorWindow
                 PlaceTextured(piece, tower, dir * radius + Vector3.up * y, Quaternion.Euler(0, angle, 0), "stone");
             }
         }
+
         PlaceTextured("Roof_Tower_RoundTiles", tower, new Vector3(0f, floors * FLOOR_HEIGHT, 0f), Quaternion.identity, "roof");
     }
+
     private static void BuildProps(GameObject root)
     {
         GameObject props = new GameObject("Props_Decoracao");
         props.transform.SetParent(root.transform);
+
         PlaceTextured("Prop_Wagon", props, new Vector3(-11.5f, 0f, 7.5f), Quaternion.Euler(0, 25f, 0), "wood");
         PlaceTextured("Prop_Crate", props, new Vector3(-10.3f, 0f, 6.7f), Quaternion.Euler(0, 10f, 0), "wood");
         PlaceTextured("Prop_Crate", props, new Vector3(-10.6f, 0.6f, 6.5f), Quaternion.Euler(0, -15f, 0), "wood");
+
         for (int i = 0; i < 6; i++)
         {
             float z = 3f - i * GRID_UNIT;
@@ -229,31 +274,38 @@ public class VillageBuilder : EditorWindow
             PlaceTextured("Prop_WoodenFence_Single", props, new Vector3(-2.0f, 0f, z), Quaternion.Euler(0, 180, 0), "wood");
         }
     }
+
     private static void SpawnPlayer(GameObject root)
     {
         GameObject player = new GameObject("Jogador");
         player.transform.SetParent(root.transform);
         player.transform.position = new Vector3(0f, 1f, 13f);
         player.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+
         CharacterController cc = player.AddComponent<CharacterController>();
         cc.height = 1.8f;
         cc.center = new Vector3(0f, 0.9f, 0f);
         cc.radius = 0.35f;
+
         GameObject camGO = new GameObject("Camera_Jogador");
         camGO.transform.SetParent(player.transform);
         camGO.transform.localPosition = new Vector3(0f, 1.6f, 0f);
         Camera cam = camGO.AddComponent<Camera>();
         camGO.AddComponent<AudioListener>();
+
         Camera mainCam = Camera.main;
         if (mainCam != null && mainCam.gameObject != camGO)
-            Object.DestroyImmediate(mainCam.gameObject);
+            UnityEngine.Object.DestroyImmediate(mainCam.gameObject);
+
         cam.tag = "MainCamera";
+
         var controllerType = Type.GetType("SimpleFirstPersonController");
         if (controllerType != null)
             player.AddComponent(controllerType);
         else
             Debug.LogWarning("SimpleFirstPersonController.cs não encontrado — adicione manualmente ao Jogador.");
     }
+
     // ------------------------------------------------------------
     // Busca/instancia modelos e aplica material com textura real
     // ------------------------------------------------------------
@@ -271,6 +323,7 @@ public class VillageBuilder : EditorWindow
         }
         return instance;
     }
+
     private static GameObject Place(string modelName, GameObject parent, Vector3 localPos, Quaternion localRot, bool logIfMissing = true)
     {
         GameObject prefab = FindModel(modelName);
@@ -280,17 +333,20 @@ public class VillageBuilder : EditorWindow
                 Debug.LogWarning($"[Vilarejo] Modelo '{modelName}' não encontrado. Confira se o FBX foi importado em {MODEL_FOLDER}.");
             return null;
         }
+
         GameObject instance = PrefabUtility.InstantiatePrefab(prefab, parent.scene) as GameObject;
-        if (instance == null) instance = Object.Instantiate(prefab);
+        if (instance == null) instance = UnityEngine.Object.Instantiate(prefab);
         instance.transform.SetParent(parent.transform);
         instance.transform.localPosition = localPos;
         instance.transform.localRotation = localRot;
         instance.name = modelName;
         return instance;
     }
+
     private static GameObject FindModel(string name)
     {
         if (modelCache.TryGetValue(name, out GameObject cached)) return cached;
+
         string[] guids = AssetDatabase.FindAssets(name + " t:Model", new[] { MODEL_FOLDER });
         foreach (string guid in guids)
         {
@@ -306,9 +362,11 @@ public class VillageBuilder : EditorWindow
         modelCache[name] = fallback;
         return fallback;
     }
+
     private static Material GetMaterial(string key)
     {
         if (materialCache.TryGetValue(key, out Material cached)) return cached;
+
         string baseName = key switch
         {
             "roof" => "T_RoundTiles_BaseColor",
@@ -318,11 +376,15 @@ public class VillageBuilder : EditorWindow
             _ => "T_UnevenBrick_BaseColor",
         };
         string normalName = baseName.Replace("BaseColor", "Normal");
+
         Texture2D baseTex = FindTexture(baseName);
         Texture2D normalTex = FindTexture(normalName);
+
         Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
         if (shader == null) return null;
+
         Material mat = new Material(shader) { name = "MV_" + key };
+
         if (baseTex != null)
         {
             if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", baseTex);
@@ -333,6 +395,7 @@ public class VillageBuilder : EditorWindow
             mat.SetTexture("_BumpMap", normalTex);
             mat.EnableKeyword("_NORMALMAP");
         }
+
         if (baseTex == null)
         {
             // sem textura encontrada: usa uma cor aproximada só pra não ficar branco
@@ -347,14 +410,17 @@ public class VillageBuilder : EditorWindow
             mat.color = fallback;
             Debug.LogWarning($"[Vilarejo] Textura '{baseName}' não encontrada em {TEXTURE_FOLDER} — usando cor sólida provisória.");
         }
+
         materialCache[key] = mat;
         return mat;
     }
+
     private static Texture2D FindTexture(string token)
     {
         string[] guids = AssetDatabase.FindAssets(token + " t:Texture2D", new[] { TEXTURE_FOLDER });
         return guids.Length == 0 ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(guids[0]));
     }
+
     private static void ApplyFlatColor(GameObject go, Color c)
     {
         Renderer r = go.GetComponent<Renderer>();
