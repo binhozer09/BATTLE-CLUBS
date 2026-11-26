@@ -17,10 +17,10 @@ Copie os arquivos do Dropbox para:
 Os diretórios glTF e OBJ ficam preservados como formatos-fonte alternativos; a primeira cena usa FBX para importação direta pelo Unity. Não é necessário duplicar glTF/OBJ dentro do projeto para gerar a cena.
 
 ## Gerador da cena
-Depois de importar os 176 FBX e as 26 texturas no projeto Unity, abra o menu:
+Com os 176 FBX e as texturas disponíveis no projeto Unity, abra o menu. Se `BattleClubs_Main.unity` ainda não existir, o gerador chama primeiro o construtor oficial da cena principal para preservar o Player, câmera e HUD; em seguida cria a cena medieval separada:
 
 `BATTLE CLUBS → World → Build Medieval Village Scene`
 
 O editor cria `Assets/Scenes/BattleClubs_MedievalVillage.unity` separada da cena principal, reutilizando os objetos de jogador/câmera/HUD da cena principal e substituindo apenas o cenário. A cena principal e os mapas antigos não são apagados nem sobrescritos.
 
-A cena ainda precisa ser aberta no Unity Editor para validar escala, encaixe dos módulos, colisões e iluminação antes de qualquer APK.
+Os materiais gerados usam mapas Base Color e, quando disponíveis, mapas Normal (incluindo os arquivos da subpasta `Normals Godot-Unity`). Os objetos de cada casa ficam agrupados e recebem MeshColliders para permitir colisão. A cena ainda precisa ser executada e aberta no Unity Editor para validar escala, encaixe dos módulos, colisões, materiais e iluminação antes de qualquer APK.
