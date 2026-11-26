@@ -48,14 +48,15 @@ namespace BattleClubs.Editor
 
             EnsureGeneratedMaterialFolder();
             Scene target = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            CopyHumanoidPlayerFromMainScene(target);
-            CreateVillageCamera();
+            GameObject player = CopyHumanoidPlayerFromMainScene(target);
             SceneManager.SetActiveScene(target);
+            CreateVillageCamera(player);
             ConfigureLighting();
             CreateGroundAndRoads();
             CreateVillageHouses();
             CreateCentralPlaza();
             CreateVillageDetails();
+            ValidateVillageScene(target, player);
             EditorSceneManager.SaveScene(target, OutputScene);
             // Make the medieval village the only enabled startup scene for builds.
             EditorBuildSettings.scenes = new[]
@@ -68,7 +69,7 @@ namespace BattleClubs.Editor
                 " | modelos colocados=" + placedModels + " | modelos ausentes=" + missingModels);
         }
 
-        private static void CopyHumanoidPlayerFromMainScene(Scene target)
+        private static GameObject CopyHumanoidPlayerFromMainScene(Scene target)
         {
             if (!File.Exists(MainScene))
                 throw new Exception("Cena de origem do humanoide não encontrada: " + MainScene);
@@ -93,9 +94,10 @@ namespace BattleClubs.Editor
             SceneManager.MoveGameObjectToScene(player, target);
             player.transform.position = new Vector3(0f, 0.2f, -12f);
             EditorSceneManager.CloseScene(source, true);
+            return player;
         }
 
-        private static void CreateVillageCamera()
+        private static void CreateVillageCamera(GameObject player)
         {
             GameObject cameraRoot = new GameObject("Village_Player_Camera");
             Camera camera = cameraRoot.AddComponent<Camera>();
@@ -105,10 +107,48 @@ namespace BattleClubs.Editor
             camera.farClipPlane = 500f;
             cameraRoot.AddComponent<AudioListener>();
             ThirdPersonCameraRig rig = cameraRoot.AddComponent<ThirdPersonCameraRig>();
-            GameObject player = GameObject.Find("Player_Local");
             if (player == null)
                 throw new Exception("Player_Local não foi transferido para a cena medieval.");
             rig.SetTarget(player.transform);
+            ThirdPersonMotor motor = player.GetComponent<ThirdPersonMotor>();
+            if (motor != null)
+            {
+                SerializedObject motorData = new SerializedObject(motor);
+                SerializedProperty cameraField = motorData.FindProperty("cameraTransform");
+                if (cameraField == null)
+                    throw new Exception("Campo cameraTransform não encontrado no controlador do humanoide.");
+                cameraField.objectReferenceValue = cameraRoot.transform;
+                motorData.ApplyModifiedPropertiesWithoutUndo();
+            }
+        }
+
+        private static void ValidateVillageScene(Scene scene, GameObject player)
+        {
+            if (!scene.IsValid() || !scene.isLoaded)
+                throw new Exception("A cena medieval não está carregada corretamente.");
+            if (player == null || player.name != "Player_Local" ||
+                player.GetComponent<CharacterController>() == null ||
+                player.GetComponent<ThirdPersonMotor>() == null)
+                throw new Exception("O humanoide ou seu controlador não foi preservado.");
+            Camera[] cameras = UnityEngine.Object.FindObjectsOfType<Camera>();
+            int villageCameras = 0;
+            foreach (Camera camera in cameras)
+                if (camera != null && camera.name == "Village_Player_Camera" &&
+                    camera.CompareTag("MainCamera"))
+                    villageCameras++;
+            if (villageCameras != 1)
+                throw new Exception("A cena precisa ter exatamente uma câmera principal nova do vilarejo.");
+            if (player.GetComponent<ThirdPersonMotor>().GetComponent<ThirdPersonMotor>() == null)
+                throw new Exception("Controlador do jogador inválido.");
+            if (placedModels < 20)
+                throw new Exception("Poucos modelos medievais foram posicionados: " + placedModels);
+            int meshColliders = 0;
+            foreach (GameObject root in scene.GetRootGameObjects())
+                meshColliders += root.GetComponentsInChildren<MeshCollider>(true).Length;
+            if (meshColliders < 10)
+                throw new Exception("As construções não receberam colisões MeshCollider suficientes: " + meshColliders);
+            Debug.Log("MEDIEVAL_VILLAGE_VALIDATION_OK | player=Player_Local | cameras=" +
+                villageCameras + " | placedModels=" + placedModels + " | meshColliders=" + meshColliders);
         }
 
         private static void LoadModels()
