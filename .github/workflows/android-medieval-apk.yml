@@ -63,11 +63,12 @@ jobs:
             -projectPath "$GITHUB_WORKSPACE/Unity" \
             -executeMethod BattleClubs.Editor.BattleClubsAndroidCI.BuildAndroid \
             -logFile "$GITHUB_WORKSPACE/unity-android-build.log" -quit
-          test -s Build/Android/BATTLE-CLUBS.apk
-          file Build/Android/BATTLE-CLUBS.apk
-          unzip -t Build/Android/BATTLE-CLUBS.apk >/dev/null
-          unzip -Z1 Build/Android/BATTLE-CLUBS.apk | grep -q '^lib/arm64-v8a/libunity.so'
-          unzip -Z1 Build/Android/BATTLE-CLUBS.apk | grep -q '^lib/arm64-v8a/libil2cpp.so'
+          APK_PATH="$GITHUB_WORKSPACE/Unity/Build/Android/BATTLE-CLUBS.apk"
+          test -s "$APK_PATH"
+          file "$APK_PATH"
+          unzip -t "$APK_PATH" >/dev/null
+          unzip -Z1 "$APK_PATH" | grep -q '^lib/arm64-v8a/libunity.so'
+          unzip -Z1 "$APK_PATH" | grep -q '^lib/arm64-v8a/libil2cpp.so'
 
       - name: Diagnosticar falha
         if: failure()
@@ -86,6 +87,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: BATTLE-CLUBS-APK-Android
-          path: Build/Android/BATTLE-CLUBS.apk
+          path: Unity/Build/Android/BATTLE-CLUBS.apk
           if-no-files-found: error
           retention-days: 14
