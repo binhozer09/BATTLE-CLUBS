@@ -420,10 +420,6 @@ namespace BattleClubs.Editor
             CreateRoad(new Vector3(15.5f, 0.012f, 0f), new Vector3(3.2f, 0.07f, 39f));
 
             // Pequenas ligações entre os quarteirões e as entradas do povoado.
-            CreateRoad(new Vector3(-34f, 0.012f, -20f), new Vector3(3.2f, 0.07f, 22f));
-            CreateRoad(new Vector3(34f, 0.012f, -20f), new Vector3(3.2f, 0.07f, 22f));
-            CreateRoad(new Vector3(-34f, 0.012f, 20f), new Vector3(3.2f, 0.07f, 22f));
-            CreateRoad(new Vector3(34f, 0.012f, 20f), new Vector3(3.2f, 0.07f, 22f));
         }
 
         private static void CreateRoad(Vector3 position, Vector3 scale)
@@ -522,7 +518,6 @@ namespace BattleClubs.Editor
             // Nada de espalhar adereços aleatoriamente pelo mapa. Cercas e trepadeiras
             // ficam agrupadas junto aos quintais dos quatro quarteirões.
             int id = 0;
-            float[] gardenCenters = { 27f, 37f };
             foreach (int sx in new[] { -1, 1 })
             {
                 foreach (int sz in new[] { -1, 1 })
