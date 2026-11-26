@@ -17,7 +17,7 @@ namespace BattleClubs.Editor
     /// </summary>
     public static class MedievalVillageBuilder
     {
-        private const string MainScene = "Assets/Scenes/BattleClubs_Main.unity";
+        private const string MainScene = "Assets/Scenes/BattleClubs_HumanoidSource.unity";
         private const string OutputScene = "Assets/Scenes/BattleClubs_MedievalVillage.unity";
         private const string ModelFolder = "Assets/MedievalVillage/FBX";
         private const string TextureFolder = "Assets/MedievalVillage/Textures";
@@ -40,7 +40,7 @@ namespace BattleClubs.Editor
             // A cena principal é gerada pelo próprio projeto. Criá-la aqui, quando
             // ainda não existe, evita exigir uma etapa manual e não altera o mapa-fonte.
             if (!File.Exists(MainScene))
-                BattleClubsFullSceneBuilder.CreateMainGameScene();
+                BattleClubsFullSceneBuilder.CreateHumanoidSourceScene();
 
             LoadModels();
             if (Models.Count < 150)
