@@ -1,0 +1,97 @@
+name: BATTLE-CLUBS - Gerar cena medieval (sem APK)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/medieval-village-final-2026-11-26
+    paths:
+      - 'Unity/Assets/Editor/MedievalGameBuilder.cs'
+      - 'Unity/Assets/Scripts/MedievalThirdPersonController.cs'
+      - 'Unity/Assets/MedievalVillage/OBJ/**'
+      - 'Unity/Assets/MedievalVillage/Textures/**'
+      - '.github/workflows/medieval-scene-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-scene:
+    name: Importar modelos OBJ, aplicar texturas e salvar cena
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    env:
+      UNITY_NO_CLI_INVOKED_TELEMETRY: '1'
+      UNITY_NO_CRASH_REPORT: '1'
+      UNITY_NO_UPDATE_CHECK: '1'
+      UNITY_NO_CONSENT_PROMPT: '1'
+    steps:
+      - name: Baixar BATTLE-CLUBS
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1 libgconf-2-4 unzip
+
+      - name: Instalar Unity CLI
+        run: |
+          curl -fsSL https://unity.com/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Entrar na conta Unity
+        run: |
+          echo "Se a Unity solicitar autorização, abra o link temporário exibido neste passo."
+          timeout 10m unity auth login
+          unity auth status
+
+      - name: Ativar Unity Personal
+        run: |
+          unity license activate --personal --accept-eula --non-interactive
+          unity license status
+          test -s "$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+
+      - name: Instalar Unity Editor 2022.3.62f1
+        run: |
+          unity install 2022.3.62f1 --cm --accept-eula
+          EDITOR_PATH="$(find "$HOME" -type f -path '*/2022.3.62f1/Editor/Unity' -print -quit 2>/dev/null)"
+          test -n "$EDITOR_PATH"
+          echo "UNITY_EDITOR_PATH=$EDITOR_PATH" >> "$GITHUB_ENV"
+
+      - name: Gerar cena e exportar pacote completo
+        shell: bash
+        run: |
+          set -o pipefail
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -accept-apiupdate \
+            -projectPath "$GITHUB_WORKSPACE/Unity" \
+            -executeMethod MedievalGameBuilder.BuildWorld \
+            -logFile "$GITHUB_WORKSPACE/medieval-scene-build.log" -quit
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -accept-apiupdate \
+            -projectPath "$GITHUB_WORKSPACE/Unity" \
+            -executeMethod MedievalGameBuilder.ExportScenePackage \
+            -logFile "$GITHUB_WORKSPACE/medieval-package-export.log" -quit
+          test -s Unity/Assets/Scenes/BATTLE_CLUBS_Medieval_Exploration.unity
+          test -s Unity/Build/MedievalVillage/BATTLE_CLUBS_Medieval_Exploration.unitypackage
+
+      - name: Diagnosticar falha
+        if: failure()
+        run: |
+          for LOG in medieval-scene-build.log medieval-package-export.log; do
+            if [ -f "$LOG" ]; then
+              echo "===== $LOG ====="
+              grep -n -E -i "error|exception|failed|warning|MEDIEVAL WORLD|modelo não encontrado" "$LOG" | tail -250 || true
+              tail -120 "$LOG"
+            fi
+          done
+
+      - name: Publicar cena e pacote Unity
+        uses: actions/upload-artifact@v4
+        with:
+          name: BATTLE-CLUBS-Medieval-Scene
+          path: |
+            Unity/Assets/Scenes/BATTLE_CLUBS_Medieval_Exploration.unity
+            Unity/Build/MedievalVillage/BATTLE_CLUBS_Medieval_Exploration.unitypackage
+            medieval-scene-build.log
+            medieval-package-export.log
+          if-no-files-found: error
+          retention-days: 14
