@@ -53,6 +53,45 @@ function validConfig(input) {
   }
   return Object.keys(result).length ? result : null;
 }
+async function githubRequest(route, method, payload) {
+  const token = process.env.GITHUB_TOKEN || '';
+  const repository = process.env.GITHUB_REPOSITORY || 'binhozer09/BATTLE-CLUBS';
+  if (!token) return { skipped: true, reason: 'GITHUB_TOKEN ausente' };
+  const response = await fetch('https://api.github.com/repos/' + repository + route, {
+    method, headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token,
+      'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json', 'User-Agent': 'BATTLE-CLUBS-Remote-Agent' },
+    body: payload ? JSON.stringify(payload) : undefined, signal: AbortSignal.timeout(15000)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error('GitHub API HTTP ' + response.status + ': ' + String(data.message || 'erro'));
+  return data;
+}
+async function forwardDiagnosticToGitHub(state, device, diagnostic) {
+  if (!process.env.GITHUB_TOKEN) return { forwarded: false, reason: 'GITHUB_TOKEN ausente' };
+  const textFiles = [];
+  for (const file of diagnostic.files || []) {
+    if (!/\\.(log|txt|jsonl)$/i.test(file.name) || textFiles.length >= 8) continue;
+    try { textFiles.push({ name: file.name, content: fs.readFileSync(path.join(UPLOAD_DIR, file.storedName), 'utf8').slice(-10000) }); } catch {}
+  }
+  const fence = String.fromCharCode(96).repeat(3);
+  const lines = ['## Diagnóstico automático do BATTLE CLUBS', '', '- **Dispositivo:** ' + String(device.name || 'Android').slice(0,80),
+    '- **ID do dispositivo:** ' + diagnostic.deviceId, '- **Recebido em (UTC):** ' + diagnostic.receivedAt,
+    '- **Arquivos:** ' + (diagnostic.files || []).map(f => f.name).join(', '), '- **Bytes:** ' + diagnostic.bytes, '',
+    'Relatório enviado automaticamente pelo APK via agente seguro Railway.'];
+  for (const file of textFiles) lines.push('', '### ' + file.name, fence + 'text', file.content.replace(/```/g, '   '), fence);
+  const bodyText = lines.join('\n').slice(0, 60000);
+  const previous = device.githubIssue;
+  let issue;
+  if (previous && previous.number && Date.now() - Number(previous.updatedAt || 0) < 15 * 60 * 1000) {
+    await githubRequest('/issues/' + previous.number + '/comments', 'POST', { body: bodyText });
+    issue = { number: previous.number, html_url: previous.url };
+  } else {
+    issue = await githubRequest('/issues', 'POST', { title: '[Android Logs] ' + String(device.name || 'Dispositivo').slice(0,60) + ' — ' + diagnostic.receivedAt, body: bodyText });
+  }
+  device.githubIssue = { number: issue.number, url: issue.html_url || (previous && previous.url) || '', updatedAt: Date.now() };
+  writeState(state);
+  return { forwarded: true, issue: device.githubIssue };
+}
 function deviceFor(req, state) {
   const token=bearer(req);
   return Object.entries(state.devices).find(([,d])=>safeEqual(d.token,token));
@@ -123,7 +162,10 @@ const server=http.createServer(async(req,res)=>{
     state.diagnostics=state.diagnostics.slice(0,200);
     device.lastSeen=new Date().toISOString(); writeState(state);
     console.log('DIAGNOSTICS_RECEIVED',JSON.stringify({deviceId:id,fileCount:parsed.files.length,files:parsed.files.map(f=>f.name),fields:Object.keys(parsed.fields)}));
-    return send(res,200,{ok:true,receivedBytes:raw.length,receivedFiles:parsed.files.length});
+    let github = { forwarded: false, reason: 'não configurado' };
+    try { github = await forwardDiagnosticToGitHub(state, device, diagnostic); }
+    catch (e) { console.error('GITHUB_DIAGNOSTICS_FORWARD_FAILED', e.message); github = { forwarded: false, reason: 'falha ao encaminhar' }; }
+    return send(res,200,{ok:true,receivedBytes:raw.length,receivedFiles:parsed.files.length,githubForwarded:github.forwarded,githubIssue:github.issue || null});
   }
   if (req.method==='GET' && url.pathname.startsWith('/v1/admin/evidence/')) {
     if (!safeEqual(bearer(req),ADMIN_KEY)) return send(res,401,{error:'Não autorizado'});

@@ -34,3 +34,12 @@ O cliente envia os arquivos de evidência do diretório local de diagnóstico ap
 - Não há ainda entrega remota de texturas/modelos/AssetBundles.
 - Não há captura de vídeo MP4 no Android; são enviadas imagens e logs.
 - O APK atualmente instalado precisa ser atualizado para incluir o cliente remoto.
+
+
+## Encaminhamento automático para GitHub
+- Quando um Android pareado envia evidências para `POST /v1/diagnostics`, o servidor também publica os arquivos de texto (`.log`, `.txt`, `.jsonl`) em uma issue do repositório.
+- O repositório padrão é `binhozer09/BATTLE-CLUBS`; pode ser alterado por `GITHUB_REPOSITORY`.
+- Configure no serviço Railway `battle-clubs-remote-agent` a variável secreta `GITHUB_TOKEN` com um fine-grained Personal Access Token limitado ao repositório e com permissão **Issues: Read and write**. Nunca coloque esse token no APK nem no Git.
+- Relatórios do mesmo dispositivo são agrupados na mesma issue durante 15 minutos para evitar excesso de issues; depois disso, uma nova issue é aberta.
+- Se o token não estiver configurado ou o GitHub estiver indisponível, o arquivo continua salvo no volume Railway e o APK mantém sua cópia local. O endpoint responde com `githubForwarded: false` nesse caso.
+- Imagens de incidentes continuam no armazenamento privado do Railway; esta integração encaminha os arquivos de texto para o GitHub.
