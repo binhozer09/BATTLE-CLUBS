@@ -3,6 +3,8 @@
 // que já existam em Assets/MedievalVillage. Não cria paredes substitutas em cubos.
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 using System;
 using System.IO;
 using System.Linq;
@@ -21,6 +23,11 @@ public static class Casa1Builder
     [MenuItem("Vilarejo/Construir/Casa 1 - Casa grande")]
     public static void Build()
     {
+        // Cena exclusiva da Casa 1; não altera nem recompila o APK.
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
+            AssetDatabase.CreateFolder("Assets", "Scenes");
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
         Models.Clear();
         Materials.Clear();
 
@@ -58,7 +65,11 @@ public static class Casa1Builder
 
         Selection.activeGameObject = root;
         SceneView.lastActiveSceneView?.FrameSelected();
-        Debug.Log("[Casa 1] Construção concluída. Veja os avisos para qualquer peça ausente.");
+        const string scenePath = "Assets/Scenes/Casa_01_Grande.unity";
+        if (!EditorSceneManager.SaveScene(scene, scenePath))
+            throw new Exception("[Casa 1] Não foi possível salvar a cena: " + scenePath);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Casa 1] Cena montada e salva em " + scenePath + ". Veja os avisos para peças ausentes.");
     }
 
     private static void BuildFloor(GameObject root, int floor, string wallSet, bool ground)
