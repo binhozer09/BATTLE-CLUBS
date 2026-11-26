@@ -395,22 +395,35 @@ namespace BattleClubs.Editor
 
         private static void CreateGroundAndRoads()
         {
+            // Área compacta: o terreno acompanha o núcleo construído, sem ruas
+            // em grelha atravessando casas ou grandes vazios entre construções.
             GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
             ground.name = "MedievalVillage_Ground_Collision";
             ground.transform.position = new Vector3(0f, -0.35f, 0f);
-            ground.transform.localScale = new Vector3(132f, 0.7f, 132f);
+            ground.transform.localScale = new Vector3(104f, 0.7f, 104f);
             SetColor(ground, new Color(0.28f, 0.30f, 0.22f));
             Renderer groundRenderer = ground.GetComponent<Renderer>();
             if (groundRenderer != null && GetMaterial("stone") != null)
                 groundRenderer.sharedMaterial = GetMaterial("stone");
 
-            CreateRoad(new Vector3(0f, 0.015f, 0f), new Vector3(11f, 0.08f, 116f));
-            CreateRoad(new Vector3(0f, 0.02f, 0f), new Vector3(116f, 0.08f, 11f));
-            for (int i = -2; i <= 2; i++)
-            {
-                CreateRoad(new Vector3(i * 22f, 0.015f, 0f), new Vector3(4.2f, 0.08f, 116f));
-                CreateRoad(new Vector3(0f, 0.015f, i * 22f), new Vector3(116f, 0.08f, 4.2f));
-            }
+            // Praça central livre e ruas em anel: quatro acessos chegam à praça
+            // sem cortar o espaço de circulação nem passar por dentro das casas.
+            CreateRoad(new Vector3(0f, 0.015f, -34f), new Vector3(6f, 0.08f, 28f));
+            CreateRoad(new Vector3(0f, 0.015f, 34f), new Vector3(6f, 0.08f, 28f));
+            CreateRoad(new Vector3(-34f, 0.015f, 0f), new Vector3(28f, 0.08f, 6f));
+            CreateRoad(new Vector3(34f, 0.015f, 0f), new Vector3(28f, 0.08f, 6f));
+
+            // Ruas de contorno delimitam os quatro pequenos quarteirões.
+            CreateRoad(new Vector3(0f, 0.012f, -15.5f), new Vector3(39f, 0.07f, 3.2f));
+            CreateRoad(new Vector3(0f, 0.012f, 15.5f), new Vector3(39f, 0.07f, 3.2f));
+            CreateRoad(new Vector3(-15.5f, 0.012f, 0f), new Vector3(3.2f, 0.07f, 39f));
+            CreateRoad(new Vector3(15.5f, 0.012f, 0f), new Vector3(3.2f, 0.07f, 39f));
+
+            // Pequenas ligações entre os quarteirões e as entradas do povoado.
+            CreateRoad(new Vector3(-34f, 0.012f, -20f), new Vector3(3.2f, 0.07f, 22f));
+            CreateRoad(new Vector3(34f, 0.012f, -20f), new Vector3(3.2f, 0.07f, 22f));
+            CreateRoad(new Vector3(-34f, 0.012f, 20f), new Vector3(3.2f, 0.07f, 22f));
+            CreateRoad(new Vector3(34f, 0.012f, 20f), new Vector3(3.2f, 0.07f, 22f));
         }
 
         private static void CreateRoad(Vector3 position, Vector3 scale)
@@ -427,21 +440,33 @@ namespace BattleClubs.Editor
 
         private static void CreateVillageHouses()
         {
+            // 4 quarteirões compactos ao redor da praça. As casas ficam alinhadas
+            // em pequenos grupos, com fachadas voltadas para as ruas internas.
             int id = 0;
-            for (int x = -2; x <= 2; x++)
+            float[] offsets = { 22f, 32f };
+            for (int sx = -1; sx <= 1; sx += 2)
             {
-                for (int z = -2; z <= 2; z++)
+                for (int sz = -1; sz <= 1; sz += 2)
                 {
-                    if (Mathf.Abs(x) <= 1 && Mathf.Abs(z) <= 1) continue;
-                    Vector3 center = new Vector3(x * 22f + (z % 2 == 0 ? 3f : -3f), 0f, z * 22f);
-                    BuildHouse("House_" + (++id).ToString("00"), center, (id % 3) * 90f, id);
+                    foreach (float x in offsets)
+                    {
+                        foreach (float z in offsets)
+                        {
+                            Vector3 center = new Vector3(sx * x, 0f, sz * z);
+                            float yaw = sx < 0 ? 90f : 270f;
+                            if (sz < 0) yaw += 180f;
+                            BuildHouse("House_Quarter_" + (++id).ToString("00"), center, yaw, id);
+                        }
+                    }
                 }
             }
 
-            BuildHouse("House_Plaza_West", new Vector3(-20f, 0f, 0f), 90f, 31);
-            BuildHouse("House_Plaza_East", new Vector3(20f, 0f, 0f), 270f, 32);
-            BuildHouse("House_Plaza_North", new Vector3(0f, 0f, 20f), 180f, 33);
-            BuildHouse("House_Plaza_South", new Vector3(0f, 0f, -20f), 0f, 34);
+            // Quatro construções de entrada/comércio fecham visualmente o núcleo
+            // do povoado e dão continuidade às ruas que chegam à praça.
+            BuildHouse("House_Gate_North", new Vector3(0f, 0f, 42f), 180f, 25);
+            BuildHouse("House_Gate_South", new Vector3(0f, 0f, -42f), 0f, 26);
+            BuildHouse("House_Gate_West", new Vector3(-42f, 0f, 0f), 90f, 27);
+            BuildHouse("House_Gate_East", new Vector3(42f, 0f, 0f), 270f, 28);
         }
 
         private static void BuildHouse(string name, Vector3 center, float yaw, int variation)
@@ -494,18 +519,36 @@ namespace BattleClubs.Editor
 
         private static void CreateVillageDetails()
         {
-            System.Random random = new System.Random(2026);
-            for (int i = 0; i < 24; i++)
+            // Nada de espalhar adereços aleatoriamente pelo mapa. Cercas e trepadeiras
+            // ficam agrupadas junto aos quintais dos quatro quarteirões.
+            int id = 0;
+            float[] gardenCenters = { 27f, 37f };
+            foreach (int sx in new[] { -1, 1 })
             {
-                float x = (float)(random.NextDouble() * 104.0 - 52.0);
-                float z = (float)(random.NextDouble() * 104.0 - 52.0);
-                if (Mathf.Abs(x) < 16f && Mathf.Abs(z) < 16f) continue;
-                Place("Village_Fence_" + i, new Vector3(x, 0.55f, z),
-                    new Vector3(2.8f, 1.1f, 0.18f), (float)random.Next(0, 4) * 90f, "Prop_WoodenFence_Single", "Prop_MetalFence_Simple");
-                if (i % 3 == 0)
-                    Place("Village_Vine_" + i, new Vector3(x + 1.5f, 1.4f, z),
-                        new Vector3(1.5f, 2.4f, 0.25f), 0f, "Prop_Vine1", "Prop_Vine2", "Prop_Vine4");
+                foreach (int sz in new[] { -1, 1 })
+                {
+                    float x = sx * gardenCenters[1];
+                    float z = sz * gardenCenters[1];
+                    Place("Courtyard_Fence_" + (++id).ToString("00"),
+                        new Vector3(x - sx * 3f, 0.55f, z - sz * 4f),
+                        new Vector3(3.2f, 1.1f, 0.18f), sx < 0 ? 90f : 270f,
+                        "Prop_WoodenFence_Single", "Prop_MetalFence_Simple");
+                    Place("Courtyard_Fence_" + (++id).ToString("00"),
+                        new Vector3(x + sx * 3f, 0.55f, z - sz * 4f),
+                        new Vector3(3.2f, 1.1f, 0.18f), sx < 0 ? 90f : 270f,
+                        "Prop_WoodenFence_Single", "Prop_MetalFence_Simple");
+                    Place("Courtyard_Vine_" + (++id).ToString("00"),
+                        new Vector3(x - sx * 4.5f, 1.35f, z),
+                        new Vector3(1.4f, 2.3f, 0.25f), 0f,
+                        "Prop_Vine1", "Prop_Vine2", "Prop_Vine4");
+                }
             }
+
+            // Pequenos elementos de mercado permanecem concentrados na praça.
+            Place("Market_Barrel_01", new Vector3(-7f, 0.5f, 5f),
+                new Vector3(0.9f, 1f, 0.9f), 0f, "Prop_Barrel", "Prop_Crate");
+            Place("Market_Barrel_02", new Vector3(-5.8f, 0.5f, 5.2f),
+                new Vector3(0.9f, 1f, 0.9f), 12f, "Prop_Barrel", "Prop_Crate");
         }
 
         private static void ConfigureLighting()
