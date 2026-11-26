@@ -369,6 +369,18 @@ namespace BattleClubs.Editor
             Light light = RenderSettings.sun;
             if (light == null)
             {
+                Light[] sceneLights = UnityEngine.Object.FindObjectsOfType<Light>();
+                foreach (Light candidate in sceneLights)
+                {
+                    if (candidate != null && candidate.type == LightType.Directional)
+                    {
+                        light = candidate;
+                        break;
+                    }
+                }
+            }
+            if (light == null)
+            {
                 GameObject sun = new GameObject("MedievalVillage_Sun");
                 light = sun.AddComponent<Light>();
                 light.type = LightType.Directional;
