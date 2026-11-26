@@ -56,7 +56,7 @@ namespace BattleClubs.Editor
             CreateSpawnMarkers();
             ConfigureLighting();
             CreateGroundAndRoads();
-            CreateVillageHouses();
+            CreateUserReferenceVillageLayout();
             CreateCentralPlaza();
             CreateVillageDetails();
             ValidateVillageScene(target, player);
@@ -68,8 +68,8 @@ namespace BattleClubs.Editor
             };
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("MEDIEVAL_VILLAGE_SCENE_CREATED=" + OutputScene +
-                " | modelos colocados=" + placedModels + " | modelos ausentes=" + missingModels);
+            Debug.Log("MEDIEVAL_VILLAGE_REFERENCE_LAYOUT_CREATED=" + OutputScene +
+                " | layout=VillageBuilder.cs | modelos colocados=" + placedModels + " | modelos ausentes=" + missingModels);
         }
 
         private static GameObject CopyHumanoidPlayerFromMainScene(Scene target)
@@ -429,9 +429,9 @@ namespace BattleClubs.Editor
                 roadRenderer.sharedMaterial = GetMaterial("brick");
         }
 
-        private static void CreateVillageHouses()
+        private static void CreateUserReferenceVillageLayout()
         {
-            // Layout copiado das posições do VillageBuilder fornecido pelo usuário.
+            // Layout fiel às posições e à composição do VillageBuilder.cs enviado pelo usuário.
             // Casas grandes em primeiro plano, menores ao fundo e torre ao centro.
             GameObject houses = new GameObject("Vilarejo_Casas_Layout_Referencia");
             BuildReferenceHouse(houses.transform, "Casa_Esquerda_Grande",
