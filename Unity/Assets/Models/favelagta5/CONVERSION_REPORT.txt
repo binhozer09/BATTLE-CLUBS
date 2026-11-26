@@ -1,0 +1,9 @@
+BATTLE-CLUBS GTA V asset conversion
+Source model: fv_prop_bar.ydr (1463751 bytes)
+Texture dictionaries:
+- hei_prop_bk_gate_molten.ytd (295681 bytes)
+- hei_prop_hei_shack_door.ytd (199276 bytes)
+Imported scene mesh objects: 2
+Exported FBX: fv_prop_bar.fbx (225084 bytes)
+Exported PNG textures: 19
+Collision note: embedded collision meshes, when present in the source YDR, are included as mesh geometry; Unity MeshCollider components still require setup/review.
