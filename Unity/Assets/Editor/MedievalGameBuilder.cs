@@ -73,7 +73,7 @@ public static class MedievalGameBuilder
     private static void Plane(GameObject parent,string name,Vector3 pos,Vector3 scale,string mat)
     {
         var p=GameObject.CreatePrimitive(PrimitiveType.Plane); p.name=name; p.transform.SetParent(parent.transform,false);
-        p.transform.position=pos; p.transform.localScale=scale; Apply(p,mat);
+        p.transform.localPosition=pos; p.transform.localScale=scale; Apply(p,mat);
     }
 
     private static void BuildVillage(GameObject world)
