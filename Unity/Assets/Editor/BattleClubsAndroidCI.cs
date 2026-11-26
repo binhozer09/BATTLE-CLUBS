@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 
 namespace BattleClubs.Editor
 {
-    /// <summary>Builds an Android APK using the exact user-provided VillageBuilder.</summary>
+    /// <summary>Builds the Android exploration game from the modular MedievalVillage assets.</summary>
     public static class BattleClubsAndroidCI
     {
         public static void BuildAndroid()
@@ -18,7 +18,7 @@ namespace BattleClubs.Editor
             if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
                 AssetDatabase.CreateFolder("Assets", "Scenes");
 
-            MedievalGameBuilder.BuildWorld();
+            global::MedievalGameBuilder.BuildWorld();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
