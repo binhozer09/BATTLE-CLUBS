@@ -2,36 +2,42 @@
 using System;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BattleClubs.Editor
 {
-    /// <summary>Builds the main Battle Clubs game scene for Android.</summary>
+    /// <summary>Builds an Android APK using the exact user-provided VillageBuilder.</summary>
     public static class BattleClubsAndroidCI
     {
         public static void BuildAndroid()
         {
-            // Permanently exclude the obsolete test scene from the project and build.
             const string obsoleteTestScene = "Assets/Scenes/BattleClubs_Community_Test.unity";
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(obsoleteTestScene) != null)
                 AssetDatabase.DeleteAsset(obsoleteTestScene);
 
-            // Generate the medieval village as the only game scene. The builder
-            // creates a temporary humanoid-only source scene when it is missing.
-            MedievalVillageBuilder.Build();
+            const string mainScene = "Assets/Scenes/BattleClubs_MedievalVillage.unity";
+            if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
+                AssetDatabase.CreateFolder("Assets", "Scenes");
+
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            VillageBuilder.BuildVillage();
+            if (!EditorSceneManager.SaveScene(scene, mainScene))
+                throw new Exception("Não foi possível salvar a cena do vilarejo: " + mainScene);
+
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            const string mainScene = "Assets/Scenes/BattleClubs_MedievalVillage.unity";
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(mainScene, true) };
             string[] scenes = EditorBuildSettings.scenes
-                .Where(scene => scene.enabled)
-                .Select(scene => scene.path)
+                .Where(item => item.enabled)
+                .Select(item => item.path)
                 .ToArray();
 
             if (scenes.Length == 0 || !System.IO.File.Exists(mainScene))
-                throw new Exception("A cena principal do BATTLE CLUBS não foi criada: " + mainScene);
+                throw new Exception("A cena principal do vilarejo não foi criada: " + mainScene);
 
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
                 throw new Exception("O módulo Android não está instalado no Unity Editor.");
