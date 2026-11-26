@@ -463,10 +463,10 @@ namespace BattleClubs.Editor
 
             // Quatro construções de entrada/comércio fecham visualmente o núcleo
             // do povoado e dão continuidade às ruas que chegam à praça.
-            BuildHouse("House_Gate_North", new Vector3(0f, 0f, 42f), 180f, 25);
-            BuildHouse("House_Gate_South", new Vector3(0f, 0f, -42f), 0f, 26);
-            BuildHouse("House_Gate_West", new Vector3(-42f, 0f, 0f), 90f, 27);
-            BuildHouse("House_Gate_East", new Vector3(42f, 0f, 0f), 270f, 28);
+            BuildHouse("House_Gate_North", new Vector3(-10f, 0f, 42f), 180f, 25);
+            BuildHouse("House_Gate_South", new Vector3(10f, 0f, -42f), 0f, 26);
+            BuildHouse("House_Gate_West", new Vector3(-42f, 0f, 10f), 90f, 27);
+            BuildHouse("House_Gate_East", new Vector3(42f, 0f, -10f), 270f, 28);
         }
 
         private static void BuildHouse(string name, Vector3 center, float yaw, int variation)
@@ -513,8 +513,8 @@ namespace BattleClubs.Editor
             Place("Market_Wagon", new Vector3(-5f, 0.8f, 3f), new Vector3(3.8f, 2.2f, 2.2f), 35f, "Prop_Wagon");
             Place("Market_Crate_01", new Vector3(4f, 0.45f, -3f), new Vector3(1f, 0.9f, 1f), 15f, "Prop_Crate");
             Place("Market_Crate_02", new Vector3(5.2f, 0.45f, -3.1f), new Vector3(1f, 0.9f, 1f), -8f, "Prop_Crate");
-            Place("Village_Gate_Arch", new Vector3(0f, 2.4f, -55f), new Vector3(9f, 5f, 1.3f), 0f, "Wall_Arch");
-            Place("Village_Tower_Roof", new Vector3(0f, 9f, 52f), new Vector3(9f, 4f, 9f), 0f, "Roof_Tower_RoundTiles");
+            Place("Village_Gate_Arch", new Vector3(0f, 2.4f, -48f), new Vector3(9f, 5f, 1.3f), 0f, "Wall_Arch");
+            Place("Village_Tower_Roof", new Vector3(0f, 9f, 47f), new Vector3(9f, 4f, 9f), 0f, "Roof_Tower_RoundTiles");
         }
 
         private static void CreateVillageDetails()
