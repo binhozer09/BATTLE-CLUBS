@@ -41,9 +41,13 @@ def main():
     model_output.mkdir(parents=True, exist_ok=True)
     texture_output.mkdir(parents=True, exist_ok=True)
 
+    # Enable Sollumz through Blender's add-on registry. Calling register() directly
+    # leaves preferences.addons["Sollumz"] unset and crashes during preference setup.
     sys.path.insert(0, str(addon.parent))
-    import Sollumz
-    Sollumz.register()
+    import addon_utils
+    addon_utils.enable("Sollumz", default_set=True, persistent=True)
+    if "Sollumz" not in bpy.context.preferences.addons:
+        raise RuntimeError("Blender did not register Sollumz as an enabled add-on.")
 
     # Sollumz's CI bootstrap installs the pinned szio and Windows-only PyMateria
     # dependencies, enabling native binary YDR/YTD import rather than XML-only import.
