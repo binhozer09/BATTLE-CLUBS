@@ -6,7 +6,7 @@ Os arquivos-fonte do kit estão organizados no Dropbox em `/BATTLE-CLUBS-Uploads
 - FBX: 176 modelos
 - glTF: 176 arquivos .gltf + 176 buffers .bin + 22 PNG auxiliares
 - OBJ: 176 modelos + 176 materiais .mtl
-- Textures: 26 PNG
+- Textures: 32 PNG (26 na pasta principal + 6 mapas Normal em `Normals Godot-Unity`)
 - Raiz: License_Standard.txt e Preview.jpg
 
 ## Pastas esperadas no projeto Unity
