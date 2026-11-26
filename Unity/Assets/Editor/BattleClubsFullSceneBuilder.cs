@@ -112,40 +112,6 @@ namespace BattleClubs.Editor
             return root;
         }
 
-        private static Texture2D BuildDamageTexture()
-        {
-            if (!File.Exists(DamageColorPath) || !File.Exists(DamageOpacityPath))
-                throw new System.Exception("Damage 001 Color/Opacity maps are required.");
-            SetReadable(DamageColorPath, true);
-            SetReadable(DamageOpacityPath, true);
-            Texture2D color = AssetDatabase.LoadAssetAtPath<Texture2D>(DamageColorPath);
-            Texture2D opacity = AssetDatabase.LoadAssetAtPath<Texture2D>(DamageOpacityPath);
-            if (color == null || opacity == null || color.width != opacity.width || color.height != opacity.height)
-                throw new System.Exception("Damage 001 maps could not be loaded or dimensions differ.");
-            Color[] pixels = color.GetPixels();
-            Color[] mask = opacity.GetPixels();
-            for (int i = 0; i < pixels.Length; i++) pixels[i].a = mask[i].grayscale;
-            Texture2D combined = new Texture2D(color.width, color.height, TextureFormat.RGBA32, false, true);
-            combined.SetPixels(pixels);
-            combined.Apply(false, false);
-            File.WriteAllBytes(DamageCombinedPath, combined.EncodeToPNG());
-            Object.DestroyImmediate(combined);
-            AssetDatabase.ImportAsset(DamageCombinedPath, ImportAssetOptions.ForceUpdate);
-            SetReadable(DamageColorPath, false);
-            SetReadable(DamageOpacityPath, false);
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(DamageCombinedPath);
-        }
-
-        private static void SetReadable(string path, bool readable)
-        {
-            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer != null && importer.isReadable != readable)
-            {
-                importer.isReadable = readable;
-                importer.SaveAndReimport();
-            }
-        }
-
         private static void SetObjectReference(Object target, string property, Object value)
         {
             SerializedObject serialized = new SerializedObject(target);
