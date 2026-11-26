@@ -1,0 +1,69 @@
+name: Convert GTA V assets for Unity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/convert-gta-assets.yml"
+      - "tools/gta5_to_unity.py"
+      - "Unity/Assets/Textures/favelagta5/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+    steps:
+      - name: Checkout BATTLE-CLUBS
+        uses: actions/checkout@v4
+
+      - name: Install Blender 4.5
+        uses: bradyajohnston/setup-blender@v5
+        with:
+          version: "4.5"
+
+      - name: Install Sollumz 2.9.1
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path vendor | Out-Null
+          git clone --depth 1 --branch v2.9.1 https://github.com/Sollumz/Sollumz.git vendor/Sollumz
+
+      - name: Convert YDR and YTD to Unity assets
+        shell: pwsh
+        run: |
+          blender --background --factory-startup --python tools/gta5_to_unity.py -- --addon vendor/Sollumz --source Unity/Assets/Textures/favelagta5 --model-output Unity/Assets/Models/favelagta5 --texture-output Unity/Assets/Textures/favelagta5/converted
+
+      - name: Verify converted files
+        shell: pwsh
+        run: |
+          if (!(Test-Path "Unity/Assets/Models/favelagta5/fv_prop_bar.fbx")) { throw "FBX output missing" }
+          $textures = @(Get-ChildItem "Unity/Assets/Textures/favelagta5/converted" -Filter *.png -File)
+          if ($textures.Count -lt 1) { throw "No PNG textures were extracted" }
+          Write-Host "FBX and $($textures.Count) PNG texture(s) verified."
+
+      - name: Upload converted assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-clubs-gta5-unity-assets
+          path: |
+            Unity/Assets/Models/favelagta5/
+            Unity/Assets/Textures/favelagta5/converted/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Commit converted assets to BATTLE-CLUBS
+        shell: pwsh
+        run: |
+          git add Unity/Assets/Models/favelagta5 Unity/Assets/Textures/favelagta5/converted
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Convert GTA V favela assets for Unity"
+            git push
+          } else {
+            Write-Host "No generated changes to commit."
+          }
