@@ -396,31 +396,25 @@ namespace BattleClubs.Editor
 
         private static void CreateGroundAndRoads()
         {
-            // Área compacta: o terreno acompanha o núcleo construído, sem ruas
-            // em grelha atravessando casas ou grandes vazios entre construções.
-            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            ground.name = "MedievalVillage_Ground_Collision";
-            ground.transform.position = new Vector3(0f, -0.35f, 0f);
-            ground.transform.localScale = new Vector3(104f, 0.7f, 104f);
-            SetColor(ground, new Color(0.28f, 0.30f, 0.22f));
-            Renderer groundRenderer = ground.GetComponent<Renderer>();
-            if (groundRenderer != null && GetMaterial("stone") != null)
-                groundRenderer.sharedMaterial = GetMaterial("stone");
+            // Disposição compacta igual ao VillageBuilder enviado: terreno de 60x60
+            // e um único caminho de pedra longitudinal, sem ruas em grelha.
+            GameObject groundRoot = new GameObject("Vilarejo_Ground_And_Path");
+            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            ground.name = "Chao_Grama";
+            ground.transform.SetParent(groundRoot.transform, false);
+            ground.transform.position = Vector3.zero;
+            ground.transform.localScale = new Vector3(6f, 1f, 6f);
+            SetColor(ground, new Color(0.30f, 0.45f, 0.20f));
 
-            // Praça central livre e ruas em anel: quatro acessos chegam à praça
-            // sem cortar o espaço de circulação nem passar por dentro das casas.
-            CreateRoad(new Vector3(0f, 0.015f, -34f), new Vector3(6f, 0.08f, 28f));
-            CreateRoad(new Vector3(0f, 0.015f, 34f), new Vector3(6f, 0.08f, 28f));
-            CreateRoad(new Vector3(-34f, 0.015f, 0f), new Vector3(28f, 0.08f, 6f));
-            CreateRoad(new Vector3(34f, 0.015f, 0f), new Vector3(28f, 0.08f, 6f));
-
-            // Ruas de contorno delimitam os quatro pequenos quarteirões.
-            CreateRoad(new Vector3(0f, 0.012f, -15.5f), new Vector3(39f, 0.07f, 3.2f));
-            CreateRoad(new Vector3(0f, 0.012f, 15.5f), new Vector3(39f, 0.07f, 3.2f));
-            CreateRoad(new Vector3(-15.5f, 0.012f, 0f), new Vector3(3.2f, 0.07f, 39f));
-            CreateRoad(new Vector3(15.5f, 0.012f, 0f), new Vector3(3.2f, 0.07f, 39f));
-
-            // Pequenas ligações entre os quarteirões e as entradas do povoado.
+            GameObject path = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            path.name = "Caminho_Pedra_Central";
+            path.transform.SetParent(groundRoot.transform, false);
+            path.transform.position = new Vector3(0f, 0.02f, -2f);
+            path.transform.localScale = new Vector3(3.2f, 0.04f, 30f);
+            SetColor(path, new Color(0.55f, 0.52f, 0.50f));
+            Renderer pathRenderer = path.GetComponent<Renderer>();
+            if (pathRenderer != null && GetMaterial("stone") != null)
+                pathRenderer.sharedMaterial = GetMaterial("stone");
         }
 
         private static void CreateRoad(Vector3 position, Vector3 scale)
@@ -437,115 +431,170 @@ namespace BattleClubs.Editor
 
         private static void CreateVillageHouses()
         {
-            // 4 quarteirões compactos ao redor da praça. As casas ficam alinhadas
-            // em pequenos grupos, com fachadas voltadas para as ruas internas.
-            int id = 0;
-            float[] offsets = { 22f, 32f };
-            for (int sx = -1; sx <= 1; sx += 2)
+            // Layout copiado das posições do VillageBuilder fornecido pelo usuário.
+            // Casas grandes em primeiro plano, menores ao fundo e torre ao centro.
+            GameObject houses = new GameObject("Vilarejo_Casas_Layout_Referencia");
+            BuildReferenceHouse(houses.transform, "Casa_Esquerda_Grande",
+                new Vector3(-9f, 0f, 2f), 0f, 3, 3, true, true);
+            BuildReferenceHouse(houses.transform, "Casa_Esquerda_Media",
+                new Vector3(-5f, 0f, -4f), -15f, 2, 2, true, true);
+            BuildReferenceTower(houses.transform, "Torre_Central",
+                new Vector3(2.5f, 0f, -9f));
+            BuildReferenceHouse(houses.transform, "Casa_Fundo_Pequena_1",
+                new Vector3(-1.5f, 0f, -6f), 10f, 2, 2, false, false);
+            BuildReferenceHouse(houses.transform, "Casa_Fundo_Pequena_2",
+                new Vector3(6f, 0f, -7f), -10f, 2, 2, false, false);
+            BuildReferenceHouse(houses.transform, "Casa_Direita_Grande",
+                new Vector3(9f, 0f, 1f), 180f, 3, 3, true, true);
+        }
+
+        private static void BuildReferenceHouse(Transform villageParent, string name,
+            Vector3 origin, float rotationY, int widthModules, int floors, bool brickGround, bool hasBalcony)
+        {
+            const float gridUnit = 2f;
+            const float floorHeight = 2.6f;
+            GameObject house = new GameObject(name);
+            house.transform.SetParent(villageParent, false);
+            house.transform.position = origin;
+            house.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
+
+            Transform previousParent = placementParent;
+            placementParent = house.transform;
+            float width = widthModules * gridUnit;
+
+            for (int floor = 0; floor < floors; floor++)
             {
-                for (int sz = -1; sz <= 1; sz += 2)
+                float y = floor * floorHeight;
+                bool groundFloor = floor == 0;
+                string wallSet = groundFloor && brickGround ? "UnevenBrick" : "Plaster";
+
+                // Piso inteiro por andar, dimensionado a partir da peça real do kit.
+                Place("Piso_" + floor, origin + Vector3.up * (y - 0.05f),
+                    new Vector3(width, 0.12f, width), rotationY, "Floor_WoodDark");
+
+                for (int i = 0; i < widthModules; i++)
                 {
-                    foreach (float x in offsets)
-                    {
-                        foreach (float z in offsets)
-                        {
-                            Vector3 center = new Vector3(sx * x, 0f, sz * z);
-                            float yaw = sx < 0 ? 90f : 270f;
-                            if (sz < 0) yaw += 180f;
-                            BuildHouse("House_Quarter_" + (++id).ToString("00"), center, yaw, id);
-                        }
-                    }
+                    float localX = (i - (widthModules - 1) / 2f) * gridUnit;
+                    bool centerModule = i == widthModules / 2;
+                    string frontPiece = groundFloor && centerModule
+                        ? (brickGround ? "Wall_UnevenBrick_Door_Flat" : "Wall_Plaster_Door_Flat")
+                        : "Wall_" + wallSet + "_Window_Wide_Flat";
+                    Vector3 front = origin + Quaternion.Euler(0f, rotationY, 0f) *
+                        new Vector3(localX, y + floorHeight * 0.5f, width * 0.5f);
+                    Place("Parede_Frente_" + floor + "_" + i, front,
+                        new Vector3(gridUnit, floorHeight, 0.22f), rotationY, frontPiece);
+
+                    Vector3 back = origin + Quaternion.Euler(0f, rotationY, 0f) *
+                        new Vector3(localX, y + floorHeight * 0.5f, -width * 0.5f);
+                    Place("Parede_Fundo_" + floor + "_" + i, back,
+                        new Vector3(gridUnit, floorHeight, 0.22f), rotationY + 180f,
+                        "Wall_" + wallSet + "_Straight");
+                }
+
+                string corner = groundFloor && brickGround ? "Corner_Exterior_Brick" : "Corner_Exterior_Wood";
+                Place("Canto_Direito_" + floor,
+                    origin + Quaternion.Euler(0f, rotationY, 0f) * new Vector3(width * 0.5f, y + floorHeight * 0.5f, 0f),
+                    new Vector3(gridUnit, floorHeight, gridUnit), rotationY, corner);
+                Place("Canto_Esquerdo_" + floor,
+                    origin + Quaternion.Euler(0f, rotationY, 0f) * new Vector3(-width * 0.5f, y + floorHeight * 0.5f, 0f),
+                    new Vector3(gridUnit, floorHeight, gridUnit), rotationY + 180f, corner);
+
+                if (hasBalcony && floor == floors - 2 && floors >= 2)
+                {
+                    Vector3 balconyPosition = origin + Quaternion.Euler(0f, rotationY, 0f) *
+                        new Vector3(0f, y + floorHeight * 0.5f, width * 0.5f + 0.35f);
+                    Place("Sacada_" + floor, balconyPosition,
+                        new Vector3(width, 1.15f, 1.1f), rotationY, "Balcony_Simple_Straight");
+                    Place("Beiral_Sacada_" + floor,
+                        balconyPosition + Vector3.down * 0.45f,
+                        new Vector3(width + 0.2f, 0.25f, 1.25f), rotationY, "Overhang_Plaster_Long");
                 }
             }
 
-            // Quatro construções de entrada/comércio fecham visualmente o núcleo
-            // do povoado e dão continuidade às ruas que chegam à praça.
-            BuildHouse("House_Gate_North", new Vector3(-10f, 0f, 42f), 180f, 25);
-            BuildHouse("House_Gate_South", new Vector3(10f, 0f, -42f), 0f, 26);
-            BuildHouse("House_Gate_West", new Vector3(-42f, 0f, 10f), 90f, 27);
-            BuildHouse("House_Gate_East", new Vector3(42f, 0f, -10f), 270f, 28);
+            float topY = floors * floorHeight;
+            string roof = widthModules <= 2 ? "Roof_RoundTiles_4x4" :
+                widthModules == 3 ? "Roof_RoundTiles_6x6" : "Roof_RoundTiles_8x8";
+            Place("Telhado", origin + Vector3.up * (topY + 0.7f),
+                new Vector3(width + 0.8f, 1.8f, width + 0.8f), rotationY, roof);
+            Place("Chamine", origin + Quaternion.Euler(0f, rotationY, 0f) *
+                new Vector3(width * 0.5f - 0.35f, topY + 1.7f, -width * 0.5f + 0.35f),
+                new Vector3(0.7f, 1.4f, 0.7f), rotationY, "Prop_Chimney");
+
+            if (name == "Casa_Esquerda_Grande" || name == "Casa_Direita_Grande" ||
+                name == "Casa_Esquerda_Media")
+                Place("Trepadeira_Fachada",
+                    origin + Quaternion.Euler(0f, rotationY, 0f) *
+                    new Vector3(width * 0.5f - 0.2f, floorHeight, width * 0.5f + 0.1f),
+                    new Vector3(0.8f, 2.4f, 0.25f), rotationY, "Prop_Vine1");
+
+            placementParent = previousParent;
         }
 
-        private static void BuildHouse(string name, Vector3 center, float yaw, int variation)
+        private static void BuildReferenceTower(Transform villageParent, string name, Vector3 origin)
         {
-            float w = 8.5f + (variation % 3) * 0.4f;
-            float h = 4.2f + (variation % 2) * 0.5f;
-            float d = 8f;
-            GameObject root = new GameObject(name);
+            const float gridUnit = 2f;
+            const float floorHeight = 2.6f;
+            GameObject tower = new GameObject(name);
+            tower.transform.SetParent(villageParent, false);
+            tower.transform.position = origin;
             Transform previousParent = placementParent;
-            placementParent = root.transform;
+            placementParent = tower.transform;
 
-            Place(name + "_Floor", center + Vector3.up * 0.08f, new Vector3(w, 0.16f, d),
-                yaw, "Floor_UnevenBrick", "Floor_Brick", "Floor_RedBrick");
-            Place(name + "_Front", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, h * 0.5f, -d * 0.5f),
-                new Vector3(w, h, 0.35f), yaw, "Wall_UnevenBrick_Door_Flat", "Wall_Plaster_Door_Flat", "Wall_UnevenBrick_Straight");
-            Place(name + "_Back", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, h * 0.5f, d * 0.5f),
-                new Vector3(w, h, 0.35f), yaw + 180f, "Wall_UnevenBrick_Window_Wide_Flat", "Wall_Plaster_Window_Wide_Flat", "Wall_Plaster_Straight");
-            Place(name + "_Left", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(-w * 0.5f, h * 0.5f, 0f),
-                new Vector3(d, h, 0.35f), yaw + 90f, "Wall_UnevenBrick_Straight", "Wall_Plaster_Straight");
-            Place(name + "_Right", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(w * 0.5f, h * 0.5f, 0f),
-                new Vector3(d, h, 0.35f), yaw - 90f, "Wall_Plaster_Window_Thin_Round", "Wall_Plaster_Straight");
-            Place(name + "_Roof", center + Vector3.up * (h + 0.95f),
-                new Vector3(w + 1.1f, 1.9f, d + 1.1f), yaw, "Roof_RoundTiles_6x8", "Roof_RoundTiles_6x6", "Roof_Modular_RoundTiles");
-            if (variation % 2 == 0)
-                Place(name + "_Chimney", center + Vector3.up * (h + 2.2f) + Vector3.right * 2.2f,
-                    new Vector3(0.8f, 1.8f, 0.8f), yaw, "Prop_Chimney", "Prop_Chimney2");
-            Place(name + "_Steps", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, 0.25f, -d * 0.58f),
-                new Vector3(2.2f, 0.5f, 1.2f), yaw, "Stairs_Exterior_Straight", "Stairs_Exterior_Platform");
-
+            const int sides = 8;
+            float radius = gridUnit * 0.9f;
+            const int floors = 4;
+            for (int floor = 0; floor < floors; floor++)
+            {
+                for (int side = 0; side < sides; side++)
+                {
+                    float angle = 360f / sides * side;
+                    Vector3 direction = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+                    Vector3 position = origin + direction * radius + Vector3.up * (floor * floorHeight);
+                    string piece = floor == 1 && side % 2 == 0
+                        ? "Wall_UnevenBrick_Window_Thin_Round"
+                        : "Wall_UnevenBrick_Straight";
+                    Place("Torre_Parede_" + floor + "_" + side,
+                        position + Vector3.up * (floorHeight * 0.5f),
+                        new Vector3(1.5f, floorHeight, 0.22f), angle, piece);
+                }
+            }
+            Place("Torre_Telhado",
+                origin + Vector3.up * (floors * floorHeight + 0.7f),
+                new Vector3(5.5f, 3.2f, 5.5f), 0f, "Roof_Tower_RoundTiles");
             placementParent = previousParent;
         }
 
         private static void CreateCentralPlaza()
         {
-            GameObject plaza = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            plaza.name = "Village_Central_Market_Piazza";
-            plaza.transform.position = new Vector3(0f, 0.035f, 0f);
-            plaza.transform.localScale = new Vector3(26f, 0.12f, 26f);
-            SetColor(plaza, new Color(0.48f, 0.43f, 0.34f));
-            Renderer plazaRenderer = plaza.GetComponent<Renderer>();
-            if (plazaRenderer != null && GetMaterial("stone") != null)
-                plazaRenderer.sharedMaterial = GetMaterial("stone");
-
-            Place("Market_Wagon", new Vector3(-5f, 0.8f, 3f), new Vector3(3.8f, 2.2f, 2.2f), 35f, "Prop_Wagon");
-            Place("Market_Crate_01", new Vector3(4f, 0.45f, -3f), new Vector3(1f, 0.9f, 1f), 15f, "Prop_Crate");
-            Place("Market_Crate_02", new Vector3(5.2f, 0.45f, -3.1f), new Vector3(1f, 0.9f, 1f), -8f, "Prop_Crate");
-            Place("Village_Gate_Arch", new Vector3(0f, 2.4f, -48f), new Vector3(9f, 5f, 1.3f), 0f, "Wall_Arch");
-            Place("Village_Tower_Roof", new Vector3(0f, 9f, 47f), new Vector3(9f, 4f, 9f), 0f, "Roof_Tower_RoundTiles");
+            // O caminho longitudinal já define o eixo central da vila. Não criar
+            // uma praça quadrada extra nem espalhar construções ao redor dela.
         }
 
         private static void CreateVillageDetails()
         {
-            // Nada de espalhar adereços aleatoriamente pelo mapa. Cercas e trepadeiras
-            // ficam agrupadas junto aos quintais dos quatro quarteirões.
-            int id = 0;
-            foreach (int sx in new[] { -1, 1 })
+            GameObject props = new GameObject("Props_Decoracao");
+            Transform previousParent = placementParent;
+            placementParent = props.transform;
+
+            Place("Carroca", new Vector3(-10.5f, 0.9f, 6f),
+                new Vector3(3.2f, 1.8f, 2f), 25f, "Prop_Wagon");
+            Place("Caixote_01", new Vector3(-9.3f, 0.45f, 5.2f),
+                new Vector3(0.9f, 0.9f, 0.9f), 10f, "Prop_Crate");
+            Place("Caixote_02", new Vector3(-9.6f, 1.35f, 5f),
+                new Vector3(0.9f, 0.9f, 0.9f), -15f, "Prop_Crate");
+
+            // Cercas acompanham os dois lados do caminho, exatamente nas posições
+            // do código de referência, em vez de ficarem distribuídas aleatoriamente.
+            for (int i = 0; i < 6; i++)
             {
-                foreach (int sz in new[] { -1, 1 })
-                {
-                    // Mantém os detalhes nos quintais das casas do anel externo (offset de 32 m).
-                    float x = sx * 32f;
-                    float z = sz * 32f;
-                    Place("Courtyard_Fence_" + (++id).ToString("00"),
-                        new Vector3(x - sx * 3f, 0.55f, z - sz * 4f),
-                        new Vector3(3.2f, 1.1f, 0.18f), sx < 0 ? 90f : 270f,
-                        "Prop_WoodenFence_Single", "Prop_MetalFence_Simple");
-                    Place("Courtyard_Fence_" + (++id).ToString("00"),
-                        new Vector3(x + sx * 3f, 0.55f, z - sz * 4f),
-                        new Vector3(3.2f, 1.1f, 0.18f), sx < 0 ? 90f : 270f,
-                        "Prop_WoodenFence_Single", "Prop_MetalFence_Simple");
-                    Place("Courtyard_Vine_" + (++id).ToString("00"),
-                        new Vector3(x - sx * 4.5f, 1.35f, z),
-                        new Vector3(1.4f, 2.3f, 0.25f), 0f,
-                        "Prop_Vine1", "Prop_Vine2", "Prop_Vine4");
-                }
+                float z = 2f - i * 2f;
+                Place("Cerca_Direita_" + i, new Vector3(1.9f, 0.55f, z),
+                    new Vector3(1.8f, 1.1f, 0.18f), 0f, "Prop_WoodenFence_Single");
+                Place("Cerca_Esquerda_" + i, new Vector3(-1.9f, 0.55f, z),
+                    new Vector3(1.8f, 1.1f, 0.18f), 180f, "Prop_WoodenFence_Single");
             }
 
-            // Pequenos elementos de mercado permanecem concentrados na praça.
-            Place("Market_Barrel_01", new Vector3(-7f, 0.5f, 5f),
-                new Vector3(0.9f, 1f, 0.9f), 0f, "Prop_Barrel", "Prop_Crate");
-            Place("Market_Barrel_02", new Vector3(-5.8f, 0.5f, 5.2f),
-                new Vector3(0.9f, 1f, 0.9f), 12f, "Prop_Barrel", "Prop_Crate");
+            placementParent = previousParent;
         }
 
         private static void ConfigureLighting()
