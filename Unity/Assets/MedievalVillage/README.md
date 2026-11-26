@@ -17,7 +17,7 @@ Copie os arquivos do Dropbox para:
 Os diretórios glTF e OBJ ficam preservados como formatos-fonte alternativos; a primeira cena usa FBX para importação direta pelo Unity. Não é necessário duplicar glTF/OBJ dentro do projeto para gerar a cena.
 
 ## Gerador da cena
-Com os 176 FBX e as texturas disponíveis no projeto Unity, abra o menu. Se `BattleClubs_Main.unity` ainda não existir, o gerador cria temporariamente a cena-base para obter o `Player_Local`; depois transfere somente esse objeto para a cena medieval. A câmera da vila é criada novamente:
+Com os 176 FBX e as texturas disponíveis no projeto Unity, abra o menu. Se `BattleClubs_HumanoidSource.unity` ainda não existir, o gerador cria uma cena temporária contendo somente `Player_Local`; depois transfere esse objeto para a vila. A câmera da vila é criada novamente:
 
 `BATTLE CLUBS → World → Build Medieval Village Scene`
 
