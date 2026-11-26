@@ -1,0 +1,91 @@
+name: BATTLE-CLUBS - APK Android do vilarejo medieval
+
+on:
+  push:
+    branches:
+      - feature/medieval-village-final-2026-11-26
+    paths:
+      - 'Unity/**'
+      - '.github/workflows/android-medieval-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Gerar APK Android com o vilarejo medieval
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      UNITY_NO_CLI_INVOKED_TELEMETRY: '1'
+      UNITY_NO_CRASH_REPORT: '1'
+      UNITY_NO_UPDATE_CHECK: '1'
+      UNITY_NO_CONSENT_PROMPT: '1'
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglu1-mesa libgl1 libgconf-2-4 unzip
+
+      - name: Instalar Unity CLI
+        run: |
+          curl -fsSL https://unity.com/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Autenticar na Unity
+        run: |
+          echo "Se a Unity solicitar autorização, abra o link temporário deste passo e conclua o login."
+          timeout 10m unity auth login
+          unity auth status
+
+      - name: Ativar licença Unity Personal
+        run: |
+          unity license activate --personal --accept-eula --non-interactive
+          unity license status
+          test -s "$HOME/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml"
+
+      - name: Instalar Unity 2022.3.62f1 com módulo Android
+        run: |
+          unity install 2022.3.62f1 -m android --cm --accept-eula
+          EDITOR_PATH="$(find "$HOME" -type f -path '*/2022.3.62f1/Editor/Unity' -print -quit 2>/dev/null)"
+          test -n "$EDITOR_PATH"
+          echo "UNITY_EDITOR_PATH=$EDITOR_PATH" >> "$GITHUB_ENV"
+
+      - name: Gerar cena medieval e compilar APK
+        shell: bash
+        run: |
+          set -o pipefail
+          "$UNITY_EDITOR_PATH" -batchmode -nographics -accept-apiupdate \
+            -projectPath "$GITHUB_WORKSPACE/Unity" \
+            -executeMethod BattleClubs.Editor.BattleClubsAndroidCI.BuildAndroid \
+            -logFile "$GITHUB_WORKSPACE/unity-android-build.log" -quit
+          test -s Build/Android/BATTLE-CLUBS.apk
+          file Build/Android/BATTLE-CLUBS.apk
+          unzip -t Build/Android/BATTLE-CLUBS.apk >/dev/null
+          unzip -Z1 Build/Android/BATTLE-CLUBS.apk | grep -q '^lib/arm64-v8a/libunity.so'
+          unzip -Z1 Build/Android/BATTLE-CLUBS.apk | grep -q '^lib/arm64-v8a/libil2cpp.so'
+
+      - name: Diagnosticar falha
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f unity-android-build.log ]; then
+            grep -n -E -i "error|exception|failed|failure|fatal|BATTLE_CLUBS_BUILD_|MEDIEVAL WORLD" unity-android-build.log | tail -300 || true
+            tail -200 unity-android-build.log
+          fi
+          for LOG in "$HOME/.config/unity3d/Unity/Unity.Licensing.Client.log" "$HOME/.config/unity3d/Unity/Unity.Entitlements.Audit.log"; do
+            if [ -f "$LOG" ]; then echo "===== $LOG ====="; tail -120 "$LOG"; fi
+          done
+
+      - name: Publicar APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BATTLE-CLUBS-APK-Android
+          path: Build/Android/BATTLE-CLUBS.apk
+          if-no-files-found: error
+          retention-days: 14
