@@ -95,7 +95,7 @@ namespace BattleClubs.Editor
             }
 
             SceneManager.MoveGameObjectToScene(player, target);
-            player.transform.position = new Vector3(0f, 0.2f, -12f);
+            player.transform.position = new Vector3(0f, 0.2f, -5f);
             EditorSceneManager.CloseScene(source, true);
             return player;
         }
