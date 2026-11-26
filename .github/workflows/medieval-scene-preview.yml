@@ -8,8 +8,7 @@ on:
     paths:
       - 'Unity/Assets/Editor/MedievalGameBuilder.cs'
       - 'Unity/Assets/Scripts/MedievalThirdPersonController.cs'
-      - 'Unity/Assets/MedievalVillage/OBJ/**'
-      - 'Unity/Assets/MedievalVillage/Textures/**'
+      - 'Unity/Assets/MedievalVillage/**'
       - '.github/workflows/medieval-scene-preview.yml'
 
 permissions:
@@ -17,7 +16,7 @@ permissions:
 
 jobs:
   build-scene:
-    name: Importar modelos OBJ, aplicar texturas e salvar cena
+    name: Importar modelos FBX/OBJ, aplicar materiais e salvar cena
     runs-on: ubuntu-22.04
     timeout-minutes: 90
     env:
@@ -41,7 +40,7 @@ jobs:
 
       - name: Entrar na conta Unity
         run: |
-          echo "Se a Unity solicitar autorização, abra o link temporário exibido neste passo."
+          echo "IMPORTANTE: abra o link de login da Unity mostrado logo abaixo e autorize em ate 10 minutos."
           timeout 10m unity auth login
           unity auth status
 
