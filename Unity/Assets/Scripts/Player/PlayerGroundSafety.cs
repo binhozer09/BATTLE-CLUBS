@@ -21,6 +21,7 @@ namespace BattleClubs.Player
         [SerializeField] private LayerMask groundLayers = Physics.DefaultRaycastLayers;
 
         private readonly RaycastHit[] groundHits = new RaycastHit[96];
+        private Collider mapGround;
         private Vector3 lastSafePosition;
         private bool hasSafePosition;
 
@@ -34,6 +35,13 @@ namespace BattleClubs.Player
         {
             if (controller == null || !controller.enabled || !gameObject.activeInHierarchy)
                 return;
+
+            if (mapGround == null)
+            {
+                GameObject mapGroundObject = GameObject.Find("Map_Ground");
+                if (mapGroundObject != null)
+                    mapGround = mapGroundObject.GetComponent<Collider>();
+            }
 
             if (TryFindGround(out RaycastHit groundHit))
             {
@@ -59,10 +67,12 @@ namespace BattleClubs.Player
                     RememberSafePosition();
             }
 
-            if (transform.position.y < -recoveryDepth)
+            bool belowGeneratedMap = mapGround != null &&
+                transform.position.y < mapGround.bounds.min.y - 0.25f;
+            if (belowGeneratedMap || transform.position.y < -recoveryDepth)
             {
                 BattleAIDiagnostic.Report("PLAYER_FELL_BELOW_MAP",
-                    "CharacterController caiu abaixo do mapa; retornando à última posição segura.",
+                    "CharacterController caiu abaixo do mapa; reposicionando sobre o collider Map_Ground.",
                     transform.position);
                 RecoverPlayer();
             }
@@ -124,11 +134,38 @@ namespace BattleClubs.Player
 
         private void RecoverPlayer()
         {
-            Vector3 recovery = hasSafePosition ? lastSafePosition : new Vector3(4f, 1f, 4f);
+            Vector3 recovery;
+
+            // Prefer the actual generated road/terrain collider over a stale spawn
+            // position. The previous spawn may itself have been recorded before the
+            // procedural map finished generating.
+            if (mapGround == null)
+            {
+                GameObject mapGroundObject = GameObject.Find("Map_Ground");
+                if (mapGroundObject != null)
+                    mapGround = mapGroundObject.GetComponent<Collider>();
+            }
+
+            if (mapGround != null)
+            {
+                Bounds bounds = mapGround.bounds;
+                float x = Mathf.Clamp(transform.position.x, bounds.min.x + controller.radius,
+                    bounds.max.x - controller.radius);
+                float z = Mathf.Clamp(transform.position.z, bounds.min.z + controller.radius,
+                    bounds.max.z - controller.radius);
+                float rootOffset = controller.height * 0.5f - controller.center.y;
+                recovery = new Vector3(x, bounds.max.y + rootOffset + groundClearance, z);
+            }
+            else
+            {
+                recovery = hasSafePosition ? lastSafePosition : new Vector3(4f, 1f, 4f);
+            }
+
             controller.enabled = false;
             transform.position = recovery;
             Physics.SyncTransforms();
             controller.enabled = true;
+            RememberSafePosition();
         }
 
 #if UNITY_EDITOR
