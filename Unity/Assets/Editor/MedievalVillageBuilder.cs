@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.IO;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -24,16 +25,27 @@ namespace BattleClubs.Editor
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
         private static int placedModels;
         private static int missingModels;
+        private static Transform placementParent;
+        private const string GeneratedMaterialFolder = "Assets/MedievalVillage/GeneratedMaterials";
 
         [MenuItem("BATTLE CLUBS/World/Build Medieval Village Scene")]
         public static void Build()
         {
+            placedModels = 0;
+            missingModels = 0;
             if (!AssetDatabase.IsValidFolder(ModelFolder))
                 throw new Exception("Pasta FBX não encontrada: " + ModelFolder + ". Importe primeiro os modelos do Dropbox.");
-            LoadModels();
-            if (Models.Count < 20)
-                throw new Exception("Foram encontrados apenas " + Models.Count + " modelos FBX. Importe os 176 modelos antes de gerar o vilarejo.");
 
+            // A cena principal é gerada pelo próprio projeto. Criá-la aqui, quando
+            // ainda não existe, evita exigir uma etapa manual e não altera o mapa-fonte.
+            if (!File.Exists(MainScene))
+                BattleClubsFullSceneBuilder.CreateMainGameScene();
+
+            LoadModels();
+            if (Models.Count < 150)
+                throw new Exception("Foram encontrados apenas " + Models.Count + " modelos FBX; eram esperados 176. Confira a importação antes de gerar a cena.");
+
+            EnsureGeneratedMaterialFolder();
             Scene target = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             CopyPlayableRootsFromMainScene(target);
             SceneManager.SetActiveScene(target);
@@ -101,6 +113,7 @@ namespace BattleClubs.Editor
 
             GameObject instance = PrefabUtility.InstantiatePrefab(source) as GameObject;
             if (instance == null) instance = UnityEngine.Object.Instantiate(source);
+            if (placementParent != null) instance.transform.SetParent(placementParent, true);
             instance.name = label;
             instance.transform.position = center;
             instance.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
@@ -173,15 +186,41 @@ namespace BattleClubs.Editor
             string baseName = key == "roof" ? "T_RoundTiles_BaseColor" :
                 key == "wood" ? "T_WoodTrim_BaseColor" :
                 key == "plaster" ? "T_Plaster_BaseColor" : "T_UnevenBrick_BaseColor";
+            string normalName = key == "roof" ? "T_RoundTiles_Normal" :
+                key == "wood" ? "T_WoodTrim_Normal" :
+                key == "plaster" ? "T_Plaster_Normal" : "T_UnevenBrick_Normal";
             Texture2D texture = FindTexture(baseName);
             if (texture == null && key == "brick") texture = FindTexture("T_Brick_BaseColor");
+            Texture2D normal = FindTexture(normalName);
+            if (normal == null && key == "brick") normal = FindTexture("T_Brick_Normal");
+
             Shader shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) shader = Shader.Find("Standard");
             if (shader == null) return null;
-            Material material = new Material(shader) { name = "MV_" + key };
-            if (material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap", texture);
-            if (material.HasProperty("_MainTex")) material.SetTexture("_MainTex", texture);
-            if (texture != null) material.mainTextureScale = new Vector2(2f, 2f);
+
+            string materialPath = GeneratedMaterialFolder + "/MV_" + key + ".mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material == null)
+            {
+                material = new Material(shader) { name = "MV_" + key };
+                if (texture != null)
+                {
+                    if (material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap", texture);
+                    if (material.HasProperty("_MainTex")) material.SetTexture("_MainTex", texture);
+                    material.SetTextureScale(material.HasProperty("_BaseMap") ? "_BaseMap" : "_MainTex", new Vector2(2f, 2f));
+                }
+                if (normal != null)
+                {
+                    EnsureNormalMap(normal);
+                    normal = FindTexture(normalName);
+                    if (material.HasProperty("_BumpMap"))
+                    {
+                        material.SetTexture("_BumpMap", normal);
+                        material.EnableKeyword("_NORMALMAP");
+                    }
+                }
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
             Materials[key] = material;
             return material;
         }
@@ -190,6 +229,25 @@ namespace BattleClubs.Editor
         {
             string[] guids = AssetDatabase.FindAssets(token + " t:Texture2D", new[] { TextureFolder });
             return guids.Length == 0 ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath(guids[0]));
+        }
+
+        private static void EnsureNormalMap(Texture2D texture)
+        {
+            string path = AssetDatabase.GetAssetPath(texture);
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null && importer.textureType != TextureImporterType.NormalMap)
+            {
+                importer.textureType = TextureImporterType.NormalMap;
+                importer.SaveAndReimport();
+            }
+        }
+
+        private static void EnsureGeneratedMaterialFolder()
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/MedievalVillage"))
+                AssetDatabase.CreateFolder("Assets", "MedievalVillage");
+            if (!AssetDatabase.IsValidFolder(GeneratedMaterialFolder))
+                AssetDatabase.CreateFolder("Assets/MedievalVillage", "GeneratedMaterials");
         }
 
         private static void CreateGroundAndRoads()
@@ -243,12 +301,15 @@ namespace BattleClubs.Editor
             float h = 4.2f + (variation % 2) * 0.5f;
             float d = 8f;
             GameObject root = new GameObject(name);
+            Transform previousParent = placementParent;
+            placementParent = root.transform;
+
             Place(name + "_Floor", center + Vector3.up * 0.08f, new Vector3(w, 0.16f, d),
                 yaw, "Floor_UnevenBrick", "Floor_Brick", "Floor_RedBrick");
             Place(name + "_Front", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, h * 0.5f, -d * 0.5f),
                 new Vector3(w, h, 0.35f), yaw, "Wall_UnevenBrick_Door_Flat", "Wall_Plaster_Door_Flat", "Wall_UnevenBrick_Straight");
             Place(name + "_Back", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, h * 0.5f, d * 0.5f),
-                new Vector3(w, h, 0.35f), yaw + 180f, "Wall_UnevenBrick_Window_Wide_Flat", "Wall_Plaster_Straight");
+                new Vector3(w, h, 0.35f), yaw + 180f, "Wall_UnevenBrick_Window_Wide_Flat", "Wall_Plaster_Window_Wide_Flat", "Wall_Plaster_Straight");
             Place(name + "_Left", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(-w * 0.5f, h * 0.5f, 0f),
                 new Vector3(d, h, 0.35f), yaw + 90f, "Wall_UnevenBrick_Straight", "Wall_Plaster_Straight");
             Place(name + "_Right", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(w * 0.5f, h * 0.5f, 0f),
@@ -260,7 +321,8 @@ namespace BattleClubs.Editor
                     new Vector3(0.8f, 1.8f, 0.8f), yaw, "Prop_Chimney", "Prop_Chimney2");
             Place(name + "_Steps", center + Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, 0.25f, -d * 0.58f),
                 new Vector3(2.2f, 0.5f, 1.2f), yaw, "Stairs_Exterior_Straight", "Stairs_Exterior_Platform");
-            UnityEngine.Object.DestroyImmediate(root);
+
+            placementParent = previousParent;
         }
 
         private static void CreateCentralPlaza()
@@ -304,12 +366,16 @@ namespace BattleClubs.Editor
             RenderSettings.fogColor = new Color(0.68f, 0.64f, 0.53f);
             RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.0015f;
-            GameObject sun = new GameObject("MedievalVillage_Sun");
-            Light light = sun.AddComponent<Light>();
-            light.type = LightType.Directional;
+            Light light = RenderSettings.sun;
+            if (light == null)
+            {
+                GameObject sun = new GameObject("MedievalVillage_Sun");
+                light = sun.AddComponent<Light>();
+                light.type = LightType.Directional;
+            }
             light.intensity = 1.15f;
             light.color = new Color(1f, 0.88f, 0.69f);
-            sun.transform.rotation = Quaternion.Euler(42f, -28f, 0f);
+            light.transform.rotation = Quaternion.Euler(42f, -28f, 0f);
             RenderSettings.sun = light;
         }
 
