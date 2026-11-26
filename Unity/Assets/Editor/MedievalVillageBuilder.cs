@@ -274,7 +274,7 @@ namespace BattleClubs.Editor
             if (TryGetBounds(instance, out bounds))
                 instance.transform.position += center - bounds.center;
 
-            ApplyKitMaterial(instance, label);
+            ApplyKitMaterial(instance, label + " " + source.name);
             AddStaticMeshColliders(instance);
             placedModels++;
             return instance;
@@ -324,10 +324,12 @@ namespace BattleClubs.Editor
             if (Materials.TryGetValue(key, out Material cached)) return cached;
             string baseName = key == "roof" ? "T_RoundTiles_BaseColor" :
                 key == "wood" ? "T_WoodTrim_BaseColor" :
-                key == "plaster" ? "T_Plaster_BaseColor" : "T_UnevenBrick_BaseColor";
+                key == "plaster" ? "T_Plaster_BaseColor" :
+                key == "stone" ? "T_RockTrim_BaseColor" : "T_UnevenBrick_BaseColor";
             string normalName = key == "roof" ? "T_RoundTiles_Normal" :
                 key == "wood" ? "T_WoodTrim_Normal" :
-                key == "plaster" ? "T_Plaster_Normal" : "T_UnevenBrick_Normal";
+                key == "plaster" ? "T_Plaster_Normal" :
+                key == "stone" ? "T_RockTrim_Normal" : "T_UnevenBrick_Normal";
             Texture2D texture = FindTexture(baseName);
             if (texture == null && key == "brick") texture = FindTexture("T_Brick_BaseColor");
             Texture2D normal = FindTexture(normalName);
@@ -396,6 +398,9 @@ namespace BattleClubs.Editor
             ground.transform.position = new Vector3(0f, -0.35f, 0f);
             ground.transform.localScale = new Vector3(132f, 0.7f, 132f);
             SetColor(ground, new Color(0.28f, 0.30f, 0.22f));
+            Renderer groundRenderer = ground.GetComponent<Renderer>();
+            if (groundRenderer != null && GetMaterial("stone") != null)
+                groundRenderer.sharedMaterial = GetMaterial("stone");
 
             CreateRoad(new Vector3(0f, 0.015f, 0f), new Vector3(11f, 0.08f, 116f));
             CreateRoad(new Vector3(0f, 0.02f, 0f), new Vector3(116f, 0.08f, 11f));
@@ -413,6 +418,9 @@ namespace BattleClubs.Editor
             road.transform.position = position;
             road.transform.localScale = scale;
             SetColor(road, new Color(0.36f, 0.34f, 0.29f));
+            Renderer roadRenderer = road.GetComponent<Renderer>();
+            if (roadRenderer != null && GetMaterial("brick") != null)
+                roadRenderer.sharedMaterial = GetMaterial("brick");
         }
 
         private static void CreateVillageHouses()
@@ -471,6 +479,9 @@ namespace BattleClubs.Editor
             plaza.transform.position = new Vector3(0f, 0.035f, 0f);
             plaza.transform.localScale = new Vector3(26f, 0.12f, 26f);
             SetColor(plaza, new Color(0.48f, 0.43f, 0.34f));
+            Renderer plazaRenderer = plaza.GetComponent<Renderer>();
+            if (plazaRenderer != null && GetMaterial("stone") != null)
+                plazaRenderer.sharedMaterial = GetMaterial("stone");
 
             Place("Market_Wagon", new Vector3(-5f, 0.8f, 3f), new Vector3(3.8f, 2.2f, 2.2f), 35f, "Prop_Wagon");
             Place("Market_Crate_01", new Vector3(4f, 0.45f, -3f), new Vector3(1f, 0.9f, 1f), 15f, "Prop_Crate");
