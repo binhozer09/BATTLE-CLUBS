@@ -207,8 +207,10 @@ namespace BattleClubs.Editor
                     villageCameras++;
             if (villageCameras != 1)
                 throw new Exception("A cena precisa ter exatamente uma câmera principal nova do vilarejo.");
-            if (placedModels < 20)
-                throw new Exception("Poucos modelos medievais foram posicionados: " + placedModels);
+            if (placedModels < 150)
+                throw new Exception("Poucos modelos medievais foram posicionados: " + placedModels + " (mínimo esperado: 150).");
+            if (missingModels > 0)
+                throw new Exception("A cena ficou incompleta: " + missingModels + " peças do vilarejo não foram encontradas.");
             if (scene.GetRootGameObjects().Length < 8)
                 throw new Exception("A cena medieval está incompleta: poucos grupos de cenário e jogo foram criados.");
             int meshColliders = 0;
