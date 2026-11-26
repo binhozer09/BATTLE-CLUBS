@@ -17,6 +17,7 @@ public static class MedievalGameBuilder
     private static readonly Dictionary<string, GameObject> Models = new Dictionary<string, GameObject>(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, Material> Mats = new Dictionary<string, Material>(StringComparer.OrdinalIgnoreCase);
     private static int missing;
+    private static Material natureMaterial;
 
     [MenuItem("Vilarejo/Jogo Completo/Gerar Mundo Medieval")]
     public static void BuildWorld()
@@ -34,6 +35,7 @@ public static class MedievalGameBuilder
         GameObject world = new GameObject("MEDIEVAL_WORLD");
         SetupLighting(world);
         BuildTerrain(world);
+        BuildGrassTufts(world);
         BuildWindingRoads(world);
         BuildVillage(world);
         BuildLandscape(world);
@@ -79,6 +81,38 @@ public static class MedievalGameBuilder
         ground.transform.position = new Vector3(0,-.16f,0); ground.transform.localScale = new Vector3(18f,1f,18f);
         Apply(ground, "grass");
         ground.GetComponent<Collider>().name = "Colisao_Terreno";
+    }
+
+
+    private static void BuildGrassTufts(GameObject world)
+    {
+        var holder=new GameObject("Grama_Alta_Detalhe"); holder.transform.SetParent(world.transform,false);
+        var vertices=new List<Vector3>(); var uv=new List<Vector2>(); var triangles=new List<int>();
+        UnityEngine.Random.State oldState=UnityEngine.Random.state;
+        UnityEngine.Random.InitState(26011);
+        for(int i=0;i<520;i++)
+        {
+            float x=UnityEngine.Random.Range(-78f,78f), z=UnityEngine.Random.Range(-78f,78f);
+            // Deixa o corredor central livre para os caminhos e para a circulacao.
+            if(Mathf.Abs(x)<15f && z>-76f && z<76f)continue;
+            float h=UnityEngine.Random.Range(.22f,.48f), w=UnityEngine.Random.Range(.07f,.14f);
+            for(int blade=0;blade<3;blade++)
+            {
+                float a=blade*Mathf.PI/3f;
+                Vector3 side=new Vector3(Mathf.Cos(a)*w,0,Mathf.Sin(a)*w);
+                Vector3 p=new Vector3(x,.01f,z);
+                int n=vertices.Count;
+                vertices.Add(p-side); vertices.Add(p+side); vertices.Add(p+side*.12f+Vector3.up*h); vertices.Add(p-side*.12f+Vector3.up*h);
+                uv.Add(new Vector2(0,0));uv.Add(new Vector2(1,0));uv.Add(new Vector2(1,1));uv.Add(new Vector2(0,1));
+                triangles.Add(n);triangles.Add(n+2);triangles.Add(n+1);
+                triangles.Add(n);triangles.Add(n+3);triangles.Add(n+2);
+            }
+        }
+        UnityEngine.Random.state=oldState;
+        var mesh=new Mesh(); mesh.name="Malha_Grama_Procedural"; mesh.indexFormat=UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.SetVertices(vertices);mesh.SetUVs(0,uv);mesh.SetTriangles(triangles,0);mesh.RecalculateNormals();
+        var filter=holder.AddComponent<MeshFilter>();filter.sharedMesh=mesh;
+        var renderer=holder.AddComponent<MeshRenderer>();renderer.sharedMaterial=GetMaterial("grass");
     }
 
     private static void BuildWindingRoads(GameObject root)
@@ -239,11 +273,12 @@ public static class MedievalGameBuilder
 
     private static Material GetNatureMaterial()
     {
+        if(natureMaterial!=null)return natureMaterial;
         Shader shader=Shader.Find("Universal Render Pipeline/Lit"); if(shader==null)shader=Shader.Find("Standard");
         var mat=new Material(shader); mat.name="Verde_Folhagem_Procedural";
         if(mat.HasProperty("_BaseColor"))mat.SetColor("_BaseColor",new Color(.19f,.34f,.12f));
         if(mat.HasProperty("_Color"))mat.SetColor("_Color",new Color(.19f,.34f,.12f));
-        return mat;
+        natureMaterial=mat; return mat;
     }
 
     private static GameObject Place(string name,GameObject parent,Vector3 localPos,Quaternion localRot,string material,bool collider)
