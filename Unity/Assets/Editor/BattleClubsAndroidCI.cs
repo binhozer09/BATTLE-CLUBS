@@ -12,17 +12,19 @@ namespace BattleClubs.Editor
     {
         public static void BuildAndroid()
         {
-            // Permanently exclude the obsolete test scene from the project and build.
+            // Keep the obsolete test scene excluded from the Android build.
             const string obsoleteTestScene = "Assets/Scenes/BattleClubs_Community_Test.unity";
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(obsoleteTestScene) != null)
                 AssetDatabase.DeleteAsset(obsoleteTestScene);
 
-            // Generate the single main entry scene used by the Android build.
-            BattleClubsFullSceneBuilder.CreateMainGameScene();
+            // Generate the medieval village as the only game scene. The village
+            // builder obtains Player_Local from the legacy source scene if needed,
+            // but only the village scene is included in the Android package.
+            MedievalVillageBuilder.Build();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            string mainScene = BattleClubsFullSceneBuilder.ScenePath;
+            const string mainScene = "Assets/Scenes/BattleClubs_MedievalVillage.unity";
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(mainScene, true) };
             string[] scenes = EditorBuildSettings.scenes
                 .Where(scene => scene.enabled)
@@ -54,6 +56,7 @@ namespace BattleClubs.Editor
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(options);
+            Debug.Log("BATTLE_CLUBS_BUILD_SCENE=" + mainScene);
             Debug.Log("BATTLE_CLUBS_BUILD_RESULT=" + report.summary.result);
             Debug.Log("BATTLE_CLUBS_BUILD_OUTPUT=" + outputPath);
             Debug.Log("BATTLE_CLUBS_BUILD_ERRORS=" + report.summary.totalErrors);
