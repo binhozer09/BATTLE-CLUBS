@@ -522,8 +522,9 @@ namespace BattleClubs.Editor
             {
                 foreach (int sz in new[] { -1, 1 })
                 {
-                    float x = sx * gardenCenters[1];
-                    float z = sz * gardenCenters[1];
+                    // Mantém os detalhes nos quintais das casas do anel externo (offset de 32 m).
+                    float x = sx * 32f;
+                    float z = sz * 32f;
                     Place("Courtyard_Fence_" + (++id).ToString("00"),
                         new Vector3(x - sx * 3f, 0.55f, z - sz * 4f),
                         new Vector3(3.2f, 1.1f, 0.18f), sx < 0 ? 90f : 270f,
