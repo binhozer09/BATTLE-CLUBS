@@ -41,7 +41,7 @@ public static class MedievalGameBuilder
         if (!EditorSceneManager.SaveScene(scene, scenePath)) throw new Exception("Falha ao salvar " + scenePath);
         AssetDatabase.SaveAssets(); AssetDatabase.Refresh();
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(scenePath, true) };
-        Debug.Log("[MEDIEVAL WORLD] Cena salva: " + scenePath + " | modelos ausentes: " + missing);
+        Debug.Log("[MEDIEVAL WORLD] Cena salva: " + scenePath + " | modelos ausentes: " + missing + " | casas: 6 | origem de modelos: FBX/OBJ");
         Selection.activeGameObject = world;
         SceneView.lastActiveSceneView?.FrameSelected();
     }
@@ -113,8 +113,12 @@ public static class MedievalGameBuilder
                     Place(wall+"_Straight",house,new Vector3(side*3f,y+1.56f,(j==0?-1f:1f)),
                         Quaternion.Euler(0,side<0?90:-90,0),material,true);
 
-            // Pisos planos recebem a textura de madeira/pedra disponível.
-            Plane(house,"Piso_"+f,new Vector3(0,y+.005f,0),new Vector3(.30f,1f,.20f),ground?"stone":"wood");
+            // Piso modular real do pacote: 3 x 2 peças de 2m, com materiais do kit.
+            string floorModel = ground ? "Floor_UnevenBrick" : "Floor_WoodDark";
+            for(int fx=-1;fx<=1;fx++)
+                for(int fz=-1;fz<=0;fz++)
+                    Place(floorModel,house,new Vector3(fx*2f,y+.015f,fz*2f),
+                        Quaternion.identity,ground?"stone":"wood",false);
             if(balcony && f==floors-2)
             {
                 Place("Balcony_Simple_Straight",house,new Vector3(0,y+.42f,2.45f),Quaternion.identity,"wood",true);
@@ -187,14 +191,31 @@ public static class MedievalGameBuilder
     private static GameObject FindModel(string name)
     {
         if(Models.TryGetValue(name,out var cached)) return cached;
-        string[] ids=AssetDatabase.FindAssets(name+" t:Model",new[]{ROOT});
-        foreach(string id in ids)
+        // O repositório contém os modelos OBJ; a pasta FBX pode estar vazia.
+        // Unity importa OBJ nativamente como Model, portanto pesquisamos ambos os diretórios.
+        string[] modelFolders = { ROOT + "/FBX", ROOT + "/OBJ" };
+        foreach(string folder in modelFolders)
         {
-            string path=AssetDatabase.GUIDToAssetPath(id);
-            if(Path.GetFileNameWithoutExtension(path).Equals(name,StringComparison.OrdinalIgnoreCase))
-            { var model=AssetDatabase.LoadAssetAtPath<GameObject>(path); Models[name]=model; return model; }
+            if(!AssetDatabase.IsValidFolder(folder)) continue;
+            string[] ids=AssetDatabase.FindAssets(name+" t:Model",new[]{folder});
+            foreach(string id in ids)
+            {
+                string path=AssetDatabase.GUIDToAssetPath(id);
+                if(Path.GetFileNameWithoutExtension(path).Equals(name,StringComparison.OrdinalIgnoreCase))
+                {
+                    var model=AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    if(model!=null)
+                    {
+                        Models[name]=model;
+                        Debug.Log("[MedievalWorld] Modelo carregado: "+path);
+                        return model;
+                    }
+                }
+            }
         }
-        Models[name]=null; return null;
+        Models[name]=null;
+        Debug.LogWarning("[MedievalWorld] Modelo não encontrado em FBX/OBJ: "+name);
+        return null;
     }
 
     private static bool GetBounds(GameObject go,out Bounds b)
