@@ -12,7 +12,7 @@ Plugin de Editor para ligar o projeto Unity a um serviço intermediário de IA. 
 - Salva relatórios e capturas PNG em `GameLinkReports/` na raiz do projeto.
 - Tem interface para URL HTTPS e token de acesso do relay.
 - Pode enviar relatório e imagem para um relay configurado.
-- Consulta comandos a cada 5 segundos quando ativado.
+- Consulta comandos a cada 5 segundos quando ativado; no relay atual a fila permanece vazia e não há alterações remotas.
 - Permite somente comandos `set_transform` em objetos existentes; execução remota vem desativada por padrão e usa Undo.
 
 ## Endpoints esperados no relay
@@ -22,7 +22,7 @@ Plugin de Editor para ligar o projeto Unity a um serviço intermediário de IA. 
 - `GET /v1/unity/commands` — JSON: `{"commands":[{"id":"...","action":"set_transform","targetPath":"Vilarejo_Gerado/Casa","position":[0,0,0],"rotationEuler":[0,0,0],"scale":[1,1,1],"note":"..."}]}`.
 
 ## Segurança e limites
-- A URL deve usar HTTPS. O token é guardado nas EditorPrefs locais do Unity.
+- A URL deve usar HTTPS. O token fica apenas na sessão atual do Editor (SessionState) e precisa ser informado novamente após reiniciar o Unity.
 - Nunca coloque `OPENAI_API_KEY` no APK, em Assets, no GitHub ou no cliente Unity.
 - O relay precisa autenticar o token, validar payloads e guardar a chave da API apenas como variável secreta no servidor.
 - O plugin não executa código arbitrário, não apaga objetos e não importa assets remotamente.
