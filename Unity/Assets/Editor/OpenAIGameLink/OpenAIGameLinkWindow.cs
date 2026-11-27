@@ -50,6 +50,7 @@ public class OpenAIGameLinkWindow : EditorWindow
         public string note;
     }
     [Serializable] private class CommandEnvelope { public RelayCommand[] commands; }
+    [Serializable] private class RelayResponse { public bool ok; public string message; public string analysis; public string error; }
 
     private string relayUrl = "https://YOUR-RELAY.example";
     private string accessToken = "";
@@ -196,7 +197,8 @@ public class OpenAIGameLinkWindow : EditorWindow
         {
             req.SetRequestHeader("Authorization", "Bearer " + accessToken);
             yield return req.SendWebRequest();
-            status = req.result == UnityWebRequest.Result.Success ? "Imagem enviada para análise." : "Falha ao enviar imagem: " + req.error;
+            if (req.result == UnityWebRequest.Result.Success) status = "Análise da imagem: " + FormatRelayResponse(req.downloadHandler.text);
+            else status = "Falha ao enviar imagem: " + req.error;
             Repaint();
         }
     }
@@ -249,7 +251,7 @@ public class OpenAIGameLinkWindow : EditorWindow
             req.SetRequestHeader("Content-Type", "application/json");
             req.SetRequestHeader("Authorization", "Bearer " + accessToken);
             yield return req.SendWebRequest();
-            if (req.result == UnityWebRequest.Result.Success) done(req.downloadHandler.text);
+            if (req.result == UnityWebRequest.Result.Success) done(FormatRelayResponse(req.downloadHandler.text));
             else { status = "Erro: " + req.error; Repaint(); }
         }
     }
@@ -269,6 +271,17 @@ public class OpenAIGameLinkWindow : EditorWindow
             if (root.name == path) return root.transform;
         }
         return null;
+    }
+    private static string FormatRelayResponse(string raw)
+    {
+        try {
+            RelayResponse response = JsonUtility.FromJson<RelayResponse>(raw);
+            if (response == null) return raw;
+            if (!string.IsNullOrEmpty(response.error)) return response.error;
+            if (!string.IsNullOrEmpty(response.analysis)) return response.analysis;
+            if (!string.IsNullOrEmpty(response.message)) return response.message;
+            return raw;
+        } catch { return raw; }
     }
     private static float[] V3(Vector3 v) { return new[] { v.x, v.y, v.z }; }
     private static string Escape(string s) { return (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\""); }
