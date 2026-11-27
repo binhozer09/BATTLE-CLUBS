@@ -18,7 +18,7 @@ namespace BattleClubs.Editor
             if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
                 AssetDatabase.CreateFolder("Assets", "Scenes");
 
-            global::MedievalGameBuilder.BuildWorld();
+            global::VillageBuilder.BuildVillage();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
