@@ -169,23 +169,41 @@ public class OpenAIGameLinkWindow : EditorWindow
     {
         if (!ValidateConfig()) return;
         SceneView view = SceneView.lastActiveSceneView;
-        if (view == null) { status = "Abra uma Scene View antes de capturar."; Repaint(); return; }
+        if (view == null || view.camera == null) { status = "Abra uma Scene View antes de capturar."; Repaint(); return; }
+
         string path = Path.Combine(ReportFolder(), "scene-view-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".png");
-        view.camera.Render();
-        int w = Mathf.Max(1, view.camera.pixelWidth), h = Mathf.Max(1, view.camera.pixelHeight);
-        RenderTexture rt = view.camera.targetTexture;
-        RenderTexture temp = RenderTexture.GetTemporary(w, h, 24, RenderTextureFormat.ARGB32);
-        view.camera.targetTexture = temp;
-        view.camera.Render();
-        RenderTexture.active = temp;
-        Texture2D image = new Texture2D(w, h, TextureFormat.RGB24, false);
-        image.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-        image.Apply();
-        File.WriteAllBytes(path, image.EncodeToPNG());
-        view.camera.targetTexture = rt;
-        RenderTexture.active = null;
-        RenderTexture.ReleaseTemporary(temp);
-        DestroyImmediate(image);
+        Camera sceneCamera = view.camera;
+        int w = Mathf.Max(1, sceneCamera.pixelWidth), h = Mathf.Max(1, sceneCamera.pixelHeight);
+        RenderTexture previousTarget = sceneCamera.targetTexture;
+        RenderTexture previousActive = RenderTexture.active;
+        RenderTexture temp = null;
+        Texture2D image = null;
+
+        try
+        {
+            temp = RenderTexture.GetTemporary(w, h, 24, RenderTextureFormat.ARGB32);
+            sceneCamera.targetTexture = temp;
+            sceneCamera.Render();
+            RenderTexture.active = temp;
+            image = new Texture2D(w, h, TextureFormat.RGB24, false);
+            image.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            image.Apply();
+            File.WriteAllBytes(path, image.EncodeToPNG());
+        }
+        catch (Exception e)
+        {
+            status = "Falha ao capturar a Scene View: " + e.Message;
+            Repaint();
+            return;
+        }
+        finally
+        {
+            sceneCamera.targetTexture = previousTarget;
+            RenderTexture.active = previousActive;
+            if (temp != null) RenderTexture.ReleaseTemporary(temp);
+            if (image != null) DestroyImmediate(image);
+        }
+
         StartCoroutine(SendImage(path));
     }
 
