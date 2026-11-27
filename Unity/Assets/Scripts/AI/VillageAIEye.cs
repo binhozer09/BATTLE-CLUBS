@@ -25,7 +25,107 @@ namespace MedievalVillage.AI
         private bool busy;
         private string status = "Olho da IA pronto";
         private string report = "Toque em ANALISAR para a IA observar a cena pela câmera do jogador.";
-        private Vector2 reportScroll;
+        private Vector2 reportScroll;\n        private string endpointInput = "";
+
+        [Serializable] private sealed class InspectRequest
+        {
+            public string imageBase64;
+            public string mimeType = "image/jpeg";
+            public string deviceModel;
+            public string sceneName;
+            public string instruction;
+        }
+
+        [Serializable] private sealed class InspectResponse
+        {
+            public string analysis;
+            public string error;
+        }
+
+        private void Awake()
+        {
+            if (targetCamera == null) targetCamera = GetComponent<Camera>();
+            if (targetCamera == null) targetCamera = Camera.main;
+        }
+
+        public void SetInspectionEndpoint(string httpsEndpoint)
+        {
+            inspectionEndpoint = (httpsEndpoint ?? "").Trim();
+        }
+
+        private void OnGUI()
+        {
+            const float margin = 14f;
+            float buttonWidth = Mathf.Clamp(Screen.width * .32f, 150f, 210f);
+            const float buttonHeight = 48f;
+            GUI.color = new Color(.10f, .12f, .16f, .94f);
+            if (GUI.Button(new Rect(margin, margin, buttonWidth, buttonHeight), "◉  OLHO DA IA"))
+                panelOpen = !panelOpen;
+            if (!panelOpen) { GUI.color = Color.white; return; }
+
+            float panelWidth = Mathf.Min(Screen.width - margin * 2f, 390f);
+            float panelHeight = Mathf.Min(Screen.height - 90f, 300f);
+            Rect panel = new Rect(margin, margin + buttonHeight + 8f, panelWidth, panelHeight);
+            GUI.color = new Color(.08f, .09f, .12f, .97f);
+            GUI.Box(panel, "OLHO DA IA  •  VILAREJO MEDIEVAL");
+            GUI.color = Color.white;
+            GUI.Label(new Rect(panel.x + 12, panel.y + 32, panel.width - 24, 22), status);
+            GUI.Label(new Rect(panel.x + 12, panel.y + 54, panel.width - 24, 18), "ENDEREÇO HTTPS DO SERVIDOR");
+            endpointInput = GUI.TextField(new Rect(panel.x + 12, panel.y + 73, panel.width - 105, 26), endpointInput);
+            if (GUI.Button(new Rect(panel.xMax - 82, panel.y + 73, 70, 26), "SALVAR"))
+            {
+                if (endpointInput.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    SetInspectionEndpoint(endpointInput);
+                    PlayerPrefs.SetString("VILLAGE_AI_ENDPOINT", inspectionEndpoint);
+                    PlayerPrefs.Save();
+                    status = "Servidor HTTPS salvo neste aparelho.";
+                }
+                else status = "O endereço precisa começar com https://";
+            }
+
+            Rect reportRect = new Rect(panel.x + 12, panel.y + 105, panel.width - 24, panel.height - 158);
+            reportScroll = GUI.BeginScrollView(reportRect, reportScroll,
+                new Rect(0, 0, reportRect.width - 18, Mathf.Max(reportRect.height, 180)));
+            GUI.Label(new Rect(0, 0, reportRect.width - 24, 180), report, WordWrapStyle());
+            GUI.EndScrollView();
+
+            float actionY = panel.yMax - 44f;
+            GUI.enabled = !busy && !string.IsNullOrWhiteSpace(inspectionEndpoint);
+            if (GUI.Button(new Rect(panel.x + 12, actionY, panel.width * .58f, 32f), busy ? "ANALISANDO..." : "ANALISAR CÂMERA"))
+                StartCoroutine(CaptureAndInspect());
+            GUI.enabled = true;
+            if (string.IsNullOrWhiteSpace(inspectionEndpoint))
+                GUI.Label(new Rect(panel.x + 12, actionY - 20, panel.width - 24, 18), "Configure o servidor seguro para conectar a OpenAI.");
+            if (GUI.Button(new Rect(panel.xMax - 82, actionY, 70, 32f), "FECHAR"))
+                panelOpen = false;using System;
+using System.Collections;
+using System.Text;
+using UnityEngine;
+using UnityEngine.Networking;
+
+namespace MedievalVillage.AI
+{
+    /// <summary>
+    /// Captures the player's current view and sends one still image to a secure
+    /// OpenAI proxy. The OpenAI secret must remain on the server, never in the APK.
+    /// </summary>
+    public sealed class VillageAIEye : MonoBehaviour
+    {
+        [Header("Camera and secure server")]
+        public Camera targetCamera;
+        [Tooltip("HTTPS endpoint of the Village AI proxy: https://your-service/v1/village/inspect")]
+        public string inspectionEndpoint = "";
+
+        [Header("Capture")]
+        [Range(512, 1536)] public int maxImageDimension = 1024;
+        [Range(45, 85)] public int jpegQuality = 68;
+
+        private bool panelOpen;
+        private bool busy;
+        private string status = "Olho da IA pronto";
+        private string report = "Toque em ANALISAR para a IA observar a cena pela câmera do jogador.";
+        private Vector2 reportScroll;\n        private string endpointInput = "";
 
         [Serializable] private sealed class InspectRequest
         {
