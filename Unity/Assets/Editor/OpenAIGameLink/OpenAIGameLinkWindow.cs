@@ -67,7 +67,7 @@ public class OpenAIGameLinkWindow : EditorWindow
     {
         EditorApplication.update += UpdatePolling;
         relayUrl = EditorPrefs.GetString("OpenAIGameLink.Url", relayUrl);
-        accessToken = EditorPrefs.GetString("OpenAIGameLink.Token", "");
+        accessToken = SessionState.GetString("OpenAIGameLink.Token", "");
         allowRemoteTransformCommands = EditorPrefs.GetBool("OpenAIGameLink.AllowTransforms", false);
         polling = EditorPrefs.GetBool("OpenAIGameLink.Polling", false);
         nextPoll = EditorApplication.timeSinceStartup + 1;
@@ -77,7 +77,7 @@ public class OpenAIGameLinkWindow : EditorWindow
     {
         EditorApplication.update -= UpdatePolling;
         EditorPrefs.SetString("OpenAIGameLink.Url", relayUrl);
-        EditorPrefs.SetString("OpenAIGameLink.Token", accessToken);
+        SessionState.SetString("OpenAIGameLink.Token", accessToken);
         EditorPrefs.SetBool("OpenAIGameLink.AllowTransforms", allowRemoteTransformCommands);
         EditorPrefs.SetBool("OpenAIGameLink.Polling", polling);
     }
@@ -85,7 +85,7 @@ public class OpenAIGameLinkWindow : EditorWindow
     private void OnGUI()
     {
         scroll = EditorGUILayout.BeginScrollView(scroll);
-        EditorGUILayout.HelpBox("Conecta o Editor Unity a um serviço intermediário autorizado. A chave da OpenAI fica no servidor, nunca no projeto ou APK.", MessageType.Info);
+        EditorGUILayout.HelpBox("Conecta o Editor Unity a um serviço intermediário autorizado. A chave da OpenAI fica no servidor, nunca no projeto ou APK. O token do relay permanece apenas nesta sessão do Editor.", MessageType.Info);
         EditorGUILayout.LabelField("Conexão", EditorStyles.boldLabel);
         relayUrl = EditorGUILayout.TextField("URL do relay", relayUrl);
         accessToken = EditorGUILayout.PasswordField("Token de acesso", accessToken);
@@ -141,6 +141,7 @@ public class OpenAIGameLinkWindow : EditorWindow
             if (EditorUtility.IsPersistent(go) || go.hideFlags != HideFlags.None) continue;
             Scene s = go.scene;
             if (!s.IsValid() || s != SceneManager.GetActiveScene()) continue;
+            if (report.objects.Count >= 350) break; // Mantém o JSON dentro do limite aceito pelo relay.
             Renderer renderer = go.GetComponent<Renderer>();
             Bounds b = renderer ? renderer.bounds : new Bounds(go.transform.position, Vector3.zero);
             report.objects.Add(new ObjectReport {
