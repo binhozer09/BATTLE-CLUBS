@@ -24,6 +24,8 @@
 
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -52,6 +54,7 @@ public class VillageBuilder : EditorWindow
         GameObject old = GameObject.Find("Vilarejo_Gerado");
         if (old != null) UnityEngine.Object.DestroyImmediate(old);
 
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         GameObject root = new GameObject("Vilarejo_Gerado");
 
         SetupLighting(root);
@@ -85,6 +88,15 @@ public class VillageBuilder : EditorWindow
         BuildLowWall(root);
         BuildProps(root);
         SpawnPlayer(root);
+
+        const string scenePath = "Assets/Scenes/BATTLE_CLUBS_Medieval_Exploration.unity";
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
+        EditorSceneManager.MarkSceneDirty(scene);
+        if (!EditorSceneManager.SaveScene(scene, scenePath)) throw new Exception("Não foi possível salvar a cena: " + scenePath);
+        EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(scenePath, true) };
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("[VILAREJO] CENA_SALVA=" + scenePath);
 
         Selection.activeGameObject = root;
         SceneView.lastActiveSceneView?.FrameSelected();
@@ -149,63 +161,95 @@ public class VillageBuilder : EditorWindow
     private static void BuildHouse(GameObject root, string name, Vector3 origin, float rotationY,
                                     int widthModules, int floors, string groundMaterial, bool hasBalcony, bool hasStairs)
     {
+        // Cada casa é uma caixa fechada: frente, fundo, duas laterais, quatro cantos e pisos.
+        // O kit usa módulos de 2 m e pavimentos de aproximadamente 3,12 m.
         GameObject house = new GameObject(name);
-        house.transform.SetParent(root.transform);
+        house.transform.SetParent(root.transform, false);
         house.transform.position = origin;
         house.transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
 
-        float width = widthModules * GRID_UNIT;
+        const float module = 2f;
+        const float storey = 3.12f;
+        float half = widthModules * module * 0.5f;
+        string groundWall = groundMaterial == "brick" ? "UnevenBrick" : "Plaster";
+        string upperWall = "Plaster";
 
         for (int floor = 0; floor < floors; floor++)
         {
-            float y = floor * FLOOR_HEIGHT;
-            bool isGround = floor == 0;
-            string wallMat = isGround ? groundMaterial : "plaster";
-            string wallSet = "UnevenBrick";
-            if (!isGround) wallSet = "Plaster";
+            float y = floor * storey;
+            bool ground = floor == 0;
+            string wallSet = ground ? groundWall : upperWall;
+            string finish = ground ? groundMaterial : "plaster";
 
-            PlaceFloorSlab(house, y, width, wallMat);
+            // Piso contínuo em módulos reais do pacote, sem laje cúbica de fallback.
+            string floorModel = ground ? "Floor_UnevenBrick" : "Floor_WoodDark";
+            for (int x = 0; x < widthModules; x++)
+            for (int z = 0; z < widthModules; z++)
+                PlaceTextured(floorModel, house,
+                    new Vector3((x - (widthModules - 1) * 0.5f) * module, y + 0.02f,
+                                (z - (widthModules - 1) * 0.5f) * module),
+                    Quaternion.identity, ground ? "stone" : "wood");
 
+            // Frente: porta no centro do térreo; janelas nas demais seções.
             for (int i = 0; i < widthModules; i++)
             {
-                float localX = (i - (widthModules - 1) / 2f) * GRID_UNIT;
-                bool isCenter = (i == widthModules / 2);
+                float offset = (i - (widthModules - 1) * 0.5f) * module;
+                string front = ground && i == widthModules / 2
+                    ? "Wall_" + wallSet + "_Door_Flat"
+                    : "Wall_" + wallSet + "_Window_Wide_Flat";
+                PlaceTextured(front, house, new Vector3(offset, y + storey * 0.5f, half),
+                    Quaternion.identity, finish);
+                PlaceTextured("Wall_" + wallSet + "_Straight", house,
+                    new Vector3(offset, y + storey * 0.5f, -half),
+                    Quaternion.Euler(0f, 180f, 0f), finish);
 
-                string frontPiece = (isGround && isCenter)
-                    ? $"Wall_{wallSet}_Door_Flat"
-                    : $"Wall_{wallSet}_Window_Wide_Flat";
+                // Laterais completas: nenhuma parede fica aberta.
+                PlaceTextured("Wall_" + wallSet + "_Straight", house,
+                    new Vector3(-half, y + storey * 0.5f, offset),
+                    Quaternion.Euler(0f, 90f, 0f), finish);
+                PlaceTextured("Wall_" + wallSet + "_Straight", house,
+                    new Vector3(half, y + storey * 0.5f, offset),
+                    Quaternion.Euler(0f, -90f, 0f), finish);
 
-                PlaceTextured(frontPiece, house, new Vector3(localX, y, width / 2f), Quaternion.identity, wallMat);
-                PlaceTextured($"Wall_{wallSet}_Straight", house, new Vector3(localX, y, -width / 2f), Quaternion.Euler(0, 180, 0), wallMat);
+                if (ground && i != widthModules / 2)
+                {
+                    PlaceTextured("WindowShutters_Wide_Flat_Closed", house,
+                        new Vector3(offset, y + storey * 0.5f, half + 0.08f),
+                        Quaternion.identity, "wood", false);
+                }
             }
 
-            string cornerPiece = $"Corner_Exterior_{(isGround ? "Brick" : "Wood")}";
-            PlaceTextured(cornerPiece, house, new Vector3(width / 2f, y, 0f), Quaternion.identity, wallMat);
-            PlaceTextured(cornerPiece, house, new Vector3(-width / 2f, y, 0f), Quaternion.Euler(0, 180, 0), wallMat);
+            string corner = "Corner_Exterior_" + (ground ? "Brick" : "Wood");
+            foreach (float x in new[] { -half, half })
+            foreach (float z in new[] { -half, half })
+                PlaceTextured(corner, house, new Vector3(x, y + storey * 0.5f, z),
+                    Quaternion.Euler(0f, x * z > 0f ? 180f : 0f, 0f), finish, false);
 
-            if (hasBalcony && floor == floors - 2 && floors >= 2)
+            if (hasBalcony && floor == floors - 2)
             {
-                PlaceTextured("Balcony_Simple_Straight", house, new Vector3(0f, y + FLOOR_HEIGHT * 0.5f, width / 2f + 0.3f), Quaternion.identity, "wood");
-                PlaceTextured("Overhang_Plaster_Long", house, new Vector3(0f, y, width / 2f + 0.15f), Quaternion.identity, "plaster");
+                PlaceTextured("Balcony_Simple_Straight", house,
+                    new Vector3(0f, y + 0.55f, half + 0.55f), Quaternion.identity, "wood", false);
+                PlaceTextured("Overhang_Plaster_Long", house,
+                    new Vector3(0f, y + storey - 0.12f, half + 0.12f), Quaternion.identity, "plaster", false);
             }
         }
 
-        float topY = floors * FLOOR_HEIGHT;
-        string roofPiece = PickClosestRoof(widthModules);
-        PlaceTextured(roofPiece, house, new Vector3(0f, topY, 0f), Quaternion.identity, "roof");
-
-        // Crista de metal ornamentada na cumeeira (como na foto de referência)
-        PlaceTextured("Prop_MetalFence_Ornament", house, new Vector3(0f, topY + 1.4f, 0f), Quaternion.identity, "wood");
-
-        PlaceTextured("Prop_Chimney", house, new Vector3(width / 2f - 0.3f, topY + 0.4f, -width / 2f + 0.3f), Quaternion.identity, "brick");
-
-        if (rng.NextDouble() > 0.3)
-            PlaceTextured("Prop_Vine1", house, new Vector3(width / 2f - 0.2f, FLOOR_HEIGHT, width / 2f), Quaternion.identity, "wood");
+        float roofY = floors * storey;
+        string roof = widthModules <= 2 ? "Roof_RoundTiles_4x4" : "Roof_RoundTiles_6x6";
+        PlaceTextured(roof, house, new Vector3(0f, roofY + 1.35f, 0f), Quaternion.identity, "roof");
+        PlaceTextured("Roof_Front_Brick" + (widthModules <= 2 ? "4" : "6"), house,
+            new Vector3(0f, roofY + 1.25f, half + 0.15f), Quaternion.identity, "brick", false);
+        PlaceTextured("Roof_Front_Brick" + (widthModules <= 2 ? "4" : "6"), house,
+            new Vector3(0f, roofY + 1.25f, -half - 0.15f), Quaternion.Euler(0f, 180f, 0f), "brick", false);
+        PlaceTextured("Prop_Chimney", house,
+            new Vector3(half - 0.45f, roofY + 1.65f, -half + 0.45f), Quaternion.identity, "brick", false);
 
         if (hasStairs)
-        {
-            PlaceTextured("Stairs_Exterior_Straight", house, new Vector3(0f, 0f, width / 2f + 1.6f), Quaternion.identity, "stone");
-        }
+            PlaceTextured("Stairs_Exterior_Straight", house,
+                new Vector3(0f, 0.05f, half + 1.35f), Quaternion.identity, "stone", false);
+        if (rng.NextDouble() > 0.35)
+            PlaceTextured("Prop_Vine1", house, new Vector3(half - 0.15f, storey, half + 0.06f),
+                Quaternion.identity, "wood", false);
     }
 
     private static void PlaceFloorSlab(GameObject house, float y, float width, string mat)
@@ -277,33 +321,48 @@ public class VillageBuilder : EditorWindow
 
     private static void SpawnPlayer(GameObject root)
     {
-        GameObject player = new GameObject("Jogador");
-        player.transform.SetParent(root.transform);
-        player.transform.position = new Vector3(0f, 1f, 13f);
+        // Usa o modelo humanoide real do pacote CC0; não cria cápsula como visual.
+        string modelPath = BattleClubs.Editor.HumanoidAssetBootstrap.EnsureHumanoidModelImported();
+        GameObject modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
+        if (modelAsset == null) throw new Exception("Modelo humanoide não carregou: " + modelPath);
+
+        GameObject player = new GameObject("Jogador_Explorador");
+        player.transform.SetParent(root.transform, false);
+        player.transform.position = new Vector3(0f, 0.1f, 13f);
         player.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
 
         CharacterController cc = player.AddComponent<CharacterController>();
-        cc.height = 1.8f;
-        cc.center = new Vector3(0f, 0.9f, 0f);
-        cc.radius = 0.35f;
+        cc.height = 1.9f;
+        cc.center = new Vector3(0f, 0.95f, 0f);
+        cc.radius = 0.34f;
+        cc.stepOffset = 0.25f;
+        cc.skinWidth = 0.04f;
 
-        GameObject camGO = new GameObject("Camera_Jogador");
-        camGO.transform.SetParent(player.transform);
-        camGO.transform.localPosition = new Vector3(0f, 1.6f, 0f);
-        Camera cam = camGO.AddComponent<Camera>();
-        camGO.AddComponent<AudioListener>();
+        GameObject visual = PrefabUtility.InstantiatePrefab(modelAsset) as GameObject;
+        if (visual == null) visual = UnityEngine.Object.Instantiate(modelAsset);
+        visual.name = "Visual_Humanoide";
+        visual.transform.SetParent(player.transform, false);
+        visual.transform.localPosition = Vector3.zero;
+        visual.transform.localRotation = Quaternion.identity;
+        visual.transform.localScale = Vector3.one;
 
-        Camera mainCam = Camera.main;
-        if (mainCam != null && mainCam.gameObject != camGO)
-            UnityEngine.Object.DestroyImmediate(mainCam.gameObject);
+        Animator animator = visual.GetComponentInChildren<Animator>(true);
+        if (animator == null || animator.avatar == null || !animator.avatar.isValid || !animator.isHuman)
+            throw new Exception("O personagem importado não possui Avatar Humanoid válido.");
+        animator.applyRootMotion = false;
 
-        cam.tag = "MainCamera";
+        Bounds bounds = new Bounds();
+        bool hasBounds = false;
+        foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
+        {
+            if (renderer == null) continue;
+            if (!hasBounds) { bounds = renderer.bounds; hasBounds = true; }
+            else bounds.Encapsulate(renderer.bounds);
+        }
+        if (hasBounds && bounds.size.y > 0.01f)
+            visual.transform.localScale = Vector3.one * (1.8f / bounds.size.y);
 
-        var controllerType = Type.GetType("SimpleFirstPersonController");
-        if (controllerType != null)
-            player.AddComponent(controllerType);
-        else
-            Debug.LogWarning("SimpleFirstPersonController.cs não encontrado — adicione manualmente ao Jogador.");
+        player.AddComponent<MedievalThirdPersonController>();
     }
 
     // ------------------------------------------------------------
