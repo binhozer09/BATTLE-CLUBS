@@ -73,10 +73,10 @@ public class VillageBuilder : EditorWindow
             3, 2, 2, "Plaster", false, false, false, false);
 
         // Torre redonda ao fundo, preservada como marco da vila.
-        BuildTower(root, "Torre_Central", new Vector3(3.8f, 0f, -9.5f));
+        BuildTower(root, "Torre_Central", new Vector3(5.2f, 0f, -9.5f));
 
         // 🏘️ Pequeno conjunto de três casas distintas formando uma rua.
-        BuildHouseCluster(root, new Vector3(7.0f, 0f, -8f));
+        BuildHouseCluster(root, new Vector3(14.5f, 0f, -8f));
 
         // Casa de apoio à direita, com acabamento claro e sacada.
         BuildHouse(root, "Casa_Direita", new Vector3(10f, 0f, 2f), 170f,
