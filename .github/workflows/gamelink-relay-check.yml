@@ -1,0 +1,58 @@
+name: GameLink Relay - validation
+
+on:
+  push:
+    branches:
+      - feature/medieval-village-final-2026-11-26
+    paths:
+      - "tools/openai-gamelink-relay/**"
+      - ".github/workflows/gamelink-relay-check.yml"
+  pull_request:
+    branches:
+      - feature/medieval-village-final-2026-11-26
+    paths:
+      - "tools/openai-gamelink-relay/**"
+      - ".github/workflows/gamelink-relay-check.yml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/openai-gamelink-relay
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: node --check server.mjs
+      - name: Start relay and verify health/auth
+        env:
+          PORT: 8787
+          GAMELINK_TOKEN: ci-test-token-not-for-production
+        run: |
+          node server.mjs > /tmp/gamelink-relay.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --silent --fail http://127.0.0.1:8787/health > /tmp/gamelink-health.json; then
+              break
+            fi
+            sleep 1
+          done
+          grep -q '"ok":true' /tmp/gamelink-health.json
+          STATUS=$(curl --silent --output /tmp/gamelink-unauthorized.json --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:8787/v1/unity/ping \
+            -H 'Content-Type: application/json' --data '{}')
+          test "$STATUS" = "401"
+          STATUS=$(curl --silent --output /tmp/gamelink-authorized.json --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:8787/v1/unity/ping \
+            -H 'Authorization: Bearer ci-test-token-not-for-production' \
+            -H 'Content-Type: application/json' --data '{"unityVersion":"2022.3"}')
+          test "$STATUS" = "200"
+          grep -q '"ok":true' /tmp/gamelink-authorized.json
+          cat /tmp/gamelink-relay.log
