@@ -267,7 +267,7 @@ public static class MedievalGameBuilder
         var camRoot=new GameObject("CameraPivot"); camRoot.transform.SetParent(player.transform,false); camRoot.transform.localPosition=new Vector3(0,1.5f,0);
         var camObj=new GameObject("Main Camera"); camObj.tag="MainCamera"; camObj.transform.SetParent(camRoot.transform,false);
         camObj.transform.localPosition=new Vector3(0,.5f,-5.5f); camObj.transform.localRotation=Quaternion.identity;
-        Camera playerCamera = camObj.AddComponent<Camera>(); camObj.AddComponent<AudioListener>();\n        var aiEye = camObj.AddComponent<MedievalVillage.AI.VillageAIEye>(); aiEye.targetCamera = playerCamera;
+        camObj.AddComponent<Camera>(); camObj.AddComponent<AudioListener>();
         player.AddComponent<MedievalThirdPersonController>();
     }
 
