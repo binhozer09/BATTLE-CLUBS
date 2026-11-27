@@ -55,4 +55,24 @@ jobs:
             -H 'Content-Type: application/json' --data '{"unityVersion":"2022.3"}')
           test "$STATUS" = "200"
           grep -q '"ok":true' /tmp/gamelink-authorized.json
+
+          # A rota de comandos deve permanecer vazia: nenhuma alteração remota é executada.
+          curl --silent --fail http://127.0.0.1:8787/v1/unity/commands \
+            -H 'Authorization: Bearer ci-test-token-not-for-production' > /tmp/gamelink-commands.json
+          grep -q '"commands":\[\]' /tmp/gamelink-commands.json
+
+          # Relatório malformado deve ser rejeitado antes de chamar a API de IA.
+          STATUS=$(curl --silent --output /tmp/gamelink-invalid-report.json --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:8787/v1/unity/scene-report \
+            -H 'Authorization: Bearer ci-test-token-not-for-production' \
+            -H 'Content-Type: application/json' --data '{invalid')
+          test "$STATUS" = "400"
+
+          # Sem chave OpenAI no CI, relatório válido deve falhar com 503 controlado.
+          STATUS=$(curl --silent --output /tmp/gamelink-no-openai-key.json --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:8787/v1/unity/scene-report \
+            -H 'Authorization: Bearer ci-test-token-not-for-production' \
+            -H 'Content-Type: application/json' --data '{"objects":[]}')
+          test "$STATUS" = "503"
+          grep -q 'OPENAI_API_KEY' /tmp/gamelink-no-openai-key.json
           cat /tmp/gamelink-relay.log
