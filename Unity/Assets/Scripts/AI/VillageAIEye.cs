@@ -7,14 +7,14 @@ using UnityEngine.Networking;
 namespace MedievalVillage.AI
 {
     /// <summary>
-    /// Captures the actual player camera and sends one still image to a secure
+    /// Captures the player's current view and sends one still image to a secure
     /// OpenAI proxy. The OpenAI secret must remain on the server, never in the APK.
     /// </summary>
     public sealed class VillageAIEye : MonoBehaviour
     {
         [Header("Camera and secure server")]
         public Camera targetCamera;
-        [Tooltip("HTTPS endpoint of the Village AI proxy, for example https://your-service/v1/village/inspect")]
+        [Tooltip("HTTPS endpoint of the Village AI proxy: https://your-service/v1/village/inspect")]
         public string inspectionEndpoint = "";
 
         [Header("Capture")]
@@ -57,11 +57,10 @@ namespace MedievalVillage.AI
         {
             const float margin = 14f;
             float buttonWidth = Mathf.Clamp(Screen.width * .32f, 150f, 210f);
-            float buttonHeight = 48f;
+            const float buttonHeight = 48f;
             GUI.color = new Color(.10f, .12f, .16f, .94f);
             if (GUI.Button(new Rect(margin, margin, buttonWidth, buttonHeight), "◉  OLHO DA IA"))
                 panelOpen = !panelOpen;
-
             if (!panelOpen) { GUI.color = Color.white; return; }
 
             float panelWidth = Mathf.Min(Screen.width - margin * 2f, 390f);
@@ -70,8 +69,8 @@ namespace MedievalVillage.AI
             GUI.color = new Color(.08f, .09f, .12f, .97f);
             GUI.Box(panel, "OLHO DA IA  •  VILAREJO MEDIEVAL");
             GUI.color = Color.white;
-
             GUI.Label(new Rect(panel.x + 12, panel.y + 32, panel.width - 24, 24), status);
+
             Rect reportRect = new Rect(panel.x + 12, panel.y + 58, panel.width - 24, panel.height - 112);
             reportScroll = GUI.BeginScrollView(reportRect, reportScroll,
                 new Rect(0, 0, reportRect.width - 18, Mathf.Max(reportRect.height, 180)));
@@ -122,6 +121,11 @@ namespace MedievalVillage.AI
             Texture2D resized = null;
             RenderTexture rt = null;
             RenderTexture previous = RenderTexture.active;
+            string encodedImage = null;
+            string captureError = null;
+
+            // Keep capture exceptions separate from the network yield; Unity iterators
+            // cannot yield inside a try block that has a catch clause.
             try
             {
                 captured = ScreenCapture.CaptureScreenshotAsTexture();
@@ -136,60 +140,63 @@ namespace MedievalVillage.AI
                 resized = new Texture2D(width, height, TextureFormat.RGB24, false);
                 resized.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                 resized.Apply(false, false);
-                byte[] jpg = resized.EncodeToJPG(jpegQuality);
+                encodedImage = Convert.ToBase64String(resized.EncodeToJPG(jpegQuality));
+            }
+            catch (Exception ex) { captureError = ex.Message; }
 
-                InspectRequest payload = new InspectRequest
+            RenderTexture.active = previous;
+            if (rt != null) RenderTexture.ReleaseTemporary(rt);
+            if (captured != null) Destroy(captured);
+            if (resized != null) Destroy(resized);
+
+            if (!string.IsNullOrEmpty(captureError) || string.IsNullOrEmpty(encodedImage))
+            {
+                status = "Erro ao capturar a câmera.";
+                report = captureError ?? "A imagem ficou vazia.";
+                busy = false;
+                yield break;
+            }
+
+            InspectRequest payload = new InspectRequest
+            {
+                imageBase64 = encodedImage,
+                deviceModel = SystemInfo.deviceModel,
+                sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                instruction = "Analise esta captura real do jogo medieval. Avalie qualidade visual e montagem da vila: casas completas, alinhamento de paredes, portas, janelas, telhados, colisões visíveis, objetos atravessando outros, escala, iluminação, texturas e composição. Separe problemas observáveis de suposições. Dê correções concretas para Unity; não invente objetos que não aparecem."
+            };
+
+            status = "Enviando imagem para a OpenAI...";
+            byte[] body = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
+            using (UnityWebRequest request = new UnityWebRequest(inspectionEndpoint, "POST"))
+            {
+                request.uploadHandler = new UploadHandlerRaw(body);
+                request.downloadHandler = new DownloadHandlerBuffer();
+                request.SetRequestHeader("Content-Type", "application/json");
+                request.timeout = 75;
+                yield return request.SendWebRequest();
+
+                if (request.result == UnityWebRequest.Result.Success)
                 {
-                    imageBase64 = Convert.ToBase64String(jpg),
-                    deviceModel = SystemInfo.deviceModel,
-                    sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
-                    instruction = "Analise esta captura real do jogo medieval. Avalie qualidade visual e montagem da vila: casas completas, alinhamento de paredes, portas, janelas, telhados, colisões visíveis, objetos atravessando outros, escala, iluminação, texturas e composição. Separe problemas observáveis de suposições. Dê correções concretas para Unity; não invente objetos que não aparecem."
-                };
-
-                status = "Enviando imagem para a OpenAI...";
-                byte[] body = Encoding.UTF8.GetBytes(JsonUtility.ToJson(payload));
-                using (UnityWebRequest request = new UnityWebRequest(inspectionEndpoint, "POST"))
-                {
-                    request.uploadHandler = new UploadHandlerRaw(body);
-                    request.downloadHandler = new DownloadHandlerBuffer();
-                    request.SetRequestHeader("Content-Type", "application/json");
-                    request.timeout = 75;
-                    yield return request.SendWebRequest();
-
-                    if (request.result == UnityWebRequest.Result.Success)
+                    InspectResponse response = JsonUtility.FromJson<InspectResponse>(request.downloadHandler.text);
+                    if (response != null && !string.IsNullOrWhiteSpace(response.analysis))
                     {
-                        InspectResponse response = JsonUtility.FromJson<InspectResponse>(request.downloadHandler.text);
-                        if (response != null && !string.IsNullOrWhiteSpace(response.analysis))
-                        {
-                            report = response.analysis;
-                            status = "Análise concluída • " + DateTime.Now.ToString("HH:mm");
-                        }
-                        else
-                        {
-                            status = "Resposta inválida do servidor.";
-                            report = response != null ? response.error : request.downloadHandler.text;
-                        }
+                        report = response.analysis;
+                        status = "Análise concluída • " + DateTime.Now.ToString("HH:mm");
                     }
                     else
                     {
-                        status = "Falha na análise: " + request.error + " (" + request.responseCode + ")";
-                        report = request.downloadHandler != null ? request.downloadHandler.text : "";
+                        status = "Resposta inválida do servidor.";
+                        report = response != null ? response.error : request.downloadHandler.text;
                     }
                 }
+                else
+                {
+                    status = "Falha na análise: " + request.error + " (" + request.responseCode + ")";
+                    report = request.downloadHandler != null ? request.downloadHandler.text : "";
+                }
             }
-            catch (Exception ex)
-            {
-                status = "Erro ao analisar a câmera.";
-                report = ex.Message;
-            }
-            finally
-            {
-                RenderTexture.active = previous;
-                if (rt != null) RenderTexture.ReleaseTemporary(rt);
-                if (captured != null) Destroy(captured);
-                if (resized != null) Destroy(resized);
-                busy = false;
-            }
+
+            busy = false;
         }
     }
 }
