@@ -42,6 +42,12 @@ function rateAllowed(req) {
   }
   entry.count += 1;
   rate.set(key, entry);
+  // Evita crescimento ilimitado da tabela em serviços expostos à internet.
+  if (rate.size > 10_000) {
+    for (const [ip, value] of rate) {
+      if (now - value.start >= WINDOW_MS) rate.delete(ip);
+    }
+  }
   return entry.count <= MAX_REQUESTS_PER_WINDOW;
 }
 
@@ -78,6 +84,7 @@ async function askOpenAI(prompt, imageDataUrl) {
       "Authorization": "Bearer " + OPENAI_API_KEY,
       "Content-Type": "application/json"
     },
+    signal: AbortSignal.timeout(45_000),
     body: JSON.stringify({
       model: OPENAI_MODEL,
       instructions: [
