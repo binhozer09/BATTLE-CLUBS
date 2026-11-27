@@ -377,6 +377,20 @@ public class VillageBuilder : EditorWindow
         if (hasBounds && bounds.size.y > 0.01f)
             visual.transform.localScale = Vector3.one * (1.8f / bounds.size.y);
 
+        GameObject pivot = new GameObject("CameraPivot");
+        pivot.transform.SetParent(player.transform, false);
+        pivot.transform.localPosition = new Vector3(0f, 1.5f, 0f);
+        GameObject cameraObject = new GameObject("Main Camera");
+        cameraObject.tag = "MainCamera";
+        cameraObject.transform.SetParent(pivot.transform, false);
+        cameraObject.transform.localPosition = new Vector3(0f, 0.45f, -5.5f);
+        cameraObject.transform.localRotation = Quaternion.identity;
+        Camera camera = cameraObject.AddComponent<Camera>();
+        camera.fieldOfView = 62f;
+        camera.nearClipPlane = 0.1f;
+        camera.farClipPlane = 300f;
+        cameraObject.AddComponent<AudioListener>();
+
         player.AddComponent<MedievalThirdPersonController>();
     }
 
