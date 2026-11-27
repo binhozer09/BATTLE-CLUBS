@@ -176,8 +176,7 @@ public class VillageBuilder : EditorWindow
     private static void BuildHouse(GameObject root, string name, Vector3 origin, float rotationY,
                                     int widthModules, int floors, string groundMaterial, bool hasBalcony, bool hasStairs)
     {
-        // Cada casa é uma caixa fechada: frente, fundo, duas laterais, quatro cantos e pisos.
-        // O kit usa módulos de 2 m e pavimentos de aproximadamente 3,12 m.
+        // Casa fechada com frente de 3 módulos (porta central), laterais e fundo completos.
         GameObject house = new GameObject(name);
         house.transform.SetParent(root.transform, false);
         house.transform.position = origin;
@@ -185,85 +184,84 @@ public class VillageBuilder : EditorWindow
 
         const float module = 2f;
         const float storey = 3.12f;
-        float half = widthModules * module * 0.5f;
-        string groundWall = groundMaterial == "brick" ? "UnevenBrick" : "Plaster";
-        string upperWall = "Plaster";
+        const int frontModules = 3;
+        float halfWidth = frontModules * module * 0.5f;
+        float halfDepth = widthModules * module * 0.5f;
+        string groundSet = groundMaterial == "brick" ? "UnevenBrick" : "Plaster";
 
         for (int floor = 0; floor < floors; floor++)
         {
             float y = floor * storey;
             bool ground = floor == 0;
-            string wallSet = ground ? groundWall : upperWall;
+            string wallSet = ground ? groundSet : "Plaster";
             string finish = ground ? groundMaterial : "plaster";
-
-            // Piso contínuo em módulos reais do pacote, sem laje cúbica de fallback.
             string floorModel = ground ? "Floor_UnevenBrick" : "Floor_WoodDark";
-            for (int x = 0; x < widthModules; x++)
+
+            for (int x = 0; x < frontModules; x++)
             for (int z = 0; z < widthModules; z++)
                 PlaceTextured(floorModel, house,
-                    new Vector3((x - (widthModules - 1) * 0.5f) * module, y + 0.02f,
+                    new Vector3((x - 1) * module, y + 0.02f,
                                 (z - (widthModules - 1) * 0.5f) * module),
-                    Quaternion.identity, ground ? "stone" : "wood");
+                    Quaternion.identity, ground ? "stone" : "wood", false);
 
-            // Frente: porta no centro do térreo; janelas nas demais seções.
-            for (int i = 0; i < widthModules; i++)
+            for (int i = 0; i < frontModules; i++)
             {
-                float offset = (i - (widthModules - 1) * 0.5f) * module;
-                string front = ground && i == widthModules / 2
+                float x = (i - 1) * module;
+                string front = ground && i == 1
                     ? "Wall_" + wallSet + "_Door_Flat"
                     : "Wall_" + wallSet + "_Window_Wide_Flat";
-                PlaceTextured(front, house, new Vector3(offset, y + storey * 0.5f, half),
+                PlaceTextured(front, house, new Vector3(x, y + storey * 0.5f, halfDepth),
                     Quaternion.identity, finish);
                 PlaceTextured("Wall_" + wallSet + "_Straight", house,
-                    new Vector3(offset, y + storey * 0.5f, -half),
+                    new Vector3(x, y + storey * 0.5f, -halfDepth),
                     Quaternion.Euler(0f, 180f, 0f), finish);
+                if (ground && i != 1)
+                    PlaceTextured("WindowShutters_Wide_Flat_Closed", house,
+                        new Vector3(x, y + storey * 0.5f, halfDepth + 0.08f),
+                        Quaternion.identity, "wood", false);
+            }
 
-                // Laterais completas: nenhuma parede fica aberta.
+            for (int i = 0; i < widthModules; i++)
+            {
+                float z = (i - (widthModules - 1) * 0.5f) * module;
                 PlaceTextured("Wall_" + wallSet + "_Straight", house,
-                    new Vector3(-half, y + storey * 0.5f, offset),
+                    new Vector3(-halfWidth, y + storey * 0.5f, z),
                     Quaternion.Euler(0f, 90f, 0f), finish);
                 PlaceTextured("Wall_" + wallSet + "_Straight", house,
-                    new Vector3(half, y + storey * 0.5f, offset),
+                    new Vector3(halfWidth, y + storey * 0.5f, z),
                     Quaternion.Euler(0f, -90f, 0f), finish);
-
-                if (ground && i != widthModules / 2)
-                {
-                    PlaceTextured("WindowShutters_Wide_Flat_Closed", house,
-                        new Vector3(offset, y + storey * 0.5f, half + 0.08f),
-                        Quaternion.identity, "wood", false);
-                }
             }
 
             string corner = "Corner_Exterior_" + (ground ? "Brick" : "Wood");
-            foreach (float x in new[] { -half, half })
-            foreach (float z in new[] { -half, half })
+            foreach (float x in new[] { -halfWidth, halfWidth })
+            foreach (float z in new[] { -halfDepth, halfDepth })
                 PlaceTextured(corner, house, new Vector3(x, y + storey * 0.5f, z),
                     Quaternion.Euler(0f, x * z > 0f ? 180f : 0f, 0f), finish, false);
 
             if (hasBalcony && floor == floors - 2)
             {
                 PlaceTextured("Balcony_Simple_Straight", house,
-                    new Vector3(0f, y + 0.55f, half + 0.55f), Quaternion.identity, "wood", false);
+                    new Vector3(0f, y + 0.55f, halfDepth + 0.55f), Quaternion.identity, "wood", false);
                 PlaceTextured("Overhang_Plaster_Long", house,
-                    new Vector3(0f, y + storey - 0.12f, half + 0.12f), Quaternion.identity, "plaster", false);
+                    new Vector3(0f, y + storey - 0.12f, halfDepth + 0.12f), Quaternion.identity, "plaster", false);
             }
         }
 
         float roofY = floors * storey;
-        string roof = widthModules <= 2 ? "Roof_RoundTiles_4x4" : "Roof_RoundTiles_6x6";
+        string roof = widthModules <= 2 ? "Roof_RoundTiles_6x4" : "Roof_RoundTiles_6x6";
         PlaceTextured(roof, house, new Vector3(0f, roofY + 1.35f, 0f), Quaternion.identity, "roof");
-        PlaceTextured("Roof_Front_Brick" + (widthModules <= 2 ? "4" : "6"), house,
-            new Vector3(0f, roofY + 1.25f, half + 0.15f), Quaternion.identity, "brick", false);
-        PlaceTextured("Roof_Front_Brick" + (widthModules <= 2 ? "4" : "6"), house,
-            new Vector3(0f, roofY + 1.25f, -half - 0.15f), Quaternion.Euler(0f, 180f, 0f), "brick", false);
-        PlaceTextured("Prop_Chimney", house,
-            new Vector3(half - 0.45f, roofY + 1.65f, -half + 0.45f), Quaternion.identity, "brick", false);
+        PlaceTextured("Roof_Front_Brick6", house, new Vector3(0f, roofY + 1.25f, halfDepth + 0.15f),
+            Quaternion.identity, "brick", false);
+        PlaceTextured("Roof_Front_Brick6", house, new Vector3(0f, roofY + 1.25f, -halfDepth - 0.15f),
+            Quaternion.Euler(0f, 180f, 0f), "brick", false);
+        PlaceTextured("Prop_Chimney", house, new Vector3(halfWidth - 0.45f, roofY + 1.65f, -halfDepth + 0.45f),
+            Quaternion.identity, "brick", false);
 
         if (hasStairs)
-            PlaceTextured("Stairs_Exterior_Straight", house,
-                new Vector3(0f, 0.05f, half + 1.35f), Quaternion.identity, "stone", false);
+            PlaceTextured("Stairs_Exterior_Straight", house, new Vector3(0f, 0.05f, halfDepth + 1.35f),
+                Quaternion.identity, "stone", false);
         if (rng.NextDouble() > 0.35)
-            PlaceTextured("Prop_Vine1", house, new Vector3(half - 0.15f, storey, half + 0.06f),
+            PlaceTextured("Prop_Vine1", house, new Vector3(halfWidth - 0.15f, storey, halfDepth + 0.06f),
                 Quaternion.identity, "wood", false);
     }
 
