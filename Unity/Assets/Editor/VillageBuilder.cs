@@ -131,18 +131,33 @@ public class VillageBuilder : EditorWindow
 
     private static void BuildGroundAndPath(GameObject root)
     {
+        // Terreno completo de 180 x 180 m. O caminho é montado com pisos reais do kit.
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        ground.name = "Chao_Grama";
-        ground.transform.SetParent(root.transform);
-        ground.transform.localScale = new Vector3(6f, 1f, 6f);
-        ApplyFlatColor(ground, new Color(0.32f, 0.47f, 0.22f));
+        ground.name = "Chao_Grama_180m";
+        ground.transform.SetParent(root.transform, false);
+        ground.transform.localScale = new Vector3(18f, 1f, 18f);
+        ground.transform.position = new Vector3(0f, -0.03f, 0f);
+        ApplyFlatColor(ground, new Color(0.29f, 0.40f, 0.22f));
 
-        GameObject path = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        path.name = "Caminho_Pedra";
-        path.transform.SetParent(root.transform);
-        path.transform.position = new Vector3(0f, 0.02f, -2f);
-        path.transform.localScale = new Vector3(3.4f, 0.04f, 32f);
-        ApplyFlatColor(path, new Color(0.52f, 0.50f, 0.48f));
+        GameObject roads = new GameObject("Caminhos_Pedra_Kit");
+        roads.transform.SetParent(root.transform, false);
+        for (int i = 0; i < 66; i++)
+        {
+            float z = -66f + i * 2f;
+            float x = Mathf.Sin(i * 0.075f) * 8f;
+            PlaceTextured("Floor_UnevenBrick", roads, new Vector3(x, 0.015f, z),
+                Quaternion.Euler(0f, Mathf.Sin(i * 0.075f) * 7f, 0f), "stone");
+            PlaceTextured("Floor_UnevenBrick", roads, new Vector3(x + 2f, 0.015f, z),
+                Quaternion.Euler(0f, Mathf.Sin(i * 0.075f) * 7f, 0f), "stone", false);
+        }
+
+        GameObject square = new GameObject("Praca_Central_Pedra");
+        square.transform.SetParent(root.transform, false);
+        for (int x = -3; x <= 3; x++)
+        for (int z = -2; z <= 2; z++)
+            PlaceTextured((x + z) % 4 == 0 ? "Floor_Brick" : "Floor_UnevenBrick",
+                square, new Vector3(x * 2f, 0.025f, z * 2f + 2f),
+                Quaternion.identity, "stone", false);
     }
 
     private static void BuildLowWall(GameObject root)
