@@ -423,7 +423,7 @@ public class VillageBuilder : EditorWindow
         camera.fieldOfView = 62f;
         camera.nearClipPlane = 0.1f;
         camera.farClipPlane = 300f;
-        cameraObject.AddComponent<AudioListener>();
+        cameraObject.AddComponent<AudioListener>();\n        var aiEye = cameraObject.AddComponent<MedievalVillage.AI.VillageAIEye>();\n        aiEye.targetCamera = camera;
 
         player.AddComponent<MedievalThirdPersonController>();
     }
