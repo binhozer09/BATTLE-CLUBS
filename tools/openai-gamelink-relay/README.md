@@ -39,3 +39,24 @@ Depois do deploy, copie a URL HTTPS pública para o campo URL do relay no plugin
 - Diagnósticos não são comandos. Não há execução remota de código nem edição automática nesta versão.
 - O último diagnóstico fica apenas na memória do processo; reiniciar ou escalar para múltiplas instâncias perde/fragmenta esse histórico.
 - O uso da OpenAI API é cobrado separadamente da assinatura ChatGPT.
+
+
+## Render (publicação)
+O serviço pode ser publicado como **Web Service** no Render:
+- Runtime: Node
+- Branch: `feature/medieval-village-final-2026-11-26`
+- Root Directory: `tools/openai-gamelink-relay`
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health Check Path: `/health`
+- Região/plano: escolha conforme disponibilidade; o plano gratuito pode suspender o serviço após inatividade e causar demora na primeira conexão.
+
+No painel do Render, cadastre `GAMELINK_TOKEN` e `OPENAI_API_KEY` como **Environment Variables secretas**. Não coloque valores reais no repositório. O deploy não fica funcional para análise até as duas variáveis estarem configuradas.
+
+## Verificação automática
+O workflow `.github/workflows/gamelink-relay-check.yml` valida a sintaxe, inicia o servidor e testa:
+1. resposta de saúde;
+2. rejeição de chamada sem token;
+3. aceitação de chamada com token de teste.
+
+Esses testes não usam créditos da OpenAI e não substituem um teste dentro do Unity Editor.
